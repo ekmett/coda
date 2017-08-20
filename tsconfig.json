@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "outDir": "dist",
+    "lib": [ "es2016" ],
+    "sourceMap": true
+  },
+  "files": [
+    "client.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "out"
+  ]
+}

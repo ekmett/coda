@@ -1,0 +1,83 @@
+language: c
+
+cache:
+ directories:
+  - node_modules
+  - $HOME/.cabsnap
+  - $HOME/.cabal/packages
+
+before_cache:
+ - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
+ - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
+
+notifications:
+ email:
+  - ekmett@gmail.com
+
+sudo: false
+
+matrix:
+ include:
+  - env: CABALVER=1.24 GHCVER=8.2.1
+    compiler: ": #GHC 8.2.1"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+
+before_install:
+ - unset CC
+ - if [ $TRAVIS_OS_NAME == "linux" ]; then
+     export CXX="g++-4.9" CC="gcc-4.9" DISPLAY=:99.0;
+     sh -e /etc/init.d/xvfb start;
+     sleep 3;
+   fi
+ - export HAPPYVER=1.19.5
+ - export ALEXVER=3.1.7
+ - export PATH=~/.cabal/bin:/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/$HAPPYVER/bin:/opt/alex/$ALEXVER/bin:$PATH
+
+install:
+ - cabal --version
+ - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+ - if [ -f $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz ];
+   then
+     zcat $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz >
+          $HOME/.cabal/packages/hackage.haskell.org/00-index.tar;
+   fi
+ - travis_retry cabal update
+ - "sed -i  's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config"
+ - cabal install --only-dependencies --enable-tests --enable-benchmarks --dry -v > installplan.txt
+ - sed -i -e '1,/^Resolving /d' installplan.txt; cat installplan.txt
+ - if diff -u installplan.txt $HOME/.cabsnap/installplan.txt;
+   then
+     echo "cabal build-cache HIT";
+     rm -rfv .ghc;
+     cp -a $HOME/.cabsnap/ghc $HOME/.ghc;
+     cp -a $HOME/.cabsnap/lib $HOME/.cabsnap/share $HOME/.cabsnap/bin $HOME/.cabal/;
+   else
+     echo "cabal build-cache MISS";
+     rm -rf $HOME/.cabsnap;
+     mkdir -p $HOME/.ghc $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin;
+     cabal install --only-dependencies --enable-tests --enable-benchmarks;
+   fi
+ - if [ ! -d $HOME/.cabsnap ];
+   then
+      echo "snapshotting package-db to build-cache";
+      mkdir $HOME/.cabsnap;
+      cp -a $HOME/.ghc $HOME/.cabsnap/ghc;
+      cp -a $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin installplan.txt $HOME/.cabsnap/;
+   fi
+
+script:
+ - npm install
+ - npm test --silent
+ - cabal test
+ - cabal sdist
+ - npm install vsce -g
+ - vsce package
+ - cabal install --force-reinstalls dist/*-*.tar.gz
+
+notifications:
+  irc:
+    channels:
+      - "irc.freenode.org#coda-lang"
+    skip_join: true
+    template:
+      - "\x0313coda\x0f/\x0306%{branch}\x0f \x0314%{commit}\x0f %{message} \x0302\x1f%{build_url}\x0f"

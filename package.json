@@ -1,0 +1,63 @@
+{
+  "name": "coda",
+  "description": "Coda language",
+  "categories": [
+    "Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ekmett/coda.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ekmett/coda/issues",
+    "email": "ekmett@gmail.com"
+  },
+  "version": "0.0.1",
+  "author": {
+    "name": "Edward A. Kmett",
+    "email": "ekmett@gmail.com",
+    "url": "http://github.com/ekmett"
+  },
+  "publisher": "edwardkmett",
+  "license": "BSD-2-Clause",
+  "engines": {
+    "vscode": "^1.12.2"
+  },
+  "scripts": {
+    "vscode:prepublish": "./node_modules/typescript/bin/tsc -p ./",
+    "compile": "./node_modules/typescript/bin/tsc -watch -p ./",
+    "preinstall": "echo $NODE_ENV && cabal sandbox init && cabal install --only-dependencies --enable-tests && cabal configure --enable-tests",
+    "install": "cabal build",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "cabal test"
+  },
+  "dependencies": {
+    "path": "^0.12.7",
+    "vscode-languageclient": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.33",
+    "@types/node": "^6.0.52",
+    "typescript": "^2.4.2",
+    "path": "^0.12.7",
+    "vscode-languageclient": "^3.3.0",
+    "vscode": "^1.0.3"
+  },
+  "activationEvents": [
+    "onLanguage:coda"
+  ],
+  "main": "dist/client.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "coda",
+        "extensions": [
+          ".co"
+        ],
+        "aliases": [
+          "Coda"
+        ]
+      }
+    ]
+  }
+}
