@@ -2,3 +2,9 @@
 tsconfig.json
 tslint.json
 *.ts
+Coda
+*.hs
+VERSION
+bin
+dist
+*.lhs

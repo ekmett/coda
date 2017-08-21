@@ -3,30 +3,66 @@ coda
 
 [![Build Status](https://secure.travis-ci.org/ekmett/coda.png?branch=master)](http://travis-ci.org/ekmett/coda)
 
-The entire compiler is being built as a plugin for Visual Studio Code
+This package provides a toy compiler for experimenting with resumable parsing, which is designed as a plugin for Visual Studio Code.
 
-Build instructions:
+Installation
+============
+
+To build:
+
+1. Make sure you have `npm` and `Visual Studio Code` installed and that `code` from the command line will invoke visual studio code.
+
+2. If you would like to avoid affecting your global environment, you can choose to run
 
 ```
-$ npm install vsce -g
-$ npm install --ignore-scripts
-$ vsce package
+$ cabal sandbox
 ```
 
-this will prdoduce a `.vsix` file that can be installed into Visual Studio Code. The package installer currently assumes that the target
-machine has a modern GHC installed and includes the haskell source to be built on the target machine.
+or set up a local `stack` configuration.
 
-We could alternately switch to using ghcjs to build during the devDependency step and run directly in the
-client process, but while it'd reduce end-user dependencies, it'd slow build time for extension development.
+3. Just
 
-You can also set up a development environment for debugging the extension during extension development.
-See [Building, Debugging and Sideloading the extension in Visual Studio Code](https://github.com/Microsoft/vscode-go/wiki/Building,-Debugging-and-Sideloading-the-extension-in-Visual-Studio-Code)
+```
+$ cabal install
+```
+
+to register the extension with Visual Studio. Alternately, you can `cabal build` then 
+
+4. 
+
+4. Install the resulting `dist/build/coda-<version>.vsix` file by opening Visual Studio Code, then hitting
+   `⌘-Shift-P` then selecting
+
+```
+> Extensions: Install Extension from VSIX
+```
+
+and selecting the file.
+
+To side-step this process for active development on the compiler, you can try to symlink the client
+directory directly into Visual Studio Code with
+
+```
+$ make dirty
+```
+
+and then just build in place.
+
+The instructions in [Running and Debugging Your Extension](https://code.visualstudio.com/docs/extensions/debugging-extensions)
+can be readily tweaked to work here if you need more interactive debugging support when working on the compiler.
+
+Requirements
+============
+
+Currently, the build process is being tested on GHC 8.0, but I'm not actively doing anything to shut off older GHCs or newer ones.
+
+Patches that help increase portability are welcome.
 
 Contact Information
--------------------
+===================
 
 Contributions and bug reports are welcome!
 
-Please feel free to contact me through github or on the #haskell IRC channel on irc.freenode.net.
+Please feel free to contact me through github or on the ##coda or #haskell IRC channels on irc.freenode.net.
 
 -Edward Kmett

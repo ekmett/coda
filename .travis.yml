@@ -1,4 +1,6 @@
 language: c
+sudo: false
+dist: trusty
 
 cache:
  directories:
@@ -10,17 +12,21 @@ before_cache:
  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
 
-notifications:
- email:
-  - ekmett@gmail.com
-
-sudo: false
-
 matrix:
  include:
-  - env: CABALVER=1.24 GHCVER=8.2.1
-    compiler: ": #GHC 8.2.1"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+  - env: CABALVER=1.24 GHCVER=8.0.1
+    compiler: ": #GHC 8.0.1"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+#  - env: CABALVER=1.24 GHCVER=8.2.1
+#    compiler: ": #GHC 8.2.1"
+#    addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+#  - env: CABALVER=head GHCVER=head CABALFLAGS=--allow-newer
+#    compiler: ": #GHC head"
+#    addons: {apt: {packages: [cabal-install-head,ghc-head,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+
+# allow_failures:
+#  - env: CABALVER=1.24 GHCVER=8.2.1
+#  - env: CABALVER=head GHCVER=head CABALFLAGS=--allow-newer
 
 before_install:
  - unset CC
@@ -32,6 +38,7 @@ before_install:
  - export HAPPYVER=1.19.5
  - export ALEXVER=3.1.7
  - export PATH=~/.cabal/bin:/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/$HAPPYVER/bin:/opt/alex/$ALEXVER/bin:$PATH
+ - export CABALFLAGS="$CABALFLAGS -v2"
 
 install:
  - cabal --version
@@ -57,6 +64,7 @@ install:
      mkdir -p $HOME/.ghc $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin;
      cabal install --only-dependencies --enable-tests --enable-benchmarks;
    fi
+# snapshot package-db on cache miss
  - if [ ! -d $HOME/.cabsnap ];
    then
       echo "snapshotting package-db to build-cache";
@@ -66,18 +74,16 @@ install:
    fi
 
 script:
- - npm install
- - npm test --silent
- - cabal test
- - cabal sdist
- - npm install vsce -g
- - vsce package
- - cabal install --force-reinstalls dist/*-*.tar.gz
+ - time cabal configure --enable-tests --enable-benchmarks
+ - time cabal build
+ - time cabal test --show-details=always
+ - time cabal sdist
+ - unzip -v dist/build/*.vsix
 
 notifications:
   irc:
     channels:
-      - "irc.freenode.org#coda-lang"
+      - "irc.freenode.org##coda"
     skip_join: true
     template:
       - "\x0313coda\x0f/\x0306%{branch}\x0f \x0314%{commit}\x0f %{message} \x0302\x1f%{build_url}\x0f"

@@ -5,15 +5,15 @@
     "moduleResolution": "node",
     "strictNullChecks": true,
     "noImplicitAny": true,
-    "outDir": "dist",
+    "outDir": "bin",
     "lib": [ "es2016" ],
     "sourceMap": true
   },
   "files": [
-    "client.ts"
+    "extension.ts"
   ],
   "exclude": [
     "node_modules",
-    "out"
+    "bin"
   ]
 }

@@ -1,13 +1,28 @@
+VERSION = $(shell cat .version)
+HS_VERSION = 0.$(VERSION)
+PLUGIN = coda-$(ARCH)-$(VERSION)
+VSCE = node_modules/vsce/out/vsce
+CODA = bin/coda
+AUTHOR = ekmett
+
 all:
-	npm install
+	cabal build
+
+install:
+	cabal install
 
 clean:
-	rm -rf dist dist-newstyle
+	cabal clean
+
+dirty: bin/extension.js bin/coda
+	mkdir -p ~/.vscode/extensions
+	rm -rf ~/.vscode/extensions/$(AUTHOR).coda-$(VERSION)
+	ln -s . ~/.vscode/extensions/$(AUTHOR).coda-$(VERSION)
 
 reallyclean: clean
-	rm -rf node_modules .cabal-sandbox cabal.sandbox.config
+	rm -rf node_modules
 
 distclean: reallyclean
 	rm -rf package-lock.json
 
-.PHONY: all clean reallyclean distclean
+.PHONY: all clean dirty distclean reallyclean
