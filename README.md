@@ -12,41 +12,10 @@ To build:
 
 1. Make sure you have `npm` and `Visual Studio Code` installed and that `code` from the command line will invoke visual studio code.
 
-2. If you would like to avoid affecting your global environment, you can choose to run
+2. Run `cabal install` to build and register the extension with Visual Studio.
 
-```
-$ cabal sandbox
-```
-
-or set up a local `stack` configuration.
-
-3. Just
-
-```
-$ cabal install
-```
-
-to register the extension with Visual Studio. Alternately, you can `cabal build` then 
-
-4. 
-
-4. Install the resulting `dist/build/coda-<version>.vsix` file by opening Visual Studio Code, then hitting
-   `⌘-Shift-P` then selecting
-
-```
-> Extensions: Install Extension from VSIX
-```
-
-and selecting the file.
-
-To side-step this process for active development on the compiler, you can try to symlink the client
-directory directly into Visual Studio Code with
-
-```
-$ make dirty
-```
-
-and then just build in place.
+If `code` is not in your path, or you want a manual install for some reason, you can use `cabal build`, open Visual Studio
+Code, type `⌘-Shift-P`, select `> Extensions: Install Extension from VSIX` from the resulting selection box, and finally pick out `dist/build/coda-<version>.vsix` in the finder dialogue to install the package.
 
 The instructions in [Running and Debugging Your Extension](https://code.visualstudio.com/docs/extensions/debugging-extensions)
 can be readily tweaked to work here if you need more interactive debugging support when working on the compiler.

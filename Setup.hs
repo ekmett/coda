@@ -14,11 +14,10 @@ import Data.List (unwords)
 import Distribution.Extra.Doctest (generateBuildModule)
 import Distribution.Package (pkgVersion)
 import Distribution.PackageDescription (PackageDescription, package)
-import Distribution.Simple (defaultMainWithHooks, buildHook, cleanHook, instHook, copyHook, simpleUserHooks)
+import Distribution.Simple (defaultMainWithHooks, buildHook, cleanHook, instHook, copyHook, testHook, regHook, simpleUserHooks)
 import Distribution.Simple.LocalBuildInfo (LocalBuildInfo(..), withExeLBI)
 import Distribution.Simple.Utils (createDirectoryIfMissingVerbose, rewriteFile)
 import Distribution.Simple.Setup (BuildFlags(buildVerbosity), fromFlag)
-import System.Directory (removeDirectoryRecursive, doesDirectoryExist)
 import System.Exit (ExitCode(..), exitWith)
 import System.FilePath (FilePath, (</>), (<.>))
 import System.Process (rawSystem)
@@ -37,23 +36,33 @@ import Distribution.PackageDescription (exeName)
 
 main :: IO ()
 main = defaultMainWithHooks $ simpleUserHooks
-  { buildHook = \pkg lbi hooks flags -> do
+  { buildHook = buildHook'
+  , cleanHook = cleanHook'
+  , instHook = instHook'
+  , copyHook = copyHook'
+  , regHook = regHook'
+  , testHook = testHook'
+  } where
+  buildHook' pkg lbi hooks flags = do
     generateBuildModule "doctests" flags pkg lbi
     generateBuildModule "hlint" flags pkg lbi
     generateCodaBuildModule flags pkg lbi
     buildHook simpleUserHooks pkg lbi hooks flags
-    run (buildDir lbi </> "build-coda" </> "build-coda" <.> exe) ["all"]
-  , cleanHook = \pkg lbi hooks flags -> do
+    build lbi ["all"]
+  cleanHook' pkg lbi hooks flags = do
     cleanHook simpleUserHooks pkg lbi hooks flags
-    doesDirectoryExist "bin" >>= \x -> when x $ removeDirectoryRecursive "bin"
-    doesDirectoryExist "node_modules" >>= \x -> when x $ removeDirectoryRecursive "node_modules"
-  , instHook = \pkg lbi hooks flags -> do
+  instHook' pkg lbi hooks flags = do
     instHook simpleUserHooks pkg lbi hooks flags
-    run (buildDir lbi </> "build-coda" </> "build-coda" <.> exe) ["install"]
-  , copyHook = \pkg lbi hooks flags -> do
+    build lbi ["install"]
+  copyHook' pkg lbi hooks flags = do
     copyHook simpleUserHooks pkg lbi hooks flags
-    run (buildDir lbi </> "build-coda" </> "build-coda" <.> exe) ["copy"]
-  }
+    build lbi ["copy"]
+  regHook' pkg lbi hooks flags = do
+    regHook simpleUserHooks pkg lbi hooks flags
+    build lbi ["register"]
+  testHook' args pkg lbi hooks flags = do
+    testHook simpleUserHooks args pkg lbi hooks flags
+    -- build lbi ["test"]
 
 run :: FilePath -> [String] -> IO ()
 run cmd args = rawSystem cmd args >>= \case
@@ -61,6 +70,11 @@ run cmd args = rawSystem cmd args >>= \case
   ExitFailure e -> do
     putStrLn $ "error: " ++ unwords (cmd:args) ++ " exited with status code " ++ show e
     exitWith $ ExitFailure e
+
+build :: LocalBuildInfo -> [String] -> IO ()
+build lbi xs = do
+  putStrLn $ "Building " ++ unwords xs
+  run (buildDir lbi </> "build-coda" </> "build-coda" <.> exe) xs
 
 generateCodaBuildModule :: BuildFlags -> PackageDescription -> LocalBuildInfo -> IO ()
 generateCodaBuildModule flags pkg lbi = do

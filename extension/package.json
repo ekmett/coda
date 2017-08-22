@@ -25,6 +25,7 @@
   },
   "scripts": {
     "prepare": "node ./node_modules/vscode/bin/install && tsc -p ./",
+    "lint": "tslint *.ts",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "update-vscode": "node ./node_modules/vscode/bin/install"
@@ -36,9 +37,10 @@
   "devDependencies": {
     "@types/mocha": "^2.2.33",
     "@types/node": "^6.0.52",
+    "tslint": "^5.6.0",
     "typescript": "^2.4.2",
-    "vscode": "^1.0.3",
-    "vsce": "^1.30.0"
+    "vsce": "^1.30.0",
+    "vscode": "^1.0.3"
   },
   "activationEvents": [
     "onLanguage:coda"
