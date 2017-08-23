@@ -85,5 +85,6 @@ notifications:
     channels:
       - "irc.freenode.org##coda"
     skip_join: true
+    nick: coda-travis
     template:
       - "\x0313coda\x0f/\x0306%{branch}\x0f \x0314%{commit}\x0f %{message} \x0302\x1f%{build_url}\x0f"

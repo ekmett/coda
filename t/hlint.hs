@@ -19,12 +19,12 @@ import Language.Haskell.HLint
 -- import System.Exit
 
 toFile :: String -> String
-toFile xs = map (\c -> if c == '.' then '/' else c) xs ++ ".hs"
+toFile xs = "src/" ++ map (\c -> if c == '.' then '/' else c) xs ++ ".hs"
 
 main :: IO ()
 main = do
     let args = ["lint"] ++ map toFile module_sources ++ ["--cpp-define=HLINT", "--cpp-ansi"]
     putStrLn $ unwords ("hlint":args)
     hints <- hlint args
-    traverse_ (putStrLn . show) hints
+    traverse_ print hints
     -- unless (null hints) exitFailure

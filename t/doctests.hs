@@ -14,7 +14,14 @@
 module Main where
 
 import Build_doctests
+import Data.List (unwords)
 import Test.DocTest
 
+toFile :: String -> String
+toFile xs = "src/" ++ map (\c -> if c == '.' then '/' else c) xs ++ ".hs"
+
 main :: IO ()
-main = doctest $ flags ++ pkgs ++ module_sources
+main = do
+  let args = flags ++ pkgs ++ map toFile module_sources
+  putStrLn $ unwords ("doctest":args)
+  doctest args

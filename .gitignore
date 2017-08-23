@@ -22,4 +22,3 @@ codex.tags
 old/
 *.vsix
 node_modules/
-bin/
