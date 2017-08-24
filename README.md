@@ -17,7 +17,7 @@ To build:
 
 1. Make sure you have `npm` and `Visual Studio Code` installed and that `code` invokes the latter from the command line.
 
-2. Run `cabal install` to build and register the extension with Visual Studio Code.
+2. Run `cabal install` or `stack install` to build and register the extension with Visual Studio Code.
 
 If `code` is not in your path, or you want a manual install for some reason, you can use `cabal build`, open Visual Studio
 Code, type `⌘-Shift-P`, select `> Extensions: Install Extension from VSIX` from the resulting selection box, and finally pick out `dist/build/coda-<version>.vsix` in the finder dialogue to install the package.
