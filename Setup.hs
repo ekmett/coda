@@ -16,6 +16,7 @@ import Distribution.Simple.LocalBuildInfo (LocalBuildInfo(..))
 import Distribution.Version (Version(..))
 import System.Directory (makeAbsolute, copyFile, createDirectoryIfMissing)
 import System.Environment (lookupEnv, withArgs)
+import System.Info.Extra (isWindows)
 
 main :: IO ()
 main = defaultMainWithHooks $ simpleUserHooks
@@ -68,7 +69,6 @@ build pkg lbi xs extraRules = do
   let vscode_d_ts = extDir </> "node_modules/vscode/vscode.d.ts"
   let package_lock = extDir </> "package-lock.json"
   let extDirExtensionFiles = map (extDir </>) extensionFiles
-  let npm_exe = "npm" -- <.> exe
 
   withArgs [xs] $ shakeArgs shakeOptions
       { shakeFiles = buildDir lbi
@@ -80,7 +80,11 @@ build pkg lbi xs extraRules = do
 
     extraRules
 
-    npm <- newResource "npm" 1
+    npmResource <- newResource "npm" 1
+    let npm :: [String] -> Action ()
+        npm args = if isWindows
+          then withResource npmResource 1 $ cmd (Cwd extDir) "cmd.exe" "/c" "npm.cmd" args
+          else withResource npmResource 1 $ cmd (Cwd extDir) "npm" args
 
     phony "build" $
       need ["cabal-build", vsix]
@@ -91,7 +95,7 @@ build pkg lbi xs extraRules = do
 
     phony "test" $ do
       need $ "cabal-test" : extDirExtensionFiles
-      withResource npm 1 $ cmd (Cwd extDir) npm_exe "run-script" "lint"
+      npm ["run-script","lint"]
 
     vsix %> \_ -> do
       need $ [extDir </> "bin/extension.js", extDir </> "bin/coda" <.> exe, node_modules]
@@ -104,7 +108,7 @@ build pkg lbi xs extraRules = do
       when has_cached_package_lock $ do
         putLoud "Using cached package-lock.json"
         liftIO $ copyFile "var/package-lock.json" package_lock -- untracked
-      () <- withResource npm 1 $ cmd (Cwd extDir) npm_exe "install" "--ignore-scripts"
+      npm ["install","--ignore-scripts"]
       unless has_cached_package_lock $ do
         putLoud "Caching package-lock.json"
         liftIO $ do
@@ -121,7 +125,7 @@ build pkg lbi xs extraRules = do
       else do
         need [node_modules]
         putLoud "Downloading vscode.d.ts"
-        () <- withResource npm 1 $ cmd (Cwd extDir) npm_exe "run-script" "update-vscode"
+        npm ["run-script","update-vscode"]
         liftIO $ do
           createDirectoryIfMissing False "var"
           copyFile out "var/vscode.d.ts" -- untracked
@@ -133,7 +137,7 @@ build pkg lbi xs extraRules = do
 
     extDir </> "bin/extension.js" %> \_ -> do
       need (vscode_d_ts : extDirExtensionFiles)
-      withResource npm 1 $ cmd (Cwd extDir) npm_exe "run-script" "compile"
+      npm ["run-script","compile"]
 
     for_ extensionFiles $ \file -> extDir </> file %> \out -> copyFile' ("ext" </> file) out
     for_ markdownFiles $ \file -> extDir </> file %> \out -> copyFile' file out

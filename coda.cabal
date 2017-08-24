@@ -40,6 +40,7 @@ custom-setup
     Cabal,
     cabal-doctest >= 1 && < 1.1,
     directory >= 1.2 && < 1.4,
+    extra >= 1.5 && < 1.6,
     filepath >= 1.4.1 && <1.5,
     process >= 1.4.2 && < 1.5,
     shake >= 0.15 && < 0.16
