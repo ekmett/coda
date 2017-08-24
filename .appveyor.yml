@@ -7,7 +7,9 @@ branches:
 environment:
   nodejs_version: "8"
 
-cache: c:\sr -> stack.yaml
+cache:
+  - c:\sr -> stack.yaml
+  - C:\Users\appveyor\AppData\Local\Programs\stack -> stack.yaml
 
 clone_folder: c:\project\coda
 
