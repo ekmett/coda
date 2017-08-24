@@ -2,7 +2,7 @@ build: off
 
 platform:
 - x64
-- Win32
+# - Win32
 
 branches:
   except:
@@ -13,7 +13,7 @@ environment:
 
 cache:
   - c:\sr -> stack.yaml
-#  - C:\Users\appveyor\AppData\Local\Programs\stack -> stack.yaml
+  - C:\Users\appveyor\AppData\Local\Programs\stack -> stack.yaml
 
 clone_folder: c:\project\coda
 
