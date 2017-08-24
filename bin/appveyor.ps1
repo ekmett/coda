@@ -16,7 +16,8 @@ if ($phase -eq "install") {
     Invoke-WebRequest 'http://www.stackage.org/stack/windows-i386' -OutFile 'stack.zip'
   }
   "> unzip stack"
-  7z x -y stack.zip bin/stack.exe
+  7z x -y stack.zip stack.exe
+  Move-Item -Path stack.exe -Destination bin\stack.exe
 } elseif($phase -eq "build_script") {
   "> stack setup"
   cmd /c 'bin\stack setup 2>&1 1>&2 > nul'
