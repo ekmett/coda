@@ -95,7 +95,7 @@ build pkg lbi xs extraRules = do
         Nothing -> do
           absVsix <- liftIO (makeAbsolute vsix)
           putNormal "Unable to install: 'code' not found"
-          putNormal $ "Package: " ++ show absVsix
+          putNormal $ "Package: " ++ absVsix
 
     phony "test" $ do
       need $ "cabal-test" : extDirExtensionFiles
