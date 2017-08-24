@@ -125,10 +125,11 @@ build pkg lbi verb xs extraRules = do
 
     phony "test" $ do
       need $ "cabal-test" : extDirExtensionFiles
-      quietly $ npm [] ["run-script","lint"]
+      npm [] ["run-script","lint"]
+      -- npm [] ["run-script","test"] -- download vscode and run the ext/test suite
 
     vsix %> \_ -> do
-      need $ [extDir </> "bin/extension.js", extDir </> "bin/coda" <.> exe, node_modules]
+      need $ [extDir </> "extension.js", extDir </> "bin/coda" <.> exe, node_modules]
           ++ extDirExtensionFiles
           ++ map (extDir </>) markdownFiles
       command_ [Shell, Cwd extDir] ("." </> "node_modules" </> ".bin" </> "vsce") ["package","-o","coda.vsix"]
@@ -169,7 +170,7 @@ build pkg lbi verb xs extraRules = do
       -- Assumes coda executable was built by cabal as forced by the build-tool annotations in the .cabal file.
       copyFileChanged coda_exe (extDir </> "bin/coda" <.> exe)
 
-    extDir </> "bin/extension.js" %> \_ -> do
+    extDir </> "extension.js" %> \_ -> do
       need (vscode_d_ts : extDirExtensionFiles)
       npm [WithStdout True, EchoStdout False] ["run-script", "compile"]
 

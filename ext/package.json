@@ -28,7 +28,8 @@
     "lint": "tslint *.ts",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
-    "update-vscode": "node ./node_modules/vscode/bin/install"
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "test": "node ./node_modules/vscode/bin/test"
   },
   "dependencies": {
     "path": "^0.12.7",
@@ -45,7 +46,7 @@
   "activationEvents": [
     "onLanguage:coda"
   ],
-  "main": "bin/extension.js",
+  "main": "extension.js",
   "contributes": {
     "languages": [
       {

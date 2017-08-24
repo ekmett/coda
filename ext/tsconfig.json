@@ -5,15 +5,17 @@
     "moduleResolution": "node",
     "strictNullChecks": true,
     "noImplicitAny": true,
-    "outDir": "bin",
     "lib": [ "es2016" ],
     "sourceMap": true
   },
   "files": [
-    "extension.ts"
+    "extension.ts",
+    "test/index.ts",
+    "test/extension.test.ts"
   ],
   "exclude": [
     "node_modules",
-    "bin"
+    "bin",
+    ".vscode-test"
   ]
 }
