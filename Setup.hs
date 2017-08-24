@@ -16,7 +16,6 @@ import Distribution.Simple.LocalBuildInfo (LocalBuildInfo(..))
 import Distribution.Version (Version(..))
 import System.Directory (makeAbsolute, copyFile, createDirectoryIfMissing)
 import System.Environment (lookupEnv, withArgs)
-import System.Info.Extra (isWindows)
 
 main :: IO ()
 main = defaultMainWithHooks $ simpleUserHooks
@@ -82,16 +81,14 @@ build pkg lbi xs extraRules = do
 
     npmResource <- newResource "npm" 1
     let npm :: [String] -> Action ()
-        npm args = if isWindows
-          then withResource npmResource 1 $ cmd (Cwd extDir) "cmd.exe" "/c" "npm.cmd" args
-          else withResource npmResource 1 $ cmd (Cwd extDir) "npm" args
+        npm args = withResource npmResource 1 $ command_ [Cwd extDir, Shell] "npm" args
 
     phony "build" $
       need ["cabal-build", vsix]
 
     phony "register" $ do
       need ["cabal-register",vsix]
-      cmd "code" "--install-extension" [vsix]
+      cmd Shell "code" "--install-extension" [vsix]
 
     phony "test" $ do
       need $ "cabal-test" : extDirExtensionFiles
@@ -101,7 +98,7 @@ build pkg lbi xs extraRules = do
       need $ [extDir </> "bin/extension.js", extDir </> "bin/coda" <.> exe, node_modules]
           ++ extDirExtensionFiles
           ++ map (extDir </>) markdownFiles
-      cmd (AddPath [absoluteVscePath] []) (Cwd extDir) "vsce" "package" "-o" [makeRelative extDir absolutePackage]
+      cmd Shell (AddPath [absoluteVscePath] []) (Cwd extDir) "vsce" "package" "-o" [makeRelative extDir absolutePackage]
 
     node_modules %> \out -> do
       need extDirExtensionFiles
