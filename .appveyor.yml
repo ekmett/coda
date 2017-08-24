@@ -19,9 +19,9 @@ clone_folder: c:\project\coda
 
 init:
   - ps: |
-    if ($env:branch -eq "appveyor") {
-      iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-    }
+      if ($env:branch -eq "appveyor") {
+        iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+      }
   - ps: Install-Product node $env:nodejs_version $env:platform
   - node --version
   - npm --version
@@ -38,7 +38,7 @@ on_success:
 on_failure:
   - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}{platform}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
   - ps: |
-    if ($env:branch -eq "appveyor") {
-      $blockRdp = $true;
-      iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-    }
+      if ($env:branch -eq "appveyor") {
+        $blockRdp = $true;
+        iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+      }
