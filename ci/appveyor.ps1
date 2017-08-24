@@ -20,6 +20,8 @@ if ($phase -eq "install") {
   cmd /c '.\stack path 2>&1'
   "> stack exec env"
   cmd /c '.\stack exec env 2>&1'
+  "> install npm and node
+  cmd /c ".\stack exec --no-system-ghc -- pacman -S nodejs npm 2>&1"
   "> stack build"
   cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts 2>&1'
 } elseif ($phase -eq "test_script") {

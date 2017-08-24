@@ -68,7 +68,7 @@ build pkg lbi xs extraRules = do
   let vscode_d_ts = extDir </> "node_modules/vscode/vscode.d.ts"
   let package_lock = extDir </> "package-lock.json"
   let extDirExtensionFiles = map (extDir </>) extensionFiles
-  let npm_exe = "npm" <.> exe
+  let npm_exe = "npm" -- <.> exe
 
   withArgs [xs] $ shakeArgs shakeOptions
       { shakeFiles = buildDir lbi

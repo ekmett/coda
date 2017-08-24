@@ -4,8 +4,8 @@ branches:
   except:
   - gh-pages
 
-environment:
-  nodejs_version: "8"
+#environment:
+#  nodejs_version: "8"
 
 cache:
   - c:\sr -> stack.yaml
@@ -13,10 +13,10 @@ cache:
 
 clone_folder: c:\project\coda
 
-init:
-  - ps: Install-Product node $env:nodejs_version
-  - node --version
-  - npm --version
+#init:
+#  - ps: Install-Product node $env:nodejs_version
+#  - node --version
+#  - npm --version
 
 install:
   - ps: ci\appveyor.ps1 install
@@ -36,6 +36,6 @@ on_success:
 on_failure:
   - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}02{build_number}.{job_number}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
 
-on_finish:
-  - 7z a -r npm.zip c:\Users\appveyor\AppData\Roaming\npm
-  - ps: Push-AppveyorArtifact npm.zip
+#on_finish:
+#  - 7z a -r npm.zip c:\Users\appveyor\AppData\Roaming\npm
+#  - ps: Push-AppveyorArtifact npm.zip
