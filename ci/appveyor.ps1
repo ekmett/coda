@@ -28,7 +28,7 @@ if ($phase -eq "install") {
   cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts 2>&1'
 } elseif ($phase -eq "test_script") {
   "> stack test"
-  cmd /c ' .\stack test'
+  cmd /c '.\stack test'
 } elseif ($phase -eq "deploy_script") {
   "> stack install"
   cmd /c '.\stack install'
