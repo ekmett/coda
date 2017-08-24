@@ -13,6 +13,8 @@ import Distribution.Package (pkgVersion)
 import Distribution.PackageDescription (PackageDescription, package)
 import Distribution.Simple (defaultMainWithHooks, UserHooks(..), simpleUserHooks)
 import Distribution.Simple.LocalBuildInfo (LocalBuildInfo(..))
+import Distribution.Simple.Program.Find (findProgramOnSearchPath, defaultProgramSearchPath)
+import Distribution.Verbosity (verbose)
 import Distribution.Version (Version(..))
 import System.Directory (makeAbsolute, copyFile, createDirectoryIfMissing, renameFile)
 import System.Environment (lookupEnv, withArgs)
@@ -86,7 +88,14 @@ build pkg lbi xs extraRules = do
 
     phony "register" $ do
       need ["cabal-register",vsix]
-      cmd Shell "code" "--install-extension" [vsix]
+      liftIO (findProgramOnSearchPath verbose defaultProgramSearchPath "code") >>= \case
+        Just (code, _) -> do
+          command_ [] code ["--install-extension", vsix]
+          putNormal "Installed into Visual Studio Code"
+        Nothing -> do
+          absVsix <- liftIO (makeAbsolute vsix)
+          putNormal "Unable to install: 'code' not found"
+          putNormal $ "Package: " ++ show absVsix
 
     phony "test" $ do
       need $ "cabal-test" : extDirExtensionFiles
@@ -96,7 +105,7 @@ build pkg lbi xs extraRules = do
       need $ [extDir </> "bin/extension.js", extDir </> "bin/coda" <.> exe, node_modules]
           ++ extDirExtensionFiles
           ++ map (extDir </>) markdownFiles
-      command_ [Shell, Cwd extDir] ("." </> "node_modules" </> "vsce" </> "out" </> "vsce") ["package","-o","coda.vsix"]
+      command_ [Shell, Cwd extDir] ("." </> "node_modules" </> ".bin" </> "vsce") ["package","-o","coda.vsix"]
       liftIO $ renameFile (extDir </> "coda.vsix") vsix
 
     node_modules %> \out -> do
