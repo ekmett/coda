@@ -58,8 +58,6 @@ build pkg lbi xs extraRules = do
           program <- progressProgram
           progressDisplay 0.5 (\s -> progressTitlebar s >> program s) p
 
-  absolutePackage <- makeAbsolute vsix
-  absoluteVscePath <- makeAbsolute $ extDir </> "node_modules/vsce/out"
   extensionFiles <- filter (/= "package-lock.json") <$> getDirectoryFilesIO "ext" ["//*"]
   markdownFiles <- getDirectoryFilesIO "" ["*.md"]
   has_cached_vscode_d_ts <- not . null <$> getDirectoryFilesIO "var" ["vscode.d.ts"]
@@ -98,8 +96,8 @@ build pkg lbi xs extraRules = do
       need $ [extDir </> "bin/extension.js", extDir </> "bin/coda" <.> exe, node_modules]
           ++ extDirExtensionFiles
           ++ map (extDir </>) markdownFiles
-      cmd Shell (Cwd extDir) ("node_modules" </> "vsce" </> "out" </> "vsce") "package" "-o" "coda.vsix"
-      liftIO $ renameFile (extDir </> "coda.vsix") package
+      command_ [Shell, Cwd extDir] ("node_modules" </> "vsce" </> "out" </> "vsce") ["package","-o","coda.vsix"]
+      liftIO $ renameFile (extDir </> "coda.vsix") vsix
 
     node_modules %> \out -> do
       need extDirExtensionFiles
