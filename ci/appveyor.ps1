@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 $env:PATH += ";$PWD"
 $env:STACK_ROOT = 'c:\sr'
 $env:GNUPGHOME = '/c/project/coda/ci'
+$env:STACK_YAML = 'ci/stack.yaml'
 
 if ($phase -eq "install") {
   "> download stack"

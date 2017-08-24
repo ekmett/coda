@@ -13,7 +13,7 @@ environment:
   nodejs_version: "8"
 
 cache:
-  - c:\sr -> stack.yaml
+  - c:\sr -> ci\stack.yaml
 
 clone_folder: c:\project\coda
 
