@@ -11,12 +11,14 @@ if ($phase -eq "install") {
   Invoke-WebRequest 'http://www.stackage.org/stack/windows-i386' -OutFile 'stack.zip'
   "> unzip stack"
   7z x -y stack.zip stack.exe
-  "> stack path"
-  cmd /c '.\stack path 2>&1'
   $env:APPVEYOR_SAVE_CACHE_ON_ERROR = "true"
 } elseif($phase -eq "build_script") {
   "> stack setup"
   cmd /c '.\stack setup 2>&1 1>&2 > nul'
+  "> stack path"
+  cmd /c '.\stack path 2>&1'
+  "> stack exec env"
+  cmd /c '.\stack exec env 2>&1'
   "> stack build"
   cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts'
 } elseif ($phase -eq "test_script") {
