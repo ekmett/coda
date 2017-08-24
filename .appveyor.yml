@@ -17,8 +17,6 @@ init:
   - npm --version
 
 install:
-  - mkdir %APPDATA%\gnupg
-  - copy ci\gpg.conf %APPDATA%\gnupg
   - ps: ci\appveyor.ps1 install
 
 build_script:
