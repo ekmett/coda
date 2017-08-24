@@ -2,7 +2,7 @@ build: off
 
 platform:
 - x64
-# - Win32
+# - x86
 
 branches:
   except:
@@ -19,7 +19,7 @@ clone_folder: c:\project\coda
 
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - ps: Install-Product node $env:nodejs_version
+  - ps: Install-Product node $env:nodejs_version $env:platform
   - node --version
   - npm --version
   - npm config list
