@@ -43,7 +43,7 @@ else:
     job_url = "{build_url}/job/{job_id}".format(**vars())
     repo_url = "https://{repo_provider}.com/{repo_name}".format(**vars()).lower()
     commit_url = "{repo_url}/commit/{short_commit}".format(**vars())
-    username = "{project_name}-appveyor".format(**vars())
+    username = "appveyor".format(**vars())
 
 messages = []
 for msg in ' '.join(sys.argv[1:]).split(','):
