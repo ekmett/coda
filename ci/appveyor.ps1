@@ -9,7 +9,11 @@ $env:GNUPGHOME = '/c/project/coda/ci'
 
 if ($phase -eq "install") {
   "> download stack"
-  Invoke-WebRequest 'http://www.stackage.org/stack/windows-i386' -OutFile 'stack.zip'
+  if ($env:PLATFORM -eq "x64") {
+    Invoke-WebRequest 'http://www.stackage.org/stack/windows-x86_64' -OutFile 'stack.zip'
+  } else {
+    Invoke-WebRequest 'http://www.stackage.org/stack/windows-i386' -OutFile 'stack.zip'
+  }
   "> unzip stack"
   7z x -y stack.zip stack.exe
   $env:APPVEYOR_SAVE_CACHE_ON_ERROR = "true"
@@ -20,7 +24,7 @@ if ($phase -eq "install") {
   cmd /c '.\stack path 2>&1'
   "> stack exec env"
   cmd /c '.\stack exec env 2>&1'
-  "> install npm and node"
+  "> install node"
   cmd /c '.\stack exec --no-system-ghc -- pacman -S mingw-w64-nodejs 2>&1'
   "> stack build"
   cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts 2>&1'

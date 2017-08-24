@@ -2,6 +2,7 @@ build: off
 
 platform:
 - x64
+- Win32
 
 branches:
   except:
