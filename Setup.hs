@@ -96,7 +96,7 @@ build pkg lbi xs extraRules = do
       need $ [extDir </> "bin/extension.js", extDir </> "bin/coda" <.> exe, node_modules]
           ++ extDirExtensionFiles
           ++ map (extDir </>) markdownFiles
-      command_ [Shell, Cwd extDir] ("node_modules" </> "vsce" </> "out" </> "vsce") ["package","-o","coda.vsix"]
+      command_ [Shell, Cwd extDir] ("." </> "node_modules" </> "vsce" </> "out" </> "vsce") ["package","-o","coda.vsix"]
       liftIO $ renameFile (extDir </> "coda.vsix") vsix
 
     node_modules %> \out -> do
