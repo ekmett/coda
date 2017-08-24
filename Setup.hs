@@ -52,7 +52,7 @@ build pkg lbi xs extraRules = do
   putStrLn $ "Running " ++ xs
   let ver = intercalate "." [ show x | x <- tail $ versionBranch $ pkgVersion (package pkg) ]
       vsix = buildDir lbi </> ("coda-" ++ ver) <.> "vsix"
-      extDir = buildDir lbi </> "extension"
+      extDir = buildDir lbi </> "ext"
       coda_exe = buildDir lbi </> "coda" </> "coda" <.> exe
       progress p = lookupEnv "CI" >>= \case
         Just "true" -> return ()
@@ -64,7 +64,7 @@ build pkg lbi xs extraRules = do
   markdownFiles <- getDirectoryFilesIO "" ["*.md"]
   has_cached_vscode_d_ts <- not . null <$> getDirectoryFilesIO "var" ["vscode.d.ts"]
   has_cached_package_lock <- not . null <$> getDirectoryFilesIO "var" ["package-lock.json"]
-  let node_modules = buildDir lbi </> "extension_node_modules_installed"
+  let node_modules = buildDir lbi </> "ext_node_modules_installed"
   let vscode_d_ts = extDir </> "node_modules/vscode/vscode.d.ts"
   let package_lock = extDir </> "package-lock.json"
   let extDirExtensionFiles = map (extDir </>) extensionFiles
