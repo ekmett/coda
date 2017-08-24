@@ -21,7 +21,7 @@ if ($phase -eq "install") {
   "> stack exec env"
   cmd /c '.\stack exec env 2>&1'
   "> stack build"
-  cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts'
+  cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts 2>&1'
 } elseif ($phase -eq "test_script") {
   "> stack test"
   cmd /c ' .\stack test'
