@@ -11,13 +11,22 @@ cache: "c:\\sr"
 
 clone_folder: c:\project\coda
 
-install:
+init:
   - ps: Install-Product node $env:nodejs_version
+  - node --version
+  - npm --version
+
+install:
+  - ps: bin/appveyor.ps1 install
+
+build_script:
+- ps: bin/appveyor.ps1 build_script
 
 test_script:
-- node --version
-- npm --version
-- ps: c:/project/coda/bin/appveyor.ps1
+- ps: bin/appveyor.ps1 test_script
+
+deploy_script:
+- ps: bin/appveyor.ps1 deploy_script
 
 on_success:
 - ps: python c:/project/coda/bin/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}02{build_number}.{job_number}{color_off} {color_code}03passed{color_off} {color_code}02{underline}{job_url}{color_off}"
