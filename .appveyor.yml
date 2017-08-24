@@ -13,7 +13,7 @@ environment:
 
 cache:
   - c:\sr -> stack.yaml
-  - C:\Users\appveyor\AppData\Local\Programs\stack -> stack.yaml
+#  - C:\Users\appveyor\AppData\Local\Programs\stack -> stack.yaml
 
 clone_folder: c:\project\coda
 
