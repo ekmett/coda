@@ -21,7 +21,7 @@ if ($phase -eq "install") {
   "> stack exec env"
   cmd /c '.\stack exec env 2>&1'
   "> install npm and node"
-  cmd /c '.\stack exec --no-system-ghc -- pacman -S mingw-w64-x86_64-nodejs mingw-w64-x86_64-npm 2>&1'
+  cmd /c '.\stack exec --no-system-ghc -- pacman -S mingw-w64-x86_64-nodejs 2>&1'
   "> stack build"
   cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts 2>&1'
 } elseif ($phase -eq "test_script") {
