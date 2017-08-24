@@ -13,7 +13,7 @@ environment:
   nodejs_version: "8"
 
 cache:
-  - c:\sr -> ci\stack.yaml
+  - c:\sr -> etc/stack.yaml
 
 clone_folder: c:\project\coda
 
@@ -27,16 +27,16 @@ init:
   - npm --version
   - npm config list
 
-install:       { ps: ci\appveyor.ps1 install       }
-build_script:  { ps: ci\appveyor.ps1 build_script  }
-test_script:   { ps: ci\appveyor.ps1 test_script   }
-deploy_script: { ps: ci\appveyor.ps1 deploy_script }
+install:       { ps: bin\appveyor.ps1 install       }
+build_script:  { ps: bin\appveyor.ps1 build_script  }
+test_script:   { ps: bin\appveyor.ps1 test_script   }
+deploy_script: { ps: bin\appveyor.ps1 deploy_script }
 
 on_success:
-  - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}{platform}{color_off} {color_code}03passed{color_off} {color_code}02{underline}{job_url}{color_off}"
+  - ps: python bin/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}{platform}{color_off} {color_code}03passed{color_off} {color_code}02{underline}{job_url}{color_off}"
 
 on_failure:
-  - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}{platform}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
+  - ps: python bin/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}{platform}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
   - ps: |
       if ($env:APPVEYOR_REPO_BRANCH -eq "appveyor") {
         $blockRdp = $true;

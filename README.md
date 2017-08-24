@@ -32,6 +32,13 @@ Currently, the build process is being tested on GHC 8.0, but I'm not actively do
 
 Patches that help increase portability are welcome.
 
+Documentation
+=============
+
+Once there is an actual language here documentation will be forthcoming on it.
+
+In the meantime, API documentation is available from https://ekmett.github.io/coda/
+
 Contact Information
 ===================
 
