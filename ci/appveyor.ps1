@@ -23,7 +23,6 @@ if ($phase -eq "install") {
   cmd /c '.\stack path 2>&1'
   "> stack exec env"
   cmd /c '.\stack exec env 2>&1'
-} elseif ($phase -eq "build_script") {
   $env:APPVEYOR_SAVE_CACHE_ON_ERROR = "true"
   "> stack build"
   cmd /c 'echo | .\stack --no-terminal build --test --bench --ghc-options=-rtsopts 2>&1'
