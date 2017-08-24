@@ -1,12 +1,12 @@
 'use strict';
 import * as path from 'path';
 import { workspace, Disposable, ExtensionContext } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions } from 'vscode-languageclient';
 export function activate(context: ExtensionContext) {
-  let serverModule = context.asAbsolutePath(path.join('bin','coda'));
+  let serverPath = context.asAbsolutePath(path.join('bin', process.platform == "win32" ? 'coda.exe' : "coda"));
   let serverOptions: ServerOptions = {
-    run : { module: serverModule, transport: TransportKind.ipc, options: { execArgv: ['--server'] } },
-    debug: { module: serverModule, transport: TransportKind.ipc, options: { execArgv: ['--server','--debug'] } }
+    run : { command: serverPath, args: ['--ide'] },
+    debug: { command: serverPath, args: ['--ide', '--debug'] }
   };
   let clientOptions: LanguageClientOptions = {
     documentSelector: ['coda'],
