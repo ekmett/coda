@@ -31,10 +31,10 @@ deploy_script:
   - ps: ci\appveyor.ps1 deploy_script
 
 on_success:
-  - ps: python c:/project/coda/bin/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}02{build_number}.{job_number}{color_off} {color_code}03passed{color_off} {color_code}02{underline}{job_url}{color_off}"
+  - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}02{build_number}.{job_number}{color_off} {color_code}03passed{color_off} {color_code}02{underline}{job_url}{color_off}"
 
 on_failure:
-  - ps: python c:/project/coda/bin/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}02{build_number}.{job_number}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
+  - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}02{build_number}.{job_number}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
 
 on_finish:
   - 7z a -r npm.zip c:\Users\appveyor\AppData\Roaming\npm
