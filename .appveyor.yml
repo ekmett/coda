@@ -7,8 +7,8 @@ branches:
   except:
   - gh-pages
 
-#environment:
-#  nodejs_version: "8"
+environment:
+  nodejs_version: "8"
 
 cache:
   - c:\sr -> stack.yaml
@@ -16,10 +16,10 @@ cache:
 
 clone_folder: c:\project\coda
 
-#init:
-#  - ps: Install-Product node $env:nodejs_version
-#  - node --version
-#  - npm --version
+init:
+  - ps: Install-Product node $env:nodejs_version
+  - node --version
+  - npm --version
 
 install:
   - ps: ci\appveyor.ps1 install
