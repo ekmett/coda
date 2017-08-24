@@ -7,39 +7,38 @@ platform:
 branches:
   except:
   - gh-pages
+  - travis
 
 environment:
   nodejs_version: "8"
 
 cache:
   - c:\sr -> stack.yaml
-#  - C:\Users\appveyor\AppData\Local\Programs\stack -> stack.yaml
 
 clone_folder: c:\project\coda
 
 init:
-  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  - ps: |
+    if ($env:branch -eq "appveyor") {
+      iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    }
   - ps: Install-Product node $env:nodejs_version $env:platform
   - node --version
   - npm --version
   - npm config list
-  - npm config ls -l
 
-install:
-  - ps: ci\appveyor.ps1 install
-
-build_script:
-  - ps: ci\appveyor.ps1 build_script
-
-test_script:
-  - ps: ci\appveyor.ps1 test_script
-
-deploy_script:
-  - ps: ci\appveyor.ps1 deploy_script
+install:       { ps: ci\appveyor.ps1 install       }
+build_script:  { ps: ci\appveyor.ps1 build_script  }
+test_script:   { ps: ci\appveyor.ps1 test_script   }
+deploy_script: { ps: ci\appveyor.ps1 deploy_script }
 
 on_success:
   - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}{platform}{color_off} {color_code}03passed{color_off} {color_code}02{underline}{job_url}{color_off}"
 
 on_failure:
   - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}{platform}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  - ps: |
+    if ($env:branch -eq "appveyor") {
+      $blockRdp = $true;
+      iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    }
