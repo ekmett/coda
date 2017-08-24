@@ -1,5 +1,8 @@
-{-# language LambdaCase, MultiWayIf #-}
+{-# language CPP, LambdaCase #-}
 {-# options_ghc -Wall -threaded -rtsopts -with-rtsopts=-I0 -with-rtsopts=-qg -with-rtsopts=-qg #-}
+#ifdef HLINT
+#define MIN_VERSION_Cabal(x,y,z) 1
+#endif
 
 module Main where
 
@@ -70,7 +73,7 @@ main = defaultMainWithHooks simpleUserHooks
 
 build :: PackageDescription -> LocalBuildInfo -> Flag Cabal.Verbosity -> String -> Rules () -> IO ()
 build pkg lbi verb xs extraRules = do
-  let ver = intercalate "." [ show x | x <- tail $ versionBranch $ pkgVersion (package pkg) ]
+  let ver = intercalate "." [ show x | x <- tail $ versionNumbers $ pkgVersion (package pkg) ]
       vsix = buildDir lbi </> ("coda-" ++ ver) <.> "vsix"
       extDir = buildDir lbi </> "ext"
       coda_exe = buildDir lbi </> "coda" </> "coda" <.> exe
@@ -173,3 +176,7 @@ build pkg lbi verb xs extraRules = do
     for_ extensionFiles $ \file -> extDir </> file %> \out -> copyFile' ("ext" </> file) out
     for_ markdownFiles $ \file -> extDir </> file %> \out -> copyFile' file out
 
+#if !MIN_VERSION_Cabal(2,0,0)
+versionNumbers :: Version -> [Int]
+versionNumbers = versionBranch
+#endif
