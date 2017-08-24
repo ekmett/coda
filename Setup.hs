@@ -3,7 +3,7 @@
 
 module Main where
 
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import Data.Foldable (for_)
 import Data.List (intercalate)
 import Development.Shake
@@ -47,9 +47,9 @@ main = defaultMainWithHooks $ simpleUserHooks
 
 build :: PackageDescription -> LocalBuildInfo -> String -> Rules () -> IO ()
 build pkg lbi xs extraRules = do
-  putStrLn $ "Building " ++ xs
+  putStrLn $ "Running " ++ xs
   let ver = intercalate "." [ show x | x <- tail $ versionBranch $ pkgVersion (package pkg) ]
-      vsix = buildDir lbi </> ("coda-" ++ ver ++ ".vsix")
+      vsix = buildDir lbi </> ("coda-" ++ ver) <.> "vsix"
       extDir = buildDir lbi </> "extension"
       coda_exe = buildDir lbi </> "coda" </> "coda" <.> exe
       progress p = lookupEnv "CI" >>= \case
@@ -60,12 +60,13 @@ build pkg lbi xs extraRules = do
 
   absolutePackage <- makeAbsolute vsix
   absoluteVscePath <- makeAbsolute $ extDir </> "node_modules/vsce/out"
-  extensionFiles <- getDirectoryFilesIO "ext" ["//*"]
+  extensionFiles <- filter (/= "package-lock.json") <$> getDirectoryFilesIO "ext" ["//*"]
   markdownFiles <- getDirectoryFilesIO "" ["*.md"]
   has_cached_vscode_d_ts <- not . null <$> getDirectoryFilesIO "var" ["vscode.d.ts"]
-  has_package_lock_json <- not . null <$> getDirectoryFilesIO "ext" ["package-lock.json"]
+  has_cached_package_lock <- not . null <$> getDirectoryFilesIO "var" ["package-lock.json"]
   let node_modules = buildDir lbi </> "extension_node_modules_installed"
   let vscode_d_ts = extDir </> "node_modules/vscode/vscode.d.ts"
+  let package_lock = extDir </> "package-lock.json"
   let extDirExtensionFiles = map (extDir </>) extensionFiles
   let npm_exe = "npm" <.> exe
 
@@ -100,24 +101,30 @@ build pkg lbi xs extraRules = do
 
     node_modules %> \out -> do
       need extDirExtensionFiles
+      when has_cached_package_lock $ do
+        putLoud "Using cached package-lock.json"
+        liftIO $ copyFile "var/package-lock.json" package_lock -- untracked
       () <- withResource npm 1 $ cmd (Cwd extDir) npm_exe "install" "--ignore-scripts"
-      -- package-lock.json really belongs in var
-      liftIO $ unless has_package_lock_json $ copyFile (extDir </> "package-lock.json") "ext/package-lock.json" -- untracked
+      unless has_cached_package_lock $ do
+        putLoud "Caching package-lock.json"
+        liftIO $ do
+          createDirectoryIfMissing False "var"
+          copyFile package_lock "var/package-lock.json" -- untracked
       writeFile' out "" -- touch an indicator file
 
     -- Download an appropriate vscode.d.ts from github
-    vscode_d_ts %> \_ -> if
-      | has_cached_vscode_d_ts -> do
-        need [node_modules]
-        liftIO $ putStrLn "Using cached vscode.d.ts"
+    vscode_d_ts %> \out -> if has_cached_vscode_d_ts
+      then do
+        need [node_modules] -- need a place to put it
+        putLoud "Using cached vscode.d.ts"
         copyFile' "var/vscode.d.ts" vscode_d_ts
-      | otherwise -> do
+      else do
         need [node_modules]
-        liftIO $ putStrLn "Downloading vscode.d.ts"
+        putLoud "Downloading vscode.d.ts"
         () <- withResource npm 1 $ cmd (Cwd extDir) npm_exe "run-script" "update-vscode"
         liftIO $ do
           createDirectoryIfMissing False "var"
-          copyFile vscode_d_ts "var/vscode.d.ts" -- untracked
+          copyFile out "var/vscode.d.ts" -- untracked
 
     extDir </> "bin/coda" <.> exe %> \_ -> do
       need ["cabal-build"]
