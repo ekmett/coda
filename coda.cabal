@@ -22,12 +22,12 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
-flag test-hlint
+flag test-doctests
   default: True
   manual: True
 
-flag test-doctests
-  default: True
+flag test-hlint
+  default: False
   manual: True
 
 flag test-spec
