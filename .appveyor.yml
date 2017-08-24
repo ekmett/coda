@@ -42,4 +42,4 @@ on_success:
 
 on_failure:
   - ps: python ci/irc-notify.py "{color_code}13{project_name}{color_off}/{color_code}06{branch}{color_off} {color_code}14{short_commit}{color_off} {color_code}02{build_number}.{job_number}{color_off} {color_code}04failed{color_off} {color_code}02{underline}{job_url}{color_off}"
-  - ps: $blockRdp = $true;
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
