@@ -1,5 +1,8 @@
 build: off
 
+platform:
+- x64
+
 branches:
   except:
   - gh-pages
