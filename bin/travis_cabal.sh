@@ -24,7 +24,7 @@ coda_install() {
   cabal --version
   echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
   travis_retry cabal update
-  "sed -i  's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config"
+  sed -i  's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config
   time cabal install --enable-tests --enable-benchmarks --only-dependencies
   set +x
 }
