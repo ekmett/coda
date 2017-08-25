@@ -1,6 +1,20 @@
+{-# language LambdaCase #-}
 {-# language BangPatterns #-}
 {-# language DeriveTraversable #-}
 {-# language OverloadedStrings #-}
+
+-----------------------------------------------------------------------------
+-- |
+-- Copyright   :  (C) 2017 Edward Kmett
+-- License     :  BSD2 (see the file LICENSE.md)
+-- Maintainer  :  Edward Kmett <ekmett@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- JSON-RPC 2.0 message parsing
+--
+-----------------------------------------------------------------------------
+
 module Coda.Rpc.Parser 
   ( Parser(..)
   , ParseResult(..)
@@ -19,12 +33,17 @@ import Data.Int (Int64)
 import Data.Word (Word8)
 import qualified Data.ByteString.Lazy as Lazy
 
+--------------------------------------------------------------------------------
+-- * Lazy ByteString Parsing
+--------------------------------------------------------------------------------
+
+-- | The result of parsing
 data ParseResult a
   = Err 
   | OK !a !Lazy.ByteString
   deriving (Show, Functor, Foldable, Traversable)
 
--- this parser consumes lazy bytestrings
+-- | This parser consumes lazy bytestrings
 data Parser a = Parser { runParser :: Lazy.ByteString -> ParseResult a }
   deriving Functor
 
@@ -75,10 +94,10 @@ c2w = fromIntegral . fromEnum
 w2c :: Word8 -> Char
 w2c = toEnum . fromIntegral
 
--- | Parse one byte
-byte :: Parser Word8
-byte = Parser $ \s -> case Lazy.uncons s of
-  Just (w8, s') -> OK w8 s'
+-- | Parse one byte as an ASCII character
+ascii :: Parser Char
+ascii = Parser $ \s -> case Lazy.uncons s of
+  Just (w8, s') -> OK (w2c w8) s'
   Nothing -> Err
 
 -- | Parse exactly the string specified
@@ -87,16 +106,15 @@ string p = Parser $ \s -> case Lazy.stripPrefix p s of -- 0.10.8
   Nothing -> Err
   Just s' -> OK () s'
 
-cr :: Word8
-cr = c2w '\r'
-
 -- | Parse to the next carriage return
 line :: Parser Lazy.ByteString
-line = Parser $ \s -> case Lazy.break (== cr) s of
+line = Parser $ \s -> case Lazy.break (== c2w '\r') s of
     (p, s') -> OK p s'
   
-
 -- | Parse an integer
+--
+-- >>> runParser int64 "123what"
+-- OK 123 "what"
 int64 :: Parser Int64
 int64 = Parser $ \s -> case Lazy.uncons s of
     Just (w8, s') 
@@ -119,7 +137,7 @@ crlf = string "\r\n"
 content_header :: Parser Int64
 content_header = do
   string "Content-"
-  byte >>= \w -> case w2c w of
+  ascii >>= \case
     'L' -> string "ength: " *> int64 <* (crlf *> rest)
     'T' -> string "ype: " *> line *> crlf *> content_header
     _ -> empty
@@ -133,15 +151,23 @@ bytes n = Parser $ \s -> case Lazy.splitAt n s of
   (p, s') | Lazy.length p == n -> OK p s'
           | otherwise -> Err
 
+--------------------------------------------------------------------------------
+-- * RPC Parsing
+--------------------------------------------------------------------------------
+
 -- | This parses a JSON-RPC 2.0 message
 rpc :: Parser Lazy.ByteString
 rpc = content_header >>= bytes
 
 -- | This decodes a JSON-RPC 2.0 message lazily
+--
+-- If the outer parser fails, then the message stream is unrecoverable. If decoding fails, we simply failed to read this message.
 decodeRpc :: FromJSON a => Parser (Maybe a)
 decodeRpc = decode <$> (content_header >>= bytes)
 
 -- | This decodes a JSON-RPC 2.0 message eager
+--
+-- If the outer parser fails, then the message stream is unrecoverable. If decoding fails, we simply failed to read this message.
 decodeRpc' :: FromJSON a => Parser (Maybe a)
 decodeRpc' = decode' <$> (content_header >>= bytes)
 
