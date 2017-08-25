@@ -25,13 +25,13 @@ coda_install() {
   echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
   travis_retry cabal update
   sed -i  's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config
-  time cabal install --enable-tests --enable-library-coverage --only-dependencies
+  time cabal install --enable-tests --only-dependencies
   set +x
 }
 
 coda_script() {
   set -x
-  time cabal configure --enable-tests --enable-library-coverage
+  time cabal configure --enable-tests
   time cabal build
   time cabal test --show-details=always
   time cabal sdist
@@ -41,8 +41,8 @@ coda_script() {
 
 coda_after_script() {
   set -x
-  cabal install hpc-coveralls
-  hpc-coveralls coda-doctests coda-spec --exclude-dir=test --display-report
+  # cabal install hpc-coveralls
+  # hpc-coveralls coda-doctests coda-spec --exclude-dir=test --display-report
   set +x
 }
 
