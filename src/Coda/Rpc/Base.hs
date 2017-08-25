@@ -49,14 +49,11 @@ import Data.Aeson.Types
 import Data.Bifunctor
 import Data.Bifoldable
 import Data.Bitraversable
-import Data.ByteString.Builder
-import qualified Data.ByteString.Lazy as Lazy
 import Data.Data
 import Data.Ix
 import Data.Monoid ((<>))
 import Data.String
 import Data.Text
-import Data.Void
 import GHC.Generics
 
 --------------------------------------------------------------------------------
@@ -65,30 +62,6 @@ import GHC.Generics
 
 jsonRpcVersion :: Text
 jsonRpcVersion = fromString "2.0"
-
--- format a valid JsonRpc message
--- send :: ToJSON a => a -> Builder
--- send a = string7 "Content-Length: " <> intDec (Lazy.length content) <> string7 "\r\n\r\n" <> content where
---   content = toLazyByteString (fromEncoding (toEncoding a))
-
--- recieve a message, and give back any error messages we should reply with due to parse errors
--- this should be an interatee like thing
--- recv :: FromJSON a => Lazy.ByteString -> Either [Value] (a, Lazy.ByteString)
--- recv = parseHeaders
-
-data JsonRpcHeader = JsonRpcContentType String
-data JsonRpcHeaders = JsonRpcHeaders { jsonRpcContentLength :: !Int, jsonRpcHeaders :: [JsonRpcHeader]
-
-parseHeaders :: StateT Lazy.ByteString (Either [Response Void Void]) Int
-parseHeaders = StateT $ \s -> case stripPrefix "Content-" s of
-  Nothing -> Left [Response Nothing Nothing (Just (ReponseError ParseError "Unknown header" Nothing))]
-  Just s' -> case stripPrefix "Length: " s' of
-    Just s'' -> case split '\r' s of 
-    Just s'' ->  -- parse an integer
-    Nothing -> case stripPrefix "Type: " s' of
-
-parseHeaders :: Lazy.ByteString -> Either [Response Void Void] (Int, Lazy.ByteString)
-parseHeaders 
 
 --------------------------------------------------------------------------------
 -- Utilities

@@ -78,7 +78,7 @@ w2c = toEnum . fromIntegral
 -- | Parse one byte
 byte :: Parser Word8
 byte = Parser $ \s -> case Lazy.uncons s of
-  Just (w8, s) -> OK w8 s
+  Just (w8, s') -> OK w8 s'
   Nothing -> Err
 
 -- | Parse exactly the string specified
@@ -101,7 +101,7 @@ int64 :: Parser Int64
 int64 = Parser $ \s -> case Lazy.uncons s of
     Just (w8, s') 
       | w8 >= 48 && w8 <= 57 -> case acc (fromIntegral w8 - 48) s' of -- require at least one digit
-        (i, s') -> OK i s'
+        (i, s'') -> OK i s''
     _ -> Err
   where
   acc !i s = case Lazy.uncons s of
