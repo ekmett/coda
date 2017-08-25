@@ -6,7 +6,6 @@
 {-# language DeriveTraversable #-}
 {-# language OverloadedStrings #-}
 {-# language DeriveDataTypeable #-}
-{-# language GeneralizedNewtypeDeriving #-}
 
 -----------------------------------------------------------------------------
 -- |

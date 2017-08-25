@@ -44,7 +44,7 @@ data ParseResult a
   deriving (Show, Functor, Foldable, Traversable)
 
 -- | This parser consumes lazy bytestrings
-data Parser a = Parser { runParser :: Lazy.ByteString -> ParseResult a }
+newtype Parser a = Parser { runParser :: Lazy.ByteString -> ParseResult a }
   deriving Functor
 
 instance Applicative Parser where
@@ -76,7 +76,7 @@ instance Monad Parser where
   fail _ = empty
 
 instance Alternative Parser where
-  empty = Parser $ \_ -> Err
+  empty = Parser $ const Err
   Parser m <|> Parser n = Parser $ \s -> case m s of 
     Err -> n s
     ok -> ok
@@ -134,12 +134,12 @@ crlf = string "\r\n"
 -- | Parse a JSON-RPC 2.0 content header
 --
 -- TODO: validate Content-Type
-content_header :: Parser Int64
-content_header = do
+contentHeader :: Parser Int64
+contentHeader = do
   string "Content-"
   ascii >>= \case
     'L' -> string "ength: " *> int64 <* (crlf *> rest)
-    'T' -> string "ype: " *> line *> crlf *> content_header
+    'T' -> string "ype: " *> line *> crlf *> contentHeader
     _ -> empty
  where
    rest = crlf -- end of header
@@ -159,7 +159,7 @@ bytes n = Parser $ \s -> case Lazy.splitAt n s of
 --
 -- This stops before we get to actually decoding the JSON message.
 rpc :: Parser Lazy.ByteString
-rpc = content_header >>= bytes
+rpc = contentHeader >>= bytes
 
 -- | This decodes a JSON-RPC 2.0 message lazily
 --
