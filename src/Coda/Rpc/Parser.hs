@@ -156,6 +156,8 @@ bytes n = Parser $ \s -> case Lazy.splitAt n s of
 --------------------------------------------------------------------------------
 
 -- | This parses a JSON-RPC 2.0 message
+--
+-- This stops before we get to actually decoding the JSON message.
 rpc :: Parser Lazy.ByteString
 rpc = content_header >>= bytes
 
@@ -163,18 +165,18 @@ rpc = content_header >>= bytes
 --
 -- If the outer parser fails, then the message stream is unrecoverable. If decoding fails, we simply failed to read this message.
 decodeRpc :: FromJSON a => Parser (Maybe a)
-decodeRpc = decode <$> (content_header >>= bytes)
+decodeRpc = decode <$> rpc
 
 -- | This decodes a JSON-RPC 2.0 message eager
 --
 -- If the outer parser fails, then the message stream is unrecoverable. If decoding fails, we simply failed to read this message.
 decodeRpc' :: FromJSON a => Parser (Maybe a)
-decodeRpc' = decode' <$> (content_header >>= bytes)
+decodeRpc' = decode' <$> rpc
 
 -- | This decodes a JSON-RPC 2.0 message lazily with an error message on failure
 eitherDecodeRpc :: FromJSON a => Parser (Either String a)
-eitherDecodeRpc = eitherDecode <$> (content_header >>= bytes)
+eitherDecodeRpc = eitherDecode <$> rpc
 
 -- | This decodes a JSON-RPC 2.0 message eager with an error message on failure
 eitherDecodeRpc' :: FromJSON a => Parser (Either String a)
-eitherDecodeRpc' = eitherDecode' <$> (content_header >>= bytes)
+eitherDecodeRpc' = eitherDecode' <$> rpc
