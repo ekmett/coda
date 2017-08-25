@@ -11,7 +11,8 @@ homepage:      http://github.com/ekmett/coda/
 bug-reports:   http://github.com/ekmett/coda/issues
 copyright:     Copyright (C) 2017 Edward A. Kmett
 synopsis:      Coda
-description:   Coda
+description:
+  This package provides Coda, an experimental Visual Studio Code langauge server.
 build-type:    Custom
 extra-source-files:
   .travis.yml
@@ -21,6 +22,10 @@ extra-source-files:
 source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
+
+flag use-path
+  default: False
+  manual: True
 
 flag test-doctests
   default: True
@@ -48,11 +53,15 @@ custom-setup
 library
   default-language: Haskell2010
   build-depends:
+    aeson               >= 1.2 && < 1.3,
     base                >= 4   && < 5,
     base-orphans        >= 0.5 && < 1,
+    bifunctors          >= 5   && < 6,
+    text                >= 1.2 && < 1.3,
     transformers        >= 0.5 && < 0.6
   exposed-modules:
     Coda
+    Coda.JsonRpc
     Coda.Compiler
   ghc-options: -Wall
   hs-source-dirs: src
