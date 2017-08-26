@@ -64,6 +64,7 @@ library
     bytestring           >= 0.10.8  && < 0.11,
     bifunctors           >= 5       && < 6,
     Cabal,
+    comonad              >= 5       && < 6,
     containers           >= 0.5     && < 0.6,
     contravariant        >= 1.4     && < 2,
     exceptions           >= 0.8.2.1 && < 0.9,

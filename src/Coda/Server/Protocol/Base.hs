@@ -21,7 +21,9 @@
 -----------------------------------------------------------------------------
 
 module Coda.Server.Protocol.Base
-  ( Id(..)
+  (
+    -- * JSON-RPC 2.0
+    Id(..)
   , Request(Request, Notification, requestId, requestMethod, requestParams)
   , Response(..)
   , ResponseError(..)
@@ -30,7 +32,7 @@ module Coda.Server.Protocol.Base
     , ParseError
     , InvalidRequest
     , MethodNotFound
-    , InvalidParams 
+    , InvalidParams
     , InternalError
     , ServerErrorStart
     , ServerErrorEnd
@@ -42,10 +44,10 @@ module Coda.Server.Protocol.Base
 
 import Coda.Util.Aeson
 import Control.Applicative
+import Control.Comonad
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Encoding
-import Data.Aeson.Types
 import Data.Bifunctor
 import Data.Bifoldable
 import Data.Bitraversable
@@ -68,7 +70,7 @@ jsonRpcVersion = fromString "2.0"
 --------------------------------------------------------------------------------
 
 -- | A JSON-RPC message identifier
-data Id 
+data Id
   = IntId !Int
   | TextId !Text
   deriving (Eq, Ord, Show, Data, Generic)
@@ -87,7 +89,7 @@ instance IsString Id where
   fromString = TextId . fromString
 
 --------------------------------------------------------------------------------
--- Request
+-- ** Request
 --------------------------------------------------------------------------------
 
 -- |
@@ -95,89 +97,76 @@ instance IsString Id where
 data Request a = Request
   { requestId     :: !(Maybe Id)
   , requestMethod :: !Text
-  , requestParams :: !(Maybe a)
+  , requestParams :: !a
   } deriving (Eq, Ord, Show, Data, Generic, Functor, Foldable, Traversable)
 
-instance FromJSON1 Request where
-  liftParseJSON pa _ = withObject "Request" $ \v -> do
+instance FromJSON a => FromJSON (Request a) where
+  parseJSON = withObject "Request" $ \v -> do
     ver <- v .: "jsonrpc" -- check for jsonprc validity
     guard (ver == jsonRpcVersion)
     Request <$> v .:? "id"
             <*> v .: "method"
-            <*> explicitParseFieldMaybe pa v "params"
-
-instance ToJSON1 Request where
-  liftToJSON sa _ (Request i m a)     = object $ 
-    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ?= fmap sa a
-  liftToEncoding sa _ (Request i m a) = pairs $
-    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ?= fmap sa a
-
-instance FromJSON a => FromJSON (Request a) where
-  parseJSON = liftParseJSON parseJSON parseJSONList
+            <*> parseMissingAsNull v "params"
 
 instance ToJSON a => ToJSON (Request a) where
-  toJSON = liftToJSON toJSON toJSONList
-  toEncoding = liftToEncoding toEncoding toEncodingList
+  toJSON (Request i m a)     = object $
+    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ??~ a
+  toEncoding (Request i m a) = pairs $
+    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ??~ a
 
-pattern Notification :: Text -> Maybe a -> Request a
+instance Comonad Request where
+  extract (Request _ _ p) = p
+  extend f w = w { requestParams = f w }
+
+pattern Notification :: Text -> a -> Request a
 pattern Notification method params = Request Nothing method params
 
 --------------------------------------------------------------------------------
--- Response
+-- ** Response
 --------------------------------------------------------------------------------
 
 -- |
 -- http://www.jsonrpc.org/specification#response_object
 data Response e a = Response
   { responseId     :: !(Maybe Id)
-  , responseResult :: !(Maybe a)
+  , responseResult :: !a
   , responseError  :: !(Maybe (ResponseError e))
   } deriving (Eq, Ord, Show, Data, Generic, Functor, Foldable, Traversable)
 
-instance ToJSON2 Response where
-  liftToJSON2 se sle sa _ (Response i r e) = object $ 
+instance (ToJSON e, ToJSON a) => ToJSON (Response e a) where
+  toJSON (Response i r e) = object $
        "jsonrpc" !~ jsonRpcVersion
     <> "id"      ?~ i
-    <> "result"  ?= fmap sa r
-    <> "error"   ?= fmap (liftToJSON se sle) e
+    <> "result"  ??~ r
+    <> "error"   ?= fmap toJSON e
 
-  liftToEncoding2 se sle sa _ (Response i r e) = pairs $
+  toEncoding (Response i r e) = pairs $
        "jsonrpc" !~ jsonRpcVersion
     <> "id"      ?~ i
-    <> "result"  ?= fmap sa r
-    <> "error"   ?= fmap (liftToEncoding se sle) e
+    <> "result"  ??~ r
+    <> "error"   ?= fmap toEncoding e
 
-instance FromJSON2 Response where
-  liftParseJSON2 pe ple pa _ = withObject "Response" $ \v -> do
+instance (FromJSON e, FromJSON a) => FromJSON (Response e a) where
+  parseJSON = withObject "Response" $ \v -> do
     ver <- v .: "jsonrpc"
     guard (ver == jsonRpcVersion)
     Response
       <$> v .:? "id"
-      <*> explicitParseFieldMaybe pa v "result"
-      <*> explicitParseFieldMaybe (liftParseJSON pe ple) v "error"
+      <*> parseMissingAsNull v "result"
+      <*> v .:? "error"
 
-instance ToJSON e => ToJSON1 (Response e) where
-  liftToJSON = liftToJSON2 toJSON toJSONList
-  liftToEncoding = liftToEncoding2 toEncoding toEncodingList
-
-instance FromJSON e => FromJSON1 (Response e) where
-  liftParseJSON = liftParseJSON2 parseJSON parseJSONList
-
-instance (ToJSON e, ToJSON a) => ToJSON (Response e a) where
-  toJSON = toJSON2
-  toEncoding = toEncoding2
-
-instance (FromJSON e, FromJSON a) => FromJSON (Response e a) where
-  parseJSON = parseJSON2
+instance Comonad (Response e) where
+  extract = responseResult
+  extend f w = w { responseResult = f w }
 
 instance Bifunctor Response where
-  bimap f g (Response i r e) = Response i (fmap g r) (fmap (fmap f) e)
+  bimap f g (Response i r e) = Response i (g r) (fmap (fmap f) e)
 
 instance Bifoldable Response where
-  bifoldMap f g (Response _ r e) = foldMap g r <> foldMap (foldMap f) e
+  bifoldMap f g (Response _ r e) = g r <> foldMap (foldMap f) e
 
 instance Bitraversable Response where
-  bitraverse f g (Response i r e) = Response i <$> traverse g r <*> traverse (traverse f) e
+  bitraverse f g (Response i r e) = Response i <$> g r <*> traverse (traverse f) e
 
 --------------------------------------------------------------------------------
 -- ErrorCode
@@ -188,7 +177,7 @@ newtype ErrorCode = ErrorCode Int
   deriving (Show, Eq, Ord, Read, Bounded, Ix, Data, Generic)
 
 instance FromJSON ErrorCode where
-  parseJSON v = ErrorCode <$> parseJSON v 
+  parseJSON v = ErrorCode <$> parseJSON v
 
 instance ToJSON ErrorCode where
   toJSON (ErrorCode e) = toJSON e
@@ -209,10 +198,10 @@ pattern InvalidParams = ErrorCode (-32602)
 pattern InternalError :: ErrorCode
 pattern InternalError = ErrorCode (-32603)
 
-pattern ServerErrorStart :: ErrorCode 
+pattern ServerErrorStart :: ErrorCode
 pattern ServerErrorStart = ErrorCode (-32099)
 
-pattern ServerErrorEnd :: ErrorCode 
+pattern ServerErrorEnd :: ErrorCode
 pattern ServerErrorEnd = ErrorCode (-32000)
 
 pattern ServerNotInitialized :: ErrorCode
@@ -224,64 +213,30 @@ pattern UnknownErrorCode = ErrorCode (-32001);
 pattern RequestCancelled :: ErrorCode
 pattern RequestCancelled = ErrorCode (-32800);
 
-
 --------------------------------------------------------------------------------
 -- ResponseError
 --------------------------------------------------------------------------------
 
--- | 
+-- |
 -- http://www.jsonrpc.org/specification#error_object
 data ResponseError a = ResponseError
   { responseErrorCode    :: !ErrorCode
   , responseErrorMessage :: !Text
-  , responseErrorData    :: !(Maybe a)
+  , responseErrorData    :: !a
   } deriving (Eq, Ord, Show, Data, Generic, Functor, Foldable, Traversable)
 
-instance FromJSON1 ResponseError where
-  liftParseJSON pa _ = withObject "ResponseError" $ \v -> ResponseError
+instance FromJSON a => FromJSON (ResponseError a) where
+  parseJSON = withObject "ResponseError" $ \v -> ResponseError
     <$> v .: "code"
     <*> v .: "message"
-    <*> explicitParseFieldMaybe pa v "data"
-
-instance ToJSON1 ResponseError where
-  liftToJSON sa _ (ResponseError c m d) = object $
-    "code" !~ c <> "message" !~ m <> "data" ?= fmap sa d
-  liftToEncoding sa _ (ResponseError c m d) = pairs $
-    "code" !~ c <> "message" !~ m <> "data" ?= fmap sa d
-
-instance FromJSON a => FromJSON (ResponseError a) where
-  parseJSON = liftParseJSON parseJSON parseJSONList
+    <*> parseMissingAsNull v "data"
 
 instance ToJSON a => ToJSON (ResponseError a) where
-  toJSON = liftToJSON toJSON toJSONList
-  toEncoding = liftToEncoding toEncoding toEncodingList
+  toJSON (ResponseError c m d) = object $
+    "code" !~ c <> "message" !~ m <> "data" ??~ d
+  toEncoding (ResponseError c m d) = pairs $
+    "code" !~ c <> "message" !~ m <> "data" ??~ d
 
-{-
-
---------------------------------------------------------------------------------
--- Position
---------------------------------------------------------------------------------
-
-data Position = Position
-  { positionLine :: !Int
-  , positionCharacter :: !Int
-  } deriving (Eq, Ord, Show, Data, Generic)
-
-data Range = Range
-  { rangeStart :: !Int
-  , rangeEnd :: !Int
-  } deriving (Eq, Ord, Show, Data, Generic)
-
-data Location = Location
-  { uri :: !DocumentUri
-  , range :: !Range
-  } deriving (Eq, Ord, Show, Data, Generic)
-
---------------------------------------------------------------------------------
--- DocumentUri
---------------------------------------------------------------------------------
-
-type DocumentUri = Text
-
--}
-
+instance Comonad ResponseError where
+  extract = responseErrorData
+  extend f w = w { responseErrorData = f w }

@@ -36,12 +36,12 @@ import GHC.Generics
 
 -- | Language Server Protocol: cancellation notification
 pattern CancelRequest :: Id -> Request Value
-pattern CancelRequest identifier <- Request Nothing "$/cancelRequest" (Just (fromJSON -> Success identifier)) where
-  CancelRequest identifier = Request Nothing "$/cancelRequest" (Just (toJSON (identifier)))
+pattern CancelRequest identifier <- Request Nothing "$/cancelRequest" (fromJSON -> Success identifier) where
+  CancelRequest identifier = Request Nothing "$/cancelRequest" (toJSON (identifier))
 
 _CancelRequest :: Prism' (Request Value) Id
-_CancelRequest = prism' (Request Nothing "$/cancelRequest" . Just . toJSON) $ \case
-  Request Nothing "$/cancelRequest" (Just (fromJSON -> Success a)) -> Just a
+_CancelRequest = prism' (Request Nothing "$/cancelRequest" . toJSON) $ \case
+  Request Nothing "$/cancelRequest" (fromJSON -> Success a) -> Just a
   _ -> Nothing
   
 type DocumentUri = Text

@@ -19,7 +19,7 @@ import Coda.Server.Protocol.Parser
 import Coda.Server.Protocol.Builder
 import Coda.Server.Protocol.Base
 import Coda.Util.Instances ()
-import Data.Aeson (ToJSON, FromJSON)
+import Data.Aeson (ToJSON, FromJSON, Value(..))
 import Data.ByteString.Builder
 import Data.ByteString.Lazy as Lazy
 import Data.Tagged
@@ -56,7 +56,7 @@ golden name content
 
 protocolTests :: TestTree
 protocolTests = testGroup "protocol"
-  [ golden "request"      (Request (Just (IntId 1)) "request" Nothing :: Request Void)
-  , golden "notification" (Notification "notification" (Just [1,2]) :: Request [Int])
-  , golden "response"     (Response (Just "id") (Just 2) Nothing :: Response Void Int)
+  [ golden "request"      (Request (Just (IntId 1)) "request" Null :: Request Value)
+  , golden "notification" (Notification "notification" [1,2] :: Request [Int])
+  , golden "response"     (Response (Just "id") 2 Nothing :: Response (Maybe Void) Int)
   ]

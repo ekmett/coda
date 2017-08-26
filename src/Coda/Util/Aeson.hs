@@ -18,18 +18,27 @@ module Coda.Util.Aeson
   ( FromHook(..)
   , ToHook(..)
   , (?~), (?=)
+  , (??~)
+  , parseMissingAsNull
   ) where
 
 import Coda.Util.Instances () -- Void instances
 import Data.Aeson
+import Data.Aeson.Internal
 import Data.Aeson.Encoding.Internal
+import Data.Aeson.Types
+import Data.HashMap.Strict as HashMap
+import Data.Maybe (fromMaybe)
 import Data.Text
 
 --------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
 
-infixr 8 ?=, !=, !~, ?~
+parseMissingAsNull :: FromJSON a => Object -> Text -> Parser a
+parseMissingAsNull m k = parseJSON (fromMaybe Null (HashMap.lookup k m)) <?> Key k
+
+infixr 8 ?=, !=, !~, ?~, ??~
 
 class Monoid (Ob v) => FromHook v where
   type Ob v :: *
@@ -59,4 +68,9 @@ _ ?= Nothing = mempty
 (?~) :: (ToJSON v, ToHook t) => Text -> Maybe v -> t
 t ?~ Just a  = t !~ a
 _ ?~ Nothing = mempty
+
+(??~) :: (ToJSON a, ToHook r) => Text -> a -> r
+t ??~ a = case toJSON a of
+  Null -> mempty
+  x    -> t !~ x
 
