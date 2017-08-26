@@ -2,6 +2,7 @@
 dist/
 dist-newstyle/
 .hsenv/
+.coda_history
 docs
 wiki
 TAGS
