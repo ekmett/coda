@@ -5,8 +5,8 @@ import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions } 
 export function activate(context: ExtensionContext) {
   let serverPath = context.asAbsolutePath(path.join('bin', process.platform === 'win32' ? 'coda.exe' : 'coda'));
   let serverOptions: ServerOptions = {
-    run : { command: serverPath, args: ['--ide'] },
-    debug: { command: serverPath, args: ['--ide', '--debug'] }
+    run : { command: serverPath, args: ['server'] },
+    debug: { command: serverPath, args: ['server', '--debug'] }
   };
   let clientOptions: LanguageClientOptions = {
     documentSelector: ['coda'],
