@@ -15,7 +15,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Rpc.Parser 
+module Coda.Protocol.Parser 
   ( Parser(..)
   , ParseResult(..)
   , rpc

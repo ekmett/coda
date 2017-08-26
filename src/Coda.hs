@@ -1,5 +1,11 @@
-module Coda where
+module Coda
+  ( module Coda.Protocol.Base
+  , module Coda.Protocol.Builder
+  , module Coda.Protocol.Parser
+  , module Coda.Protocol.Sink
+  ) where
 
-import Coda.Rpc.Base
-import Coda.Rpc.Builder
-import Coda.Rpc.Parser
+import Coda.Protocol.Base
+import Coda.Protocol.Builder
+import Coda.Protocol.Parser
+import Coda.Protocol.Sink

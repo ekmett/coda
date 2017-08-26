@@ -20,9 +20,9 @@
 -- http://www.jsonrpc.org/specification
 -----------------------------------------------------------------------------
 
-module Coda.Rpc.Base
+module Coda.Protocol.Base
   ( Id(..)
-  , Request(..)
+  , Request(Request, Notification, requestId, requestMethod, requestParams)
   , Response(..)
   , ResponseError(..)
   , ErrorCode
@@ -66,7 +66,7 @@ jsonRpcVersion = fromString "2.0"
 -- Utilities
 --------------------------------------------------------------------------------
 
-infixr 8 ?=, !=, !~
+infixr 8 ?=, !=, !~, ?~
 
 class Monoid (Ob v) => From v where
   type Ob v :: *
@@ -92,6 +92,10 @@ instance x ~ (Text, Value) => To [x] where
 (?=) :: From v => Text -> Maybe v -> Ob v
 t ?= Just a  = t != a
 _ ?= Nothing = mempty
+
+(?~) :: (ToJSON v, To t) => Text -> Maybe v -> t
+t ?~ Just a  = t !~ a
+_ ?~ Nothing = mempty
 
 --------------------------------------------------------------------------------
 -- Id
@@ -122,7 +126,7 @@ instance IsString Id where
 -- |
 -- http://www.jsonrpc.org/specification#request_object
 data Request a = Request
-  { requestId     :: !Id
+  { requestId     :: !(Maybe Id)
   , requestMethod :: !Text
   , requestParams :: !(Maybe a)
   } deriving (Eq, Ord, Show, Data, Generic, Functor, Foldable, Traversable)
@@ -137,9 +141,9 @@ instance FromJSON1 Request where
 
 instance ToJSON1 Request where
   liftToJSON sa _ (Request i m a)     = object $ 
-    "jsonrpc" !~ jsonRpcVersion <> "id" !~ i <> "method" !~ m <> "params" ?= fmap sa a
+    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ?= fmap sa a
   liftToEncoding sa _ (Request i m a) = pairs $
-    "jsonrpc" !~ jsonRpcVersion <> "id" !~ i <> "method" !~ m <> "params" ?= fmap sa a
+    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ?= fmap sa a
 
 instance FromJSON a => FromJSON (Request a) where
   parseJSON = liftParseJSON parseJSON parseJSONList
@@ -147,6 +151,9 @@ instance FromJSON a => FromJSON (Request a) where
 instance ToJSON a => ToJSON (Request a) where
   toJSON = liftToJSON toJSON toJSONList
   toEncoding = liftToEncoding toEncoding toEncodingList
+
+pattern Notification :: Text -> Maybe a -> Request a
+pattern Notification method params = Request Nothing method params
 
 --------------------------------------------------------------------------------
 -- Response

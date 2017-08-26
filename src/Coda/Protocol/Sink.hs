@@ -1,4 +1,4 @@
-module Coda.Rpc.Sink 
+module Coda.Protocol.Sink 
   ( Sink(..)
   ) where
 

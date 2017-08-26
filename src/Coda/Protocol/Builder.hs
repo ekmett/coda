@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Rpc.Builder
+module Coda.Protocol.Builder
   ( buildRpc
   , hPutRpc
   , putRpc
