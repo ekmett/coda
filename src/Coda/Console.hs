@@ -1,12 +1,13 @@
 --------------------------------------------------------------------
 -- |
--- Copyright :  (c) Edward Kmett and Dan Doel 2012-2014
+-- Copyright : (c) Edward Kmett 2017
+--             (c) Edward Kmett and Dan Doel 2012-2014
 -- License   :  BSD2
 -- Maintainer:  Edward Kmett <ekmett@gmail.com>
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- General-purpose utilities for pretty printing.
+-- Start a REPL
 --------------------------------------------------------------------
 
 module Coda.Console 
@@ -19,10 +20,10 @@ import Coda.Console.Completion
 import Coda.Console.Options
 import Coda.Console.Unicode
 import Coda.Version
-import Data.Char
 import Control.Exception.Lens
 import Control.Lens
 import Control.Monad.State
+import Data.Char
 import System.Console.Haskeline
 import System.Exit.Lens
 

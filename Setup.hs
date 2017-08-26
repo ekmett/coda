@@ -4,6 +4,16 @@
 #define MIN_VERSION_Cabal(x,y,z) 1
 #endif
 
+--------------------------------------------------------------------
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+--------------------------------------------------------------------
+
 module Main where
 
 import Control.Monad (unless, when)

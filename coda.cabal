@@ -84,8 +84,6 @@ library
     Coda.Console.Completion
     Coda.Console.Options
     Coda.Console.Unicode
-    Coda.Instances
-    Coda.Pretty
     Coda.Server
     Coda.Server.Options
     Coda.Server.Protocol.Base
@@ -93,6 +91,9 @@ library
     Coda.Server.Protocol.Parser
     Coda.Server.Protocol.Sink
     Coda.Syntax.Keywords
+    Coda.Util.Instances
+    Coda.Util.Aeson
+    Coda.Util.Pretty
     Coda.Version
 
   other-modules:

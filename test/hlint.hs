@@ -1,11 +1,11 @@
------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 -- |
--- Module      :  Main (hlint)
--- Copyright   :  (C) 2013-2017 Edward Kmett
--- License     :  BSD-style (see the file LICENSE)
--- Maintainer  :  Edward Kmett <ekmett@gmail.com>
--- Stability   :  provisional
--- Portability :  portable
+-- Copyright :  (c) Edward Kmett 2013-2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
 --
 -- This module runs HLint on the local source tree.
 -----------------------------------------------------------------------------
