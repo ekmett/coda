@@ -5,14 +5,21 @@ import Data.Foldable
 import Data.Monoid
 import Options.Applicative
 
-data Command = Server ServerOptions deriving Show
+data Command
+  = CommandServer ServerOptions
+  | CommandRepl
+  deriving Show
 
-commands :: Parser Command
+server, repl, commands :: Parser Command
+server = CommandServer <$> parseServerOptions
+repl   = pure CommandRepl
+
 commands = subparser $ fold
-  [ command "server" $ info (helper <*> (Server <$> parseServerOptions)) (progDesc "Begin a language server session")
+  [ command "server" $ info (helper <*> server) (progDesc "Begin a language server session")
+  , command "repl"   $ info (helper <*> repl) (progDesc "Start a REPL")
   ]
 
 main :: IO ()
 main = do
-  opts <- execParser $ info (helper <*> commands) $ fullDesc <> progDesc "coda"
-  print opts
+  cmd <- execParser $ info (helper <*> commands) $ fullDesc <> progDesc "coda"
+  print cmd
