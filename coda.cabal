@@ -66,12 +66,11 @@ library
     text                >= 1.2    && < 1.3,
     transformers        >= 0.5    && < 0.6
   exposed-modules:
-    Coda
     Coda.Instances
-    Coda.Protocol.Base
-    Coda.Protocol.Builder
-    Coda.Protocol.Parser
-    Coda.Protocol.Sink
+    Coda.Server.Protocol.Base
+    Coda.Server.Protocol.Builder
+    Coda.Server.Protocol.Parser
+    Coda.Server.Protocol.Sink
   ghc-options: -Wall
   hs-source-dirs: src
 
@@ -132,7 +131,7 @@ test-suite coda-tasty
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   cpp-options: -DTEST_TASTY
   other-modules:
-    Coda.Protocol.Test
+    Coda.Server.Protocol.Test
   if !flag(test-tasty)
     buildable: False
   else

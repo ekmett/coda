@@ -8,7 +8,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Protocol.Sink 
+module Coda.Server.Protocol.Sink 
   ( Sink(..)
   ) where
 

@@ -20,7 +20,7 @@
 -- http://www.jsonrpc.org/specification
 -----------------------------------------------------------------------------
 
-module Coda.Protocol.Base
+module Coda.Server.Protocol.Base
   ( Id(..)
   , Request(Request, Notification, requestId, requestMethod, requestParams)
   , Response(..)
