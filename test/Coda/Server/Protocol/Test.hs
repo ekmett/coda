@@ -30,7 +30,7 @@ import Test.Tasty.Golden
 import Test.Tasty.Providers as Tasty
 
 goldenFile :: TestName -> FilePath
-goldenFile name = "test" </> "protocol" </> name <.> "golden"
+goldenFile name = "test" </> "tasty" </> "protocol" </> name <.> "golden"
 
 data ParseTest = ParseTest String (Lazy.ByteString -> Tasty.Result)
 

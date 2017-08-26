@@ -1,5 +1,6 @@
-{-# LANGUAGE CPP, ForeignFunctionInterface #-}
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
+{-# language CPP #-}
+{-# language ForeignFunctionInterface #-}
+{-# options_ghc -Wno-redundant-constraints #-}
 
 --------------------------------------------------------------------
 -- |
