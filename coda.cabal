@@ -88,6 +88,7 @@ library
     Coda.Server.Options
     Coda.Server.Protocol.Base
     Coda.Server.Protocol.Builder
+    Coda.Server.Protocol.Language.Base
     Coda.Server.Protocol.Parser
     Coda.Server.Protocol.Sink
     Coda.Syntax.Keywords
