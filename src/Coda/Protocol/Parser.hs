@@ -15,6 +15,7 @@
 --
 -----------------------------------------------------------------------------
 
+
 module Coda.Protocol.Parser 
   ( Parser(..)
   , ParseResult(..)
@@ -32,6 +33,9 @@ import Data.Aeson
 import Data.Int (Int64)
 import Data.Word (Word8)
 import qualified Data.ByteString.Lazy as Lazy
+
+-- $setup
+-- >>> :set -XOverloadedStrings
 
 --------------------------------------------------------------------------------
 -- * Lazy ByteString Parsing
