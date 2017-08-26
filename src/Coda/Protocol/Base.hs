@@ -101,6 +101,7 @@ _ ?~ Nothing = mempty
 -- Id
 --------------------------------------------------------------------------------
 
+-- | A JSON-RPC message identifier
 data Id 
   = IntId !Int
   | TextId !Text

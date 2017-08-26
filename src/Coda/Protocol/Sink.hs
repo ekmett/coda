@@ -16,6 +16,7 @@ import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Divisible
 import Data.Void
 
+-- | A contravariant message sink
 newtype Sink a = Sink { (<~) :: a -> IO () }
 
 instance Contravariant Sink where
