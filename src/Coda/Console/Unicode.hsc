@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP, ForeignFunctionInterface #-}
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
+
 --------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett and Dan Doel 2012-2013
@@ -9,6 +10,7 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+
 module Coda.Console.Unicode
   ( withUnicode
   ) where

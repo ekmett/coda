@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
+
 --------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett and Dan Doel 2012-2014
@@ -9,6 +10,7 @@
 --
 -- General-purpose utilities for pretty printing.
 --------------------------------------------------------------------
+
 module Coda.Pretty
   ( module Text.PrettyPrint.ANSI.Leijen
   , names

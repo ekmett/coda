@@ -7,6 +7,7 @@
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
+
 --------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett 2017
@@ -17,6 +18,7 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+
 module Coda.Console.Command
   ( Command(..)
   , HasCommand(..)

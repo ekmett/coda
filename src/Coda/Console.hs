@@ -1,3 +1,14 @@
+--------------------------------------------------------------------
+-- |
+-- Copyright :  (c) Edward Kmett and Dan Doel 2012-2014
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+-- General-purpose utilities for pretty printing.
+--------------------------------------------------------------------
+
 module Coda.Console 
   ( heading
   , console
