@@ -4,7 +4,7 @@
 
 --------------------------------------------------------------------
 -- |
--- Copyright :  (c) Edward Kmett and Dan Doel 2012-2013
+-- Copyright :  (c) Edward Kmett 2017, (c) Edward Kmett and Dan Doel 2012-2013
 -- License   :  BSD2
 -- Maintainer:  Edward Kmett <ekmett@gmail.com>
 -- Stability :  experimental

@@ -24,7 +24,8 @@ module Coda.Server.Protocol.Base
   (
     -- * JSON-RPC 2.0
     Id(..)
-  , Request(Request, Notification, requestId, requestMethod, requestParams)
+  , Request(Request, requestId, requestMethod, requestParams)
+  , pattern Notification, _Notification
   , Response(..)
   , ResponseError(..)
   , ErrorCode
@@ -45,10 +46,10 @@ module Coda.Server.Protocol.Base
 import Coda.Util.Aeson
 import Control.Applicative
 import Control.Comonad
+import Control.Lens.Combinators
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Encoding
-import Data.Bifunctor
 import Data.Bifoldable
 import Data.Bitraversable
 import Data.Data
@@ -103,7 +104,7 @@ data Request a = Request
 instance FromJSON a => FromJSON (Request a) where
   parseJSON = withObject "Request" $ \v -> do
     ver <- v .: "jsonrpc" -- check for jsonprc validity
-    guard (ver == jsonRpcVersion)
+    when (ver /= jsonRpcVersion) $ fail "invalid JSON-RPC version"
     Request <$> v .:? "id"
             <*> v .: "method"
             <*> parseMissingAsNull v "params"
@@ -120,6 +121,9 @@ instance Comonad Request where
 
 pattern Notification :: Text -> a -> Request a
 pattern Notification method params = Request Nothing method params
+
+_Notification :: Prism' (Request a) (Text, a)
+_Notification = prism' (uncurry (Request Nothing)) $ \(Request i m p) -> (m,p) <$ i
 
 --------------------------------------------------------------------------------
 -- ** Response
@@ -149,7 +153,7 @@ instance (ToJSON e, ToJSON a) => ToJSON (Response e a) where
 instance (FromJSON e, FromJSON a) => FromJSON (Response e a) where
   parseJSON = withObject "Response" $ \v -> do
     ver <- v .: "jsonrpc"
-    guard (ver == jsonRpcVersion)
+    when (ver /= jsonRpcVersion) $ fail "invalid JSON-RPC version"
     Response
       <$> v .:? "id"
       <*> parseMissingAsNull v "result"
@@ -208,10 +212,10 @@ pattern ServerNotInitialized :: ErrorCode
 pattern ServerNotInitialized = ErrorCode (-32002)
 
 pattern UnknownErrorCode :: ErrorCode
-pattern UnknownErrorCode = ErrorCode (-32001);
+pattern UnknownErrorCode = ErrorCode (-32001)
 
 pattern RequestCancelled :: ErrorCode
-pattern RequestCancelled = ErrorCode (-32800);
+pattern RequestCancelled = ErrorCode (-32800)
 
 --------------------------------------------------------------------------------
 -- ResponseError

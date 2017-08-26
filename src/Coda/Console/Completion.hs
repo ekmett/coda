@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Copyright :  (c) Edward Kmett and Dan Doel 2012-2013
+-- Copyright :  (c) Edward Kmett 2017, (c) Edward Kmett and Dan Doel 2012-2013
 -- License   :  BSD2
 -- Maintainer:  Edward Kmett <ekmett@gmail.com>
 -- Stability :  experimental
@@ -34,7 +34,7 @@ loading zs = isPrefixOf ":l" xs && isPrefixOf xs ":load"
 completed :: (String,String) -> IO (String, [Completion])
 completed (ls, rs)
   | ' ' `notElem` ls = completeWith startingKeywordSet (ls, rs)
-  | loading rls = completeFilename (ls, rs)
+  | loading rls = completeFilename (ls, rs) -- todo upgrade this to use more general per-command parser
   | otherwise   = completeWith keywordSet (ls, rs)
   where rls = reverse ls
 
@@ -44,8 +44,8 @@ completeWith kws = completeWord Nothing " ,()[]{}" $ \s -> do
   let strs = mempty
   return $ (strs <> kws)^..folded.filtered (s `isPrefixOf`).to (\o -> Completion o o True)
 
+-- | Haskeline settings supporting autocomplete and persistent history
 settings :: Settings IO
 settings = setComplete completed defaultSettings
   { historyFile = Just ".coda_history"
   }
-
