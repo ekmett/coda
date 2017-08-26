@@ -134,6 +134,7 @@ build pkg lbi verb xs extraRules = do
           ++ map (extDir </>) markdownFiles
       command_ [Shell, Cwd extDir] ("." </> "node_modules" </> ".bin" </> "vsce") ["package","-o","coda.vsix"]
       liftIO $ renameFile (extDir </> "coda.vsix") vsix
+      putNormal $ "Packaged extension: " ++ vsix
 
     node_modules %> \out -> do
       need extDirExtensionFiles

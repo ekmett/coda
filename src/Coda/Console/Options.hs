@@ -20,11 +20,13 @@ import Control.Lens
 import Data.Monoid ((<>))
 import Options.Applicative as Options
 
+-- | Options for @coda repl@
 data ConsoleOptions = ConsoleOptions
   { _consoleOptionsNoHeading :: Bool
   , _consoleOptionsNoUnicode :: Bool
   } deriving (Eq,Ord,Show,Read)
 
+-- | Parse @coda repl@ options
 parseConsoleOptions :: Options.Parser ConsoleOptions
 parseConsoleOptions = ConsoleOptions
   <$> switch (long "no-heading" <> help "Don't show a heading at the top of the REPL")

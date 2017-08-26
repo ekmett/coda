@@ -106,6 +106,7 @@ executable coda
   build-depends:
     base,
     coda,
+    lens,
     optparse-applicative
   main-is: Main.hs
   hs-source-dirs: app

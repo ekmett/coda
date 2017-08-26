@@ -22,11 +22,13 @@ import Data.Data
 import Data.Monoid
 import Options.Applicative as Options
 
+-- | Options for @coda server@
 data ServerOptions = ServerOptions
   { _serverOptionsDebug :: !Bool
   , _serverOptionsLog   :: !(Maybe FilePath)
   } deriving (Eq,Ord,Show,Read,Data)
 
+-- | Parse @coda server@ options
 parseServerOptions :: Options.Parser ServerOptions
 parseServerOptions = ServerOptions
   <$> switch (long "debug" <> help "enable debugging")

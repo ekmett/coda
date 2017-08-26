@@ -8,7 +8,11 @@
 --
 --------------------------------------------------------------------
 
-
 module Coda.Server
-  (
+  ( server
   ) where
+
+import Coda.Server.Options
+
+server :: ServerOptions -> IO ()
+server = print
