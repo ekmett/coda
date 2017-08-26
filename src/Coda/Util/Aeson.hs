@@ -20,6 +20,7 @@ module Coda.Util.Aeson
   , (?~), (?=)
   ) where
 
+import Coda.Util.Instances () -- Void instances
 import Data.Aeson
 import Data.Aeson.Encoding.Internal
 import Data.Text
