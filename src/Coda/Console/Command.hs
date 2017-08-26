@@ -26,7 +26,7 @@ module Coda.Console.Command
   , executeCommand
   ) where
 
-import Coda.Pretty
+import Coda.Util.Pretty
 import Coda.Version
 import Control.Lens
 import Control.Monad.IO.Class

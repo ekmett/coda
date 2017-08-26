@@ -40,6 +40,7 @@ module Coda.Server.Protocol.Base
     )
   ) where
 
+import Coda.Util.Aeson
 import Control.Applicative
 import Control.Monad
 import Data.Aeson
@@ -61,41 +62,6 @@ import GHC.Generics
 
 jsonRpcVersion :: Text
 jsonRpcVersion = fromString "2.0"
-
---------------------------------------------------------------------------------
--- Utilities
---------------------------------------------------------------------------------
-
-infixr 8 ?=, !=, !~, ?~
-
-class Monoid (Ob v) => From v where
-  type Ob v :: *
-  (!=) :: Text -> v -> Ob v
-
-instance x ~ Value => From (Encoding' x) where
-  type Ob (Encoding' x) = Series
-  t != a       = pair t a
-  
-instance From Value where
-  type Ob Value = [(Text, Value)]
-  t != a       = [t .= a]
-
-class Monoid t => To t where
-  (!~) :: ToJSON v => Text -> v -> t
-
-instance To Series where
- t !~ a       = pair t (toEncoding a)
-  
-instance x ~ (Text, Value) => To [x] where
- t !~ a = [t .= toJSON a]
-
-(?=) :: From v => Text -> Maybe v -> Ob v
-t ?= Just a  = t != a
-_ ?= Nothing = mempty
-
-(?~) :: (ToJSON v, To t) => Text -> Maybe v -> t
-t ?~ Just a  = t !~ a
-_ ?~ Nothing = mempty
 
 --------------------------------------------------------------------------------
 -- Id

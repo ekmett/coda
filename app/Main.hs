@@ -21,17 +21,17 @@ import Data.Foldable
 import Data.Monoid
 import Options.Applicative
 
-serverCommand, replCommand, commands :: Parser (IO ())
+serverCommand, consoleCommand, commands :: Parser (IO ())
 serverCommand = parseServerOptions <&> server
-consoleCommand   = parseConsoleOptions <&> console
+consoleCommand = parseConsoleOptions <&> console
 
 commands = subparser $ fold
   [ command "repl"    $ info (helper <*> consoleCommand) $
-      progDesc "Start a REPL")
+      progDesc "Start a REPL"
   , command "server"  $ info (helper <*> serverCommand) $
-      progDesc "Begin a language server session")
+      progDesc "Begin a language server session"
   , command "version" $ info (putStrLn version <$ helper) $
-      progDesc "Show detailed version information")
+      progDesc "Show detailed version information"
   ]
 
 main :: IO ()

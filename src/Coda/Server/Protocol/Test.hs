@@ -15,10 +15,10 @@ module Coda.Server.Protocol.Test
   ( protocolTests
   ) where
 
-import Coda.Instances ()
 import Coda.Server.Protocol.Parser
 import Coda.Server.Protocol.Builder
 import Coda.Server.Protocol.Base
+import Coda.Util.Instances ()
 import Data.Aeson (ToJSON, FromJSON)
 import Data.ByteString.Builder
 import Data.ByteString.Lazy as Lazy
