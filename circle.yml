@@ -1,12 +1,22 @@
+general:
+  branches:
+    ignore:
+      - gh-pages
+      - appveyor
+      - travis
+
 dependencies:
+
   cache_directories:
     - "~/.stack"
     - "~/.cabal"
+
   pre:
     - export STACK_YAML=etc/stack.yaml
     - wget -q -O- https://s3.amazonaws.com/download.fpcomplete.com/ubuntu/fpco.key | sudo apt-key add -
     - echo 'deb http://download.fpcomplete.com/ubuntu/precise stable main' | sudo tee /etc/apt/sources.list.d/fpco.list
     - sudo apt-get update && sudo apt-get install stack -y
+
   override:
     - stack setup
     - stack build -j 2 :
@@ -18,3 +28,4 @@ test:
   override:
     - stack test coda :
         timeout: 3600
+

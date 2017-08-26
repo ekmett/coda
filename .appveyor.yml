@@ -8,6 +8,7 @@ branches:
   except:
   - gh-pages
   - travis
+  - circle
 
 environment:
   nodejs_version: "8"

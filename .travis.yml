@@ -5,6 +5,7 @@ dist: trusty
 branches:
   except:
   - appveyor
+  - circle
   - gh-pages
 
 matrix:
