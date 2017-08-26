@@ -26,6 +26,17 @@ Code, type `⌘-Shift-P`, select `> Extensions: Install Extension from VSIX` fro
 The instructions in [Running and Debugging Your Extension](https://code.visualstudio.com/docs/extensions/debugging-extensions)
 can be readily tweaked to work here if you need more interactive debugging support when working on the compiler.
 
+Command-Line Autocompelion
+==========================
+
+Once you have an installed `coda` executable, bash command line autocompletion is available with:
+
+```
+$ source <(coda --bash-completion-script `which coda`)
+```
+
+You can add this to your `.profile` or `.bashrc`
+
 Requirements
 ============
 
