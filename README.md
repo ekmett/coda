@@ -1,15 +1,23 @@
-coda
-====
+# coda
 
-[![Travis CI](https://secure.travis-ci.org/ekmett/coda.png?branch=master)](http://travis-ci.org/ekmett/coda)
-[![Appveyor](https://ci.appveyor.com/api/projects/status/github/ekmett/coda?branch=master&svg=true)](https://ci.appveyor.com/project/ekmett/coda)
-[![Circle CI](https://circleci.com/gh/ekmett/coda.png?style=shield)](https://circleci.com/gh/ekmett/coda)
+[![Travis Continuous Integration Status][travis-img]][travis]
+[![Appveyor Continuous Integration Status][appveyor-img]][appveyor]
+[![Circle Continuous Integration Status][circle-img]][circle]
+
 
 This package will eventually provide a toy compiler for experimenting with resumable parsing.
 
 The application is designed as a plugin for Visual Studio Code.
 
-This also serves as an experiment in employing [`shake`](http://shakebuild.com/) inside of a custom cabal `Setup.hs`
+This also serves as an experiment in employing [`shake`][shake] inside of a custom cabal `Setup.hs`
+
+**Table of Contents**
+
+- [Installation](#installation)
+- [Autocompletion](#autocompletion)
+- [Requirements](#requirements)
+- [Documentation](#documentation)
+- [Contact Information](#contact-information)
 
 Installation
 ============
@@ -23,11 +31,11 @@ To build:
 If `code` is not in your path, or you want a manual install for some reason, you can use `cabal build`, open Visual Studio
 Code, type `⌘-Shift-P`, select `> Extensions: Install Extension from VSIX` from the resulting selection box, and finally pick out `dist/build/coda-<version>.vsix` in the finder dialogue to install the package.
 
-The instructions in [Running and Debugging Your Extension](https://code.visualstudio.com/docs/extensions/debugging-extensions)
-can be readily tweaked to work here if you need more interactive debugging support when working on the compiler.
+The instructions in [Running and Debugging Your Extension][debugging-extensions] can be readily tweaked to work here if you
+need more interactive debugging support when working on the compiler.
 
-Command-Line Autocompelion
-==========================
+Autocompletion
+==============
 
 Once you have an installed `coda` executable, bash command line autocompletion is available with:
 
@@ -59,3 +67,12 @@ Contributions and bug reports are welcome!
 Please feel free to contact me through github or on the ##coda or #haskell IRC channels on irc.freenode.net.
 
 -Edward Kmett
+
+ [appveyor]: https://ci.appveyor.com/project/ekmett/coda
+ [appveyor-img]: https://ci.appveyor.com/api/projects/status/github/ekmett/coda?branch=master&svg=true
+ [circle]: https://circleci.com/gh/ekmett/coda
+ [circle-img]: https://circleci.com/gh/ekmett/coda.png?style=shield
+ [debugging-extensions]: https://code.visualstudio.com/docs/extensions/debugging-extensions
+ [shake]: http://shakebuild.com/
+ [travis]: http://travis-ci.org/ekmett/coda
+ [travis-img]: https://secure.travis-ci.org/ekmett/coda.png?branch=master
