@@ -136,7 +136,7 @@ instance FromJSON1 Request where
   liftParseJSON pa _ = withObject "Request" $ \v -> do
     ver <- v .: "jsonrpc" -- check for jsonprc validity
     guard (ver == jsonRpcVersion)
-    Request <$> v .: "id"
+    Request <$> v .:? "id"
             <*> v .: "method"
             <*> explicitParseFieldMaybe pa v "params"
 
@@ -171,13 +171,13 @@ data Response e a = Response
 instance ToJSON2 Response where
   liftToJSON2 se sle sa _ (Response i r e) = object $ 
        "jsonrpc" !~ jsonRpcVersion
-    <> "id"      !~ i
+    <> "id"      ?~ i
     <> "result"  ?= fmap sa r
     <> "error"   ?= fmap (liftToJSON se sle) e
 
   liftToEncoding2 se sle sa _ (Response i r e) = pairs $
        "jsonrpc" !~ jsonRpcVersion
-    <> "id"      !~ i
+    <> "id"      ?~ i
     <> "result"  ?= fmap sa r
     <> "error"   ?= fmap (liftToEncoding se sle) e
 
@@ -186,7 +186,7 @@ instance FromJSON2 Response where
     ver <- v .: "jsonrpc"
     guard (ver == jsonRpcVersion)
     Response
-      <$> v .: "id"
+      <$> v .:? "id"
       <*> explicitParseFieldMaybe pa v "result"
       <*> explicitParseFieldMaybe (liftParseJSON pe ple) v "error"
 

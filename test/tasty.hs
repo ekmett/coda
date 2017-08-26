@@ -1,6 +1,6 @@
 module Main where
 
-import Coda.Protocol.Builder
+import Coda.Protocol.Test (protocolTests)
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -10,5 +10,5 @@ test = testCase "Test 1" $ (2::Int) @?= 2
 main :: IO ()
 main = defaultMain $ testGroup "tasty" 
   [ test
-  , testProtocolBuilder
+  , protocolTests
   ]
