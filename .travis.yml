@@ -30,6 +30,9 @@ install:
 script:
  - coda_trap coda_script
 
+after_script:
+ - coda_trap coda_after_script
+
 notifications:
   irc:
     channels:
