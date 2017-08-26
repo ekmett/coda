@@ -3,7 +3,7 @@ coda
 
 [![Travis CI](https://secure.travis-ci.org/ekmett/coda.png?branch=master)](http://travis-ci.org/ekmett/coda)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/github/ekmett/coda?branch=master&svg=true)](https://ci.appveyor.com/project/ekmett/coda)
-[![Circle CI](https://circleci.com/gh/ekmett/coda.svg?style=svg)](https://circleci.com/gh/ekmett/coda)
+[![Circle CI](https://circleci.com/gh/ekmett/coda.png?style=png)](https://circleci.com/gh/ekmett/coda)
 
 This package will eventually provide a toy compiler for experimenting with resumable parsing.
 
