@@ -135,7 +135,7 @@ build pkg lbi verb xs extraRules = do
       command_ [Shell, Cwd extDir] ("." </> "node_modules" </> ".bin" </> "vsce") ["package","-o","coda.vsix"]
       liftIO $ renameFile (extDir </> "coda.vsix") vsix
 
-    phony "node_modules" $ do
+    node_modules %> \out -> do
       need extDirExtensionFiles
       when has_cached_package_lock $ do
         putLoud "Using cached package-lock.json"
@@ -146,9 +146,6 @@ build pkg lbi verb xs extraRules = do
         liftIO $ do
           createDirectoryIfMissing False "var"
           copyFile package_lock "var/package-lock.json" -- untracked
-
-    node_modules %> \out -> do
-      need ["node_modules"]
       writeFile' out "" -- touch an indicator file
 
     -- Download an appropriate vscode.d.ts from github

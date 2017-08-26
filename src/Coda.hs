@@ -15,6 +15,7 @@ module Coda
   , module Coda.Protocol.Sink
   ) where
 
+import Coda.Instances ()
 import Coda.Protocol.Base
 import Coda.Protocol.Builder
 import Coda.Protocol.Parser

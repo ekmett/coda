@@ -197,6 +197,13 @@ instance ToJSON e => ToJSON1 (Response e) where
 instance FromJSON e => FromJSON1 (Response e) where
   liftParseJSON = liftParseJSON2 parseJSON parseJSONList
 
+instance (ToJSON e, ToJSON a) => ToJSON (Response e a) where
+  toJSON = toJSON2
+  toEncoding = toEncoding2
+
+instance (FromJSON e, FromJSON a) => FromJSON (Response e a) where
+  parseJSON = parseJSON2
+
 instance Bifunctor Response where
   bimap f g (Response i r e) = Response i (fmap g r) (fmap (fmap f) e)
 
