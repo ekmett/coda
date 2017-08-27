@@ -12,9 +12,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- Data types the Language Server Protocol
+-- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md Language Server Protocol>
 --------------------------------------------------------------------------------
-
 module Coda.Message.Language
   ( pattern CancelRequest, _CancelRequest
   , DocumentUri

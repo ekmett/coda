@@ -12,8 +12,7 @@
 --------------------------------------------------------------------
 
 module Coda.Util.Pretty
-  ( module Text.PrettyPrint.ANSI.Leijen
-  , names
+  ( names
   , parensIf
   , hyph
   , prePunctuate
