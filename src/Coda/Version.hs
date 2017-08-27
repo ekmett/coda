@@ -6,18 +6,12 @@
 
 module Coda.Version
   ( version
-  , versionNumbers
   ) where
 
 import Data.List (intercalate)
-import Distribution.Version
+import Data.Version
 import qualified Paths_coda
 
 -- | Grab the version number from this project.
 version :: String
-version = intercalate "." $ show <$> tail (versionNumbers Paths_coda.version)
-
-#if !MIN_VERSION_Cabal(2,0,0)
-versionNumbers :: Version -> [Int]
-versionNumbers = versionBranch
-#endif
+version = intercalate "." $ show <$> tail (versionBranch Paths_coda.version)

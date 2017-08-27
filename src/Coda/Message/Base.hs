@@ -51,7 +51,6 @@ module Coda.Message.Base
   , pattern ServerErrorEnd
   , pattern ServerNotInitialized
   , pattern UnknownErrorCode
-  , pattern RequestCancelled
 
     -- * Overloading
   , HasId(..)
@@ -94,7 +93,7 @@ jsonRpcVersion = fromString "2.0"
 data Id
   = IntId !Int
   | TextId !Text
-  deriving (Eq, Ord, Show, Data, Generic)
+  deriving (Eq, Ord, Show, Read, Data, Generic)
 
 instance ToJSON Id where
   toJSON (IntId i) = Number $ fromIntegral i
@@ -120,7 +119,7 @@ instance Hashable Id where
 --------------------------------------------------------------------------------
 
 data Nil = Nil
-  deriving (Eq, Ord, Show, Data, Generic, Ix, Bounded)
+  deriving (Eq, Ord, Show, Read, Data, Generic, Ix, Bounded)
 
 instance ToJSON Nil where
   toJSON Nil = Null
@@ -169,7 +168,7 @@ data Request i a = Request
   { requestId     :: !i
   , requestMethod :: !Text
   , requestParams :: !a
-  } deriving (Eq, Ord, Show, Data, Generic, Generic1, Functor, Foldable, Traversable)
+  } deriving (Eq, Ord, Show, Read, Data, Generic, Generic1, Functor, Foldable, Traversable)
 
 type Request_ = Request Id Value
 
@@ -236,7 +235,7 @@ instance (Hashable i, Hashable a) => Hashable (Request i a) where
 data Notification a = Notification
   { notificationMethod :: !Text
   , notificationParams :: !a
-  } deriving (Eq, Ord, Show, Data, Generic, Generic1, Functor, Foldable, Traversable)
+  } deriving (Eq, Ord, Show, Read, Data, Generic, Generic1, Functor, Foldable, Traversable)
 
 type Notification_ = Notification Value
 
@@ -298,7 +297,7 @@ data Response e i a = Response
   { responseId     :: !i
   , responseResult :: !a
   , responseError  :: !(Maybe (ResponseError e))
-  } deriving (Eq, Show, Data, Generic, Generic1, Functor, Foldable, Traversable)
+  } deriving (Eq, Show, Read, Data, Generic, Generic1, Functor, Foldable, Traversable)
 
 type Response_ = Response Value (Maybe Id) Value
 
@@ -394,9 +393,6 @@ pattern ServerNotInitialized = ErrorCode (-32002)
 pattern UnknownErrorCode :: ErrorCode
 pattern UnknownErrorCode = ErrorCode (-32001)
 
-pattern RequestCancelled :: ErrorCode
-pattern RequestCancelled = ErrorCode (-32800)
-
 --------------------------------------------------------------------------------
 -- ResponseError
 --------------------------------------------------------------------------------
@@ -416,7 +412,7 @@ data ResponseError a = ResponseError
   { responseErrorCode    :: !ErrorCode
   , responseErrorMessage :: !Text
   , responseErrorData    :: !a
-  } deriving (Eq, Ord, Show, Data, Generic, Generic1)
+  } deriving (Eq, Ord, Show, Read, Data, Generic, Generic1)
 
 type ResponseError_ = ResponseError Value
 
