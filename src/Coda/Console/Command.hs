@@ -35,6 +35,7 @@ import Data.List.Split (splitOn)
 import Data.Monoid
 import System.Console.Haskeline
 import System.Exit
+import Text.PrettyPrint.ANSI.Leijen hiding ((<$>), (<>))
 
 ------------------------------------------------------------------------------
 -- Command
