@@ -11,19 +11,14 @@
 -----------------------------------------------------------------------------
 module Main where
 
-import Build_doctests (module_sources)
+import Build (files)
 import Data.Foldable (traverse_)
 import Data.List (unwords)
 import Language.Haskell.HLint
--- import Control.Monad (unless)
--- import System.Exit
-
-toFile :: String -> String
-toFile xs = "src/" ++ map (\c -> if c == '.' then '/' else c) xs ++ ".hs"
 
 main :: IO ()
 main = do
-    let args = ["lint"] ++ map toFile module_sources ++ ["--cpp-define=HLINT", "--cpp-ansi"]
+    let args = ["lint"] ++ files ++ ["--cpp-define=HLINT", "--cpp-ansi"]
     putStrLn $ unwords ("hlint":args)
     hints <- hlint args
     traverse_ print hints

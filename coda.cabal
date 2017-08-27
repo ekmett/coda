@@ -127,6 +127,7 @@ test-suite doctests
   main-is: doctests.hs
   hs-source-dirs: test/main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  other-modules: Build
   if !flag(test-doctests)
     buildable: False
   else
@@ -141,6 +142,7 @@ test-suite hlint
   main-is: hlint.hs
   hs-source-dirs: test/main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  other-modules: Build
   if !flag(test-hlint)
     buildable: False
   else

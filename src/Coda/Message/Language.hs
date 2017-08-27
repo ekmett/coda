@@ -37,7 +37,7 @@ import GHC.Generics
 -- | Language Server Protocol: cancellation notification
 pattern CancelRequest :: Id -> Notification Value
 pattern CancelRequest identifier <- Notification "$/cancelRequest" (fromJSON -> Success identifier) where
-  CancelRequest identifier = Notification "$/cancelRequest" (toJSON (identifier))
+  CancelRequest identifier = Notification "$/cancelRequest" (toJSON identifier)
 
 _CancelRequest :: Prism' (Notification Value) Id
 _CancelRequest = prism' (Notification "$/cancelRequest" . toJSON) $ \case

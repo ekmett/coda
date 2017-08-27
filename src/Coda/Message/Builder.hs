@@ -14,11 +14,11 @@
 -----------------------------------------------------------------------------
 
 module Coda.Message.Builder
-  ( buildRpc
+  ( buildMessage
   , buildEncoding
-  , hPutRpc
+  , hPutMessage
   , hPutEncoding
-  , putRpc
+  , putMessage
   , putEncoding
   ) where
 
@@ -30,10 +30,10 @@ import System.IO
 
 -- | Serialize a JSON-RPC 2.0 message.
 --
--- >>> toLazyByteString (buildRpc "hello")
+-- >>> toLazyByteString (buildMessage "hello")
 -- "Content-Length: 7\r\n\r\n\"hello\""
-buildRpc :: ToJSON a => a -> Builder
-buildRpc = buildEncoding . toEncoding
+buildMessage :: ToJSON a => a -> Builder
+buildMessage = buildEncoding . toEncoding
 
 -- | Serialize a JSON-RPC 2.0 message from an Encoding
 buildEncoding :: Encoding -> Builder
@@ -43,16 +43,16 @@ buildEncoding a
   where content = toLazyByteString (fromEncoding a)
 
 -- | Write a JSON-RPC 2.0 message to a given file handle
-hPutRpc :: ToJSON a => Handle -> a -> IO ()
-hPutRpc h = hPutEncoding h . toEncoding
+hPutMessage :: ToJSON a => Handle -> a -> IO ()
+hPutMessage h = hPutEncoding h . toEncoding
 
 -- | Write a JSON-RPC 2.0 message to a given file handle from an Encoding
 hPutEncoding :: Handle -> Encoding -> IO ()
 hPutEncoding h = hPutBuilder h . buildEncoding
 
 -- | Write a JSON-RPC 2.0 message to stdout
-putRpc :: ToJSON a => a -> IO ()
-putRpc = putEncoding . toEncoding
+putMessage :: ToJSON a => a -> IO ()
+putMessage = putEncoding . toEncoding
 
 -- | Write a JSON-RPC 2.0 message to stdout from an Encoding
 putEncoding :: Encoding -> IO ()

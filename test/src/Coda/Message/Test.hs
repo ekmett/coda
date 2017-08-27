@@ -31,7 +31,7 @@ import Test.Tasty.Providers as Tasty
 goldenFile :: TestName -> FilePath
 goldenFile name = "test" </> "data" </> "message" </> name <.> "golden"
 
-data ParseTest = ParseTest String (Lazy.ByteString -> Tasty.Result)
+data ParseTest = ParseTest TestName (Lazy.ByteString -> Tasty.Result)
 
 instance IsTest ParseTest where
   run _opts (ParseTest name process) _progress = process <$> Lazy.readFile (goldenFile name)
@@ -41,8 +41,8 @@ instance IsTest ParseTest where
 golden :: (ToJSON a, FromJSON a, Eq a) => TestName -> a -> TestTree
 golden name content 
   = testGroup name
-  [ goldenVsString "builder" (goldenFile name) $ pure $ toLazyByteString $ buildRpc content
-  , singleTest "parser" $ ParseTest name $ \lbs -> case runParser eitherDecodeRpc lbs of
+  [ goldenVsString "builder" (goldenFile name) $ pure $ toLazyByteString $ buildMessage content
+  , singleTest "parser" $ ParseTest name $ \lbs -> case runParser eitherDecodeMessage' lbs of
       Err -> testFailed "bad content wrapper"
       OK esr rest 
         | not (Lazy.null rest) -> testFailed "leftover content"

@@ -17,6 +17,7 @@ This also serves as an experiment in employing [`shake`][shake] inside of a cust
 - [Autocompletion](#autocompletion)
 - [Requirements](#requirements)
 - [Documentation](#documentation)
+- [Directories](#directories)
 - [Contact Information](#contact-information)
 
 Installation
@@ -58,6 +59,23 @@ Documentation
 Once there is an actual language here documentation will be forthcoming on it.
 
 In the meantime, API documentation is available from https://ekmett.github.io/coda/
+
+Directories
+===========
+
+| Directory | Usage |
+| --------- | --- |
+| bin       | Executable scripts used by CI |
+| etc       | Configuration used by CI |
+| ext       | Template files used to build the extension |
+| ext/test  | The vscoe test suite for the extension |
+| main      | Where to find `Main.hs` for executable haskell files |
+| src       | coda library source code |
+| test/data | data files used by the test suite |
+| test/shim | shims to work around doctest limitations |
+| test/main | Where to find `Main.hs` for test suites |
+| test/src  | tasty tests |
+| var       | A cache that may (infrequently) be changed during the build. Can be safely deleted |
 
 Contact Information
 ===================

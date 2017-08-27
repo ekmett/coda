@@ -52,32 +52,31 @@ main = defaultMainWithHooks simpleUserHooks
 
   buildHook' pkg lbi hooks flags = build pkg lbi (buildVerbosity flags) "build" $ do
     cabal <- newResource "cabal" 1
-    phony "cabal-build" $ do
-      withResource cabal 1 $ do
-        putLoud "Building with cabal"
-        liftIO $ do
-          -- don't do these first two in parallel as they may clobber the same file!
-          generateBuildModule "doctests" flags pkg lbi
-          generateBuildModule "hlint" flags pkg lbi
-          buildHook simpleUserHooks pkg lbi hooks flags
+    "cabal-build" ~> do
+      putLoud "Building with cabal"
+      withResource cabal 1 $ liftIO $ do
+        -- don't do these first two in parallel as they may clobber the same file!
+        generateBuildModule "doctests" flags pkg lbi
+        generateBuildModule "hlint" flags pkg lbi
+        buildHook simpleUserHooks pkg lbi hooks flags
 
   regHook' pkg lbi hooks flags = build pkg lbi (regVerbosity flags) "register" $ do
     cabal <- newResource "cabal" 1
-    phony "cabal-build" $ putLoud "Registering existing build"
-    phony "cabal-register" $ do
+    "cabal-build" ~> pure ()
+    "cabal-register" ~> do
       putLoud "Registering with cabal"
       withResource cabal 1 $ liftIO $ regHook simpleUserHooks pkg lbi hooks flags
 
   copyHook' pkg lbi hooks flags = build pkg lbi (copyVerbosity flags) "copy" $ do
     cabal <- newResource "cabal" 1
-    phony "cabal-build" $ putLoud "Registering existing build"
-    phony "cabal-copy" $ do
+    "cabal-build" ~> pure ()
+    "cabal-copy" ~> do
       putLoud "Copying with cabal"
       withResource cabal 1 $ liftIO $ copyHook simpleUserHooks pkg lbi hooks flags
 
   testHook' args pkg lbi hooks flags = build pkg lbi (testVerbosity flags) "test" $ do
     cabal <- newResource "cabal" 1
-    phony "cabal-test" $ do
+    "cabal-test" ~> do
       putLoud "Testing with cabal"
       withResource cabal 1 $ liftIO $ testHook simpleUserHooks args pkg lbi hooks flags
 
@@ -142,7 +141,10 @@ build pkg lbi verb xs extraRules = do
       need $ [extDir </> "extension.js", extDir </> "bin/coda" <.> exe, node_modules]
           ++ extDirExtensionFiles
           ++ map (extDir </>) markdownFiles
-      command_ [Shell, Cwd extDir] ("." </> "node_modules" </> ".bin" </> "vsce") ["package","-o","coda.vsix"]
+      command_
+        [WithStdout True, EchoStdout False, Shell, Cwd extDir]
+        ("." </> "node_modules" </> ".bin" </> "vsce")
+        ["package","-o","coda.vsix"]
       liftIO $ renameFile (extDir </> "coda.vsix") vsix
       putNormal $ "Packaged extension: " ++ vsix
 

@@ -13,21 +13,13 @@
 
 module Main where
 
-import Build_doctests
-import Data.List (notElem, unwords)
+import Build (files)
+import Build_doctests (flags, pkgs)
+import Data.List (unwords)
 import Test.DocTest
-
-exceptions :: [String]
-exceptions =
-  [ "Coda.Console.Unicode"
-  , "Paths_coda"
-  ]
-
-toFile :: String -> String
-toFile xs = "src/" ++ map (\c -> if c == '.' then '/' else c) xs ++ ".hs"
 
 main :: IO ()
 main = do
-  let args = "-itest/shim" : flags ++ pkgs ++ map toFile (filter (`notElem` exceptions) module_sources)
+  let args = "-itest/shim" : flags ++ pkgs ++ files
   putStrLn $ unwords ("doctest":args)
   doctest args
