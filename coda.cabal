@@ -59,6 +59,7 @@ library
   build-depends:
     aeson                >= 1.1     && < 1.3,
     ansi-wl-pprint       >= 0.6     && < 0.7,
+    async                >= 2.1     && < 2.2,
     base                 >= 4.9     && < 5,
     base-orphans         >= 0.5     && < 1,
     bytestring           >= 0.10.8  && < 0.11,
@@ -69,16 +70,19 @@ library
     contravariant        >= 1.4     && < 2,
     exceptions           >= 0.8.2.1 && < 0.9,
     haskeline            >= 0.7.4   && < 0.8,
+    hashable             >= 1.2.6   && < 1.3,
+    hyphenation          >= 0.7     && < 0.8,
     lens                 >= 4.15    && < 5,
     logging              >= 3.0.4   && < 3.1,
     mtl                  >= 2.2.1   && < 2.3,
     optparse-applicative >= 0.14    && < 0.15,
     unordered-containers >= 0.2     && < 0.3,
     split                >= 0.2     && < 0.3,
+    stm                  >= 2.4     && < 2.5,
     text                 >= 1.2     && < 1.3,
-    transformers         >= 0.5     && < 0.6
+    transformers         >= 0.5     && < 0.6,
+    transformers-base    >= 0.4.4   && < 0.5
 
---    , hyphenation          >= 0.7     && < 0.8 -- disabled while on a flight
   exposed-modules:
     Coda.Console
     Coda.Console.Command
@@ -95,7 +99,9 @@ library
     Coda.Syntax.Keywords
     Coda.Util.Instances
     Coda.Util.Aeson
+    Coda.Util.Async
     Coda.Util.Pretty
+    Coda.Util.STM
     Coda.Version
 
   other-modules:

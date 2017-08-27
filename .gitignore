@@ -3,11 +3,11 @@ dist/
 dist-newstyle/
 .hsenv/
 .coda_history
-docs
-wiki
+docs/
+wiki/
 TAGS
 tags
-wip
+wip/
 .DS_Store
 .*.swp
 .*.swo

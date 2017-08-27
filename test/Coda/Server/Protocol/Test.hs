@@ -23,7 +23,6 @@ import Data.Aeson (ToJSON, FromJSON, Value(..))
 import Data.ByteString.Builder
 import Data.ByteString.Lazy as Lazy
 import Data.Tagged
-import Data.Void
 import System.FilePath
 import Test.Tasty
 import Test.Tasty.Golden
@@ -56,7 +55,7 @@ golden name content
 
 protocolTests :: TestTree
 protocolTests = testGroup "protocol"
-  [ golden "request"      (Request (Just (IntId 1)) "request" Null :: Request Value)
-  , golden "notification" (Notification "notification" [1,2] :: Request [Int])
-  , golden "response"     (Response (Just "id") 2 Nothing :: Response (Maybe Void) Int)
+  [ golden "request"      (Request (IntId 1) "request" Null :: Request Id Value)
+  , golden "notification" (Notification "notification" [1,2] :: Notification [Int])
+  , golden "response"     (Response "id" 2 Nothing :: Response Value Id Int)
   ]

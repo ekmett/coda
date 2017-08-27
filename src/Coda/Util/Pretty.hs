@@ -15,7 +15,7 @@ module Coda.Util.Pretty
   ( module Text.PrettyPrint.ANSI.Leijen
   , names
   , parensIf
---  , hyph
+  , hyph
   , prePunctuate
   , prePunctuate'
   , block
@@ -27,9 +27,10 @@ module Coda.Util.Pretty
 import Control.Monad.IO.Class
 import Control.Lens
 import Data.Monoid -- Semigroup
+import Data.Maybe (fromMaybe)
 import Numeric.Lens
 import System.IO
--- import Text.Hyphenation
+import Text.Hyphenation
 import Text.PrettyPrint.ANSI.Leijen hiding ((<$>), (<>))
 
 -- | This is an infinitely large free variable supply you can trim your used variables out of.
@@ -43,7 +44,6 @@ parensIf :: Bool -> Doc -> Doc
 parensIf True  = parens
 parensIf False = id
 
-{-
 -- | Hyphenate a word using standard TeX-style 'english_US' hyphenation.
 hyph :: String -> Doc
 hyph t = column $ \k -> columns $ \mn ->
@@ -56,7 +56,6 @@ hyph t = column $ \k -> columns $ \mn ->
      else if null sf
           then text (concat pr)
           else vsep [text (concat pr) <> char '-', text (concat sf)]
--}
 
 prePunctuate :: Doc -> [Doc] -> [Doc]
 prePunctuate _ [    ] = []
