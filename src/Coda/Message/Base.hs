@@ -20,22 +20,26 @@
 -- <http://www.jsonrpc.org/specification>
 -----------------------------------------------------------------------------
 
-module Coda.Server.Protocol.Base
+module Coda.Message.Base
   (
     -- * JSON-RPC 2.0
     Id(..)
+
     -- * Requests
   , Request(..)
   , Request_
+
     -- ** Notifications
   , pattern RequestNotification, _RequestNotification
   , Notification(..)
   , Notification_
+
     -- * Reponses
   , Response(..)
   , Response_
   , ResponseError(..)
   , ResponseError_
+
     -- ** Error Codes
   , ErrorCode (..)
   , pattern ParseError
@@ -48,6 +52,7 @@ module Coda.Server.Protocol.Base
   , pattern ServerNotInitialized
   , pattern UnknownErrorCode
   , pattern RequestCancelled
+
     -- * Overloading
   , HasId(..)
   , HasParams(..)

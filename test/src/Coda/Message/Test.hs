@@ -11,13 +11,13 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Server.Protocol.Test
-  ( protocolTests
+module Coda.Message.Test
+  ( test_message
   ) where
 
-import Coda.Server.Protocol.Parser
-import Coda.Server.Protocol.Builder
-import Coda.Server.Protocol.Base
+import Coda.Message.Parser
+import Coda.Message.Builder
+import Coda.Message.Base
 import Coda.Util.Instances ()
 import Data.Aeson (ToJSON, FromJSON, Value(..))
 import Data.ByteString.Builder
@@ -29,7 +29,7 @@ import Test.Tasty.Golden
 import Test.Tasty.Providers as Tasty
 
 goldenFile :: TestName -> FilePath
-goldenFile name = "test" </> "tasty" </> "protocol" </> name <.> "golden"
+goldenFile name = "test" </> "data" </> "message" </> name <.> "golden"
 
 data ParseTest = ParseTest String (Lazy.ByteString -> Tasty.Result)
 
@@ -53,8 +53,8 @@ golden name content
             | otherwise            -> testPassed ""
   ]
 
-protocolTests :: TestTree
-protocolTests = testGroup "protocol"
+test_message :: TestTree
+test_message = testGroup "message"
   [ golden "request"      (Request (IntId 1) "request" Null :: Request Id Value)
   , golden "notification" (Notification "notification" [1,2] :: Notification [Int])
   , golden "response"     (Response "id" 2 Nothing :: Response Value Id Int)

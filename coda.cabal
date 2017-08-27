@@ -89,13 +89,13 @@ library
     Coda.Console.Completion
     Coda.Console.Options
     Coda.Console.Unicode
+    Coda.Message.Base
+    Coda.Message.Builder
+    Coda.Message.Language
+    Coda.Message.Parser
+    Coda.Message.Sink
     Coda.Server
     Coda.Server.Options
-    Coda.Server.Protocol.Base
-    Coda.Server.Protocol.Builder
-    Coda.Server.Protocol.Language.Base
-    Coda.Server.Protocol.Parser
-    Coda.Server.Protocol.Sink
     Coda.Syntax.Keywords
     Coda.Util.Instances
     Coda.Util.Aeson
@@ -117,15 +117,15 @@ executable coda
     coda,
     lens,
     optparse-applicative
-  main-is: Main.hs
-  hs-source-dirs: app
+  main-is: coda.hs
+  hs-source-dirs: main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
 
-test-suite coda-doctests
+test-suite doctests
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: doctests.hs
-  hs-source-dirs: test
+  hs-source-dirs: test/main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   if !flag(test-doctests)
     buildable: False
@@ -135,11 +135,11 @@ test-suite coda-doctests
       base,
       doctest >= 0.11 && <0.14
 
-test-suite coda-hlint
+test-suite hlint
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: hlint.hs
-  hs-source-dirs: test
+  hs-source-dirs: test/main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   if !flag(test-hlint)
     buildable: False
@@ -149,11 +149,11 @@ test-suite coda-hlint
       base,
       hlint >= 2.0.1
 
-test-suite coda-spec
+test-suite spec
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: spec.hs
-  hs-source-dirs: test
+  hs-source-dirs: test/main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   if !flag(test-spec)
     buildable: False
@@ -163,15 +163,15 @@ test-suite coda-spec
       base,
       hspec >= 2 && < 3
 
-test-suite coda-tasty
+test-suite tasty
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: tasty.hs
-  hs-source-dirs: test
+  hs-source-dirs: test/main test/src
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   cpp-options: -DTEST_TASTY
   other-modules:
-    Coda.Server.Protocol.Test
+    Coda.Message.Test
   if !flag(test-tasty)
     buildable: False
   else

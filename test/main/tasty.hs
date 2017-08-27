@@ -15,13 +15,10 @@
 
 module Main where
 
-import Coda.Server.Protocol.Test (protocolTests)
+import Coda.Message.Test
 import Test.Tasty
--- import Test.Tasty.HUnit
 
 main :: IO ()
 main = defaultMain $ testGroup "coda" 
-  [ testGroup "server"
-    [ protocolTests
-    ]
+  [ test_message
   ]

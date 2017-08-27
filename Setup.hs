@@ -57,8 +57,8 @@ main = defaultMainWithHooks simpleUserHooks
         putLoud "Building with cabal"
         liftIO $ do
           -- don't do these first two in parallel as they may clobber the same file!
-          generateBuildModule "coda-doctests" flags pkg lbi
-          generateBuildModule "coda-hlint" flags pkg lbi
+          generateBuildModule "doctests" flags pkg lbi
+          generateBuildModule "hlint" flags pkg lbi
           buildHook simpleUserHooks pkg lbi hooks flags
 
   regHook' pkg lbi hooks flags = build pkg lbi (regVerbosity flags) "register" $ do

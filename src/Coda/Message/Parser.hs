@@ -16,7 +16,7 @@
 -----------------------------------------------------------------------------
 
 
-module Coda.Server.Protocol.Parser 
+module Coda.Message.Parser 
   ( Parser(..)
   , ParseResult(..)
   , rpc

@@ -13,7 +13,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Server.Protocol.Builder
+module Coda.Message.Builder
   ( buildRpc
   , buildEncoding
   , hPutRpc

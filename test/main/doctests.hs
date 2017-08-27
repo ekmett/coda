@@ -28,6 +28,6 @@ toFile xs = "src/" ++ map (\c -> if c == '.' then '/' else c) xs ++ ".hs"
 
 main :: IO ()
 main = do
-  let args = "-itest/doctests" : flags ++ pkgs ++ map toFile (filter (`notElem` exceptions) module_sources)
+  let args = "-itest/shim" : flags ++ pkgs ++ map toFile (filter (`notElem` exceptions) module_sources)
   putStrLn $ unwords ("doctest":args)
   doctest args

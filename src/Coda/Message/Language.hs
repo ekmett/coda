@@ -15,14 +15,14 @@
 -- Data types the Language Server Protocol
 --------------------------------------------------------------------------------
 
-module Coda.Server.Protocol.Language.Base
+module Coda.Message.Language
   ( pattern CancelRequest, _CancelRequest
   , DocumentUri
   , Position(..)
   , Range(..)
   ) where
 
-import Coda.Server.Protocol.Base
+import Coda.Message.Base
 import Coda.Util.Aeson
 import Control.Lens
 import Control.Monad
