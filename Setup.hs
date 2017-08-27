@@ -115,12 +115,12 @@ build pkg lbi verb xs extraRules = do
     extraRules
 
     npmResource <- newResource "npm" 1
-    let npm :: [CmdOption] -> [String] -> Action ()
-        npm opts args = withResource npmResource 1 $ command_ (Cwd extDir : Shell : opts)  "npm" args
+    let npm opts args = withResource npmResource 1 $
+          command_ (Traced (unwords ("npm":args)) : Cwd extDir : Shell : opts)  "npm" args
 
-    phony "build" $ need ["cabal-build", vsix]
+    "build" ~> need ["cabal-build", vsix]
 
-    phony "copy" $ do
+    "copy" ~> do
       need ["cabal-copy", vsix]
       liftIO (findProgramOnSearchPath Cabal.verbose defaultProgramSearchPath "code") >>= \case
         Just (code, _) -> do
@@ -131,9 +131,9 @@ build pkg lbi verb xs extraRules = do
           putNormal "Unable to install: 'code' not found"
           putNormal $ "Package: " ++ absVsix
 
-    phony "register" $ need ["cabal-register"]
+    "register" ~> need ["cabal-register"]
 
-    phony "test" $ do
+    "test" ~> do
       need $ "cabal-test" : extDirExtensionFiles
       npm [] ["run-script","lint"]
       -- npm [] ["run-script","test"] -- download vscode and run the ext/test suite
