@@ -10,14 +10,27 @@ stability:     provisional
 homepage:      http://github.com/ekmett/coda/
 bug-reports:   http://github.com/ekmett/coda/issues
 copyright:     Copyright (C) 2017 Edward A. Kmett
+build-type:    Custom
 synopsis:      Coda
+
 description:
   This package provides Coda, an experimental Visual Studio Code langauge server.
-build-type:    Custom
+
 extra-source-files:
-  .travis.yml
+  .hlint.yaml
   CHANGELOG.md
   README.md
+  ext/.npmignore
+  ext/.vscodeignore
+  ext/bin/coda.sh
+  ext/*.ts
+  ext/test/*.ts
+  ext/*.json
+  test/data/message/*.golden
+  test/shim/Coda/Console/Unicode.hs
+  test/src/Coda/Message/Test.hs
+  var/package-lock.json
+  var/vscode.d.ts
 
 source-repository head
   type: git
