@@ -7,28 +7,38 @@
 <link type='text/css' rel='stylesheet' href='hscolour.css' />
 </head>
 <body>
-<pre><a name="line-1"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Util</span><span class='hs-varop'>.</span><span class='hs-conid'>Async</span> 
-<a name="line-2"></a>  <span class='hs-layout'>(</span> <span class='hs-varid'>waitAll</span>
-<a name="line-3"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>waitAllSTM</span>
-<a name="line-4"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>waitAll_</span>
-<a name="line-5"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>waitAllSTM_</span>
-<a name="line-6"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span> 
-<a name="line-7"></a>
-<a name="line-8"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Concurrent</span><span class='hs-varop'>.</span><span class='hs-conid'>Async</span>
-<a name="line-9"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Concurrent</span><span class='hs-varop'>.</span><span class='hs-conid'>STM</span>
+<pre><a name="line-1"></a><span class='hs-comment'>---------------------------------------------------------------------------------</span>
+<a name="line-2"></a><span class='hs-comment'>--- |</span>
+<a name="line-3"></a><span class='hs-comment'>--- Copyright :  (c) Edward Kmett 2017</span>
+<a name="line-4"></a><span class='hs-comment'>--- License   :  BSD2</span>
+<a name="line-5"></a><span class='hs-comment'>--- Maintainer:  Edward Kmett &lt;ekmett@gmail.com&gt;</span>
+<a name="line-6"></a><span class='hs-comment'>--- Stability :  experimental</span>
+<a name="line-7"></a><span class='hs-comment'>--- Portability: non-portable</span>
+<a name="line-8"></a><span class='hs-comment'>---</span>
+<a name="line-9"></a><span class='hs-comment'>---------------------------------------------------------------------------------</span>
 <a name="line-10"></a>
-<a name="line-11"></a><a name="waitAllSTM"></a><span class='hs-definition'>waitAllSTM</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>STM</span> <span class='hs-keyglyph'>[</span><span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span>
-<a name="line-12"></a><span class='hs-definition'>waitAllSTM</span> <span class='hs-conid'>[]</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>pure</span> <span class='hs-conid'>[]</span>
-<a name="line-13"></a><span class='hs-definition'>waitAllSTM</span> <span class='hs-layout'>(</span><span class='hs-varid'>x</span><span class='hs-conop'>:</span><span class='hs-varid'>xs</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-conop'>:</span><span class='hs-layout'>)</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitSTM</span> <span class='hs-varid'>x</span> <span class='hs-varop'>`orElse`</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitAllSTM</span> <span class='hs-varid'>xs</span> <span class='hs-varop'>*&gt;</span> <span class='hs-varid'>retry</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varop'>&lt;*&gt;</span> <span class='hs-varid'>waitAllSTM</span> <span class='hs-varid'>xs</span>
-<a name="line-14"></a>
-<a name="line-15"></a><a name="waitAll"></a><span class='hs-definition'>waitAll</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-keyglyph'>[</span><span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span>
-<a name="line-16"></a><span class='hs-definition'>waitAll</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>atomically</span> <span class='hs-varop'>.</span> <span class='hs-varid'>waitAllSTM</span>
+<a name="line-11"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Util</span><span class='hs-varop'>.</span><span class='hs-conid'>Async</span> 
+<a name="line-12"></a>  <span class='hs-layout'>(</span> <span class='hs-varid'>waitAll</span>
+<a name="line-13"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>waitAllSTM</span>
+<a name="line-14"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>waitAll_</span>
+<a name="line-15"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>waitAllSTM_</span>
+<a name="line-16"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span> 
 <a name="line-17"></a>
-<a name="line-18"></a><a name="waitAllSTM_"></a><span class='hs-definition'>waitAllSTM_</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>STM</span> <span class='hs-conid'>()</span>
-<a name="line-19"></a><span class='hs-definition'>waitAllSTM_</span> <span class='hs-conid'>[]</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>pure</span> <span class='hs-conid'>()</span>
-<a name="line-20"></a><span class='hs-definition'>waitAllSTM_</span> <span class='hs-layout'>(</span><span class='hs-varid'>x</span><span class='hs-conop'>:</span><span class='hs-varid'>xs</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitSTM</span> <span class='hs-varid'>x</span> <span class='hs-varop'>`orElse`</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitAllSTM_</span> <span class='hs-varid'>xs</span> <span class='hs-varop'>*&gt;</span> <span class='hs-varid'>retry</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varop'>*&gt;</span> <span class='hs-varid'>waitAllSTM_</span> <span class='hs-varid'>xs</span>
-<a name="line-21"></a>
-<a name="line-22"></a><a name="waitAll_"></a><span class='hs-definition'>waitAll_</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
-<a name="line-23"></a><span class='hs-definition'>waitAll_</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>atomically</span> <span class='hs-varop'>.</span> <span class='hs-varid'>waitAllSTM_</span>
+<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Concurrent</span><span class='hs-varop'>.</span><span class='hs-conid'>Async</span>
+<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Concurrent</span><span class='hs-varop'>.</span><span class='hs-conid'>STM</span>
+<a name="line-20"></a>
+<a name="line-21"></a><a name="waitAllSTM"></a><span class='hs-definition'>waitAllSTM</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>STM</span> <span class='hs-keyglyph'>[</span><span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span>
+<a name="line-22"></a><span class='hs-definition'>waitAllSTM</span> <span class='hs-conid'>[]</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>pure</span> <span class='hs-conid'>[]</span>
+<a name="line-23"></a><span class='hs-definition'>waitAllSTM</span> <span class='hs-layout'>(</span><span class='hs-varid'>x</span><span class='hs-conop'>:</span><span class='hs-varid'>xs</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-conop'>:</span><span class='hs-layout'>)</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitSTM</span> <span class='hs-varid'>x</span> <span class='hs-varop'>`orElse`</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitAllSTM</span> <span class='hs-varid'>xs</span> <span class='hs-varop'>*&gt;</span> <span class='hs-varid'>retry</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varop'>&lt;*&gt;</span> <span class='hs-varid'>waitAllSTM</span> <span class='hs-varid'>xs</span>
+<a name="line-24"></a>
+<a name="line-25"></a><a name="waitAll"></a><span class='hs-definition'>waitAll</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-keyglyph'>[</span><span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span>
+<a name="line-26"></a><span class='hs-definition'>waitAll</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>atomically</span> <span class='hs-varop'>.</span> <span class='hs-varid'>waitAllSTM</span>
+<a name="line-27"></a>
+<a name="line-28"></a><a name="waitAllSTM_"></a><span class='hs-definition'>waitAllSTM_</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>STM</span> <span class='hs-conid'>()</span>
+<a name="line-29"></a><span class='hs-definition'>waitAllSTM_</span> <span class='hs-conid'>[]</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>pure</span> <span class='hs-conid'>()</span>
+<a name="line-30"></a><span class='hs-definition'>waitAllSTM_</span> <span class='hs-layout'>(</span><span class='hs-varid'>x</span><span class='hs-conop'>:</span><span class='hs-varid'>xs</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitSTM</span> <span class='hs-varid'>x</span> <span class='hs-varop'>`orElse`</span> <span class='hs-layout'>(</span><span class='hs-varid'>waitAllSTM_</span> <span class='hs-varid'>xs</span> <span class='hs-varop'>*&gt;</span> <span class='hs-varid'>retry</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varop'>*&gt;</span> <span class='hs-varid'>waitAllSTM_</span> <span class='hs-varid'>xs</span>
+<a name="line-31"></a>
+<a name="line-32"></a><a name="waitAll_"></a><span class='hs-definition'>waitAll_</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Async</span> <span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
+<a name="line-33"></a><span class='hs-definition'>waitAll_</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>atomically</span> <span class='hs-varop'>.</span> <span class='hs-varid'>waitAllSTM_</span>
 </pre></body>
 </html>

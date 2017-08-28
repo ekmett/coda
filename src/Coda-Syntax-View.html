@@ -11,28 +11,38 @@
 <a name="line-2"></a><span class='hs-comment'>{-# language DeriveDataTypeable #-}</span>
 <a name="line-3"></a><span class='hs-comment'>{-# language DeriveGeneric #-}</span>
 <a name="line-4"></a>
-<a name="line-5"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Syntax</span><span class='hs-varop'>.</span><span class='hs-conid'>View</span>
-<a name="line-6"></a>  <span class='hs-layout'>(</span> <span class='hs-conid'>ViewL</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>ViewR</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
-<a name="line-7"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>ViewableL</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>ViewableR</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
-<a name="line-8"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-9"></a>
-<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Data</span>
-<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Generics</span>
-<a name="line-12"></a>
-<a name="line-13"></a><a name="ViewL"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ViewL</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
-<a name="line-14"></a>  <span class='hs-keyglyph'>=</span> <span class='hs-conid'>EmptyL</span>
-<a name="line-15"></a>  <span class='hs-keyglyph'>|</span> <span class='hs-varop'>!</span><span class='hs-varid'>a</span> <span class='hs-conop'>:&lt;</span> <span class='hs-varop'>!</span><span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span>
-<a name="line-16"></a>  <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Eq</span><span class='hs-layout'>,</span> <span class='hs-conid'>Ord</span><span class='hs-layout'>,</span> <span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>,</span> <span class='hs-conid'>Functor</span><span class='hs-layout'>,</span> <span class='hs-conid'>Foldable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Traversable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Data</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic1</span><span class='hs-layout'>)</span>
-<a name="line-17"></a>
-<a name="line-18"></a><a name="ViewR"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ViewR</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
-<a name="line-19"></a>  <span class='hs-keyglyph'>=</span> <span class='hs-conid'>EmptyR</span>
-<a name="line-20"></a>  <span class='hs-keyglyph'>|</span> <span class='hs-varop'>!</span><span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-conop'>:&gt;</span> <span class='hs-varop'>!</span><span class='hs-varid'>a</span>
-<a name="line-21"></a>  <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Eq</span><span class='hs-layout'>,</span> <span class='hs-conid'>Ord</span><span class='hs-layout'>,</span> <span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>,</span> <span class='hs-conid'>Functor</span><span class='hs-layout'>,</span> <span class='hs-conid'>Foldable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Traversable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Data</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic1</span><span class='hs-layout'>)</span>
-<a name="line-22"></a>    
-<a name="line-23"></a><span class='hs-keyword'>class</span> <span class='hs-conid'>ViewableL</span> <span class='hs-varid'>f</span> <span class='hs-keyword'>where</span>
-<a name="line-24"></a>  <span class='hs-varid'>viewL</span> <span class='hs-keyglyph'>::</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>ViewL</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
-<a name="line-25"></a>
-<a name="line-26"></a><span class='hs-keyword'>class</span> <span class='hs-conid'>ViewableR</span> <span class='hs-varid'>f</span> <span class='hs-keyword'>where</span>
-<a name="line-27"></a>  <span class='hs-varid'>viewR</span> <span class='hs-keyglyph'>::</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>ViewR</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-5"></a><span class='hs-comment'>---------------------------------------------------------------------------------</span>
+<a name="line-6"></a><span class='hs-comment'>--- |</span>
+<a name="line-7"></a><span class='hs-comment'>--- Copyright :  (c) Edward Kmett 2017</span>
+<a name="line-8"></a><span class='hs-comment'>--- License   :  BSD2</span>
+<a name="line-9"></a><span class='hs-comment'>--- Maintainer:  Edward Kmett &lt;ekmett@gmail.com&gt;</span>
+<a name="line-10"></a><span class='hs-comment'>--- Stability :  experimental</span>
+<a name="line-11"></a><span class='hs-comment'>--- Portability: non-portable</span>
+<a name="line-12"></a><span class='hs-comment'>---</span>
+<a name="line-13"></a><span class='hs-comment'>---------------------------------------------------------------------------------</span>
+<a name="line-14"></a>
+<a name="line-15"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Syntax</span><span class='hs-varop'>.</span><span class='hs-conid'>View</span>
+<a name="line-16"></a>  <span class='hs-layout'>(</span> <span class='hs-conid'>ViewL</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>ViewR</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
+<a name="line-17"></a>  <span class='hs-layout'>,</span> <span class='hs-conid'>ViewableL</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>ViewableR</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
+<a name="line-18"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-19"></a>
+<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Data</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Generics</span>
+<a name="line-22"></a>
+<a name="line-23"></a><a name="ViewL"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ViewL</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-24"></a>  <span class='hs-keyglyph'>=</span> <span class='hs-conid'>EmptyL</span>
+<a name="line-25"></a>  <span class='hs-keyglyph'>|</span> <span class='hs-varop'>!</span><span class='hs-varid'>a</span> <span class='hs-conop'>:&lt;</span> <span class='hs-varop'>!</span><span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span>
+<a name="line-26"></a>  <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Eq</span><span class='hs-layout'>,</span> <span class='hs-conid'>Ord</span><span class='hs-layout'>,</span> <span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>,</span> <span class='hs-conid'>Functor</span><span class='hs-layout'>,</span> <span class='hs-conid'>Foldable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Traversable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Data</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic1</span><span class='hs-layout'>)</span>
+<a name="line-27"></a>
+<a name="line-28"></a><a name="ViewR"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ViewR</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-29"></a>  <span class='hs-keyglyph'>=</span> <span class='hs-conid'>EmptyR</span>
+<a name="line-30"></a>  <span class='hs-keyglyph'>|</span> <span class='hs-varop'>!</span><span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-conop'>:&gt;</span> <span class='hs-varop'>!</span><span class='hs-varid'>a</span>
+<a name="line-31"></a>  <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Eq</span><span class='hs-layout'>,</span> <span class='hs-conid'>Ord</span><span class='hs-layout'>,</span> <span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>,</span> <span class='hs-conid'>Functor</span><span class='hs-layout'>,</span> <span class='hs-conid'>Foldable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Traversable</span><span class='hs-layout'>,</span> <span class='hs-conid'>Data</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic</span><span class='hs-layout'>,</span> <span class='hs-conid'>Generic1</span><span class='hs-layout'>)</span>
+<a name="line-32"></a>    
+<a name="line-33"></a><span class='hs-keyword'>class</span> <span class='hs-conid'>ViewableL</span> <span class='hs-varid'>f</span> <span class='hs-keyword'>where</span>
+<a name="line-34"></a>  <span class='hs-varid'>viewL</span> <span class='hs-keyglyph'>::</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>ViewL</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-35"></a>
+<a name="line-36"></a><span class='hs-keyword'>class</span> <span class='hs-conid'>ViewableR</span> <span class='hs-varid'>f</span> <span class='hs-keyword'>where</span>
+<a name="line-37"></a>  <span class='hs-varid'>viewR</span> <span class='hs-keyglyph'>::</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>ViewR</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
 </pre></body>
 </html>
