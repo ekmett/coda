@@ -71,10 +71,10 @@ import GHC.Generics
 --
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#-cancellation-support>
 
-pattern CancelRequest :: Id -> Notification Value
+pattern CancelRequest :: Id -> Notification_
 pattern CancelRequest identifier = Notification "$/cancelRequest" (Value_ identifier)
 
-_CancelRequest :: Prism' (Notification Value) Id
+_CancelRequest :: Prism' Notification_ Id
 _CancelRequest = prism' CancelRequest $ \case
   CancelRequest a -> Just a
   _ -> Nothing

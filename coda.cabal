@@ -21,6 +21,7 @@ extra-source-files:
   CHANGELOG.md
   README.md
   ext/.npmignore
+  ext/.vscode/*.json
   ext/.vscodeignore
   ext/bin/coda.sh
   ext/*.ts
@@ -116,6 +117,7 @@ library
     Coda.Util.Instances
     Coda.Util.Aeson
     Coda.Util.Async
+    Coda.Util.Cat
     Coda.Util.Pretty
     Coda.Util.STM
     Coda.Version

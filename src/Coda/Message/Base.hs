@@ -30,7 +30,8 @@ module Coda.Message.Base
   , Request_
 
     -- ** Notifications
-  , pattern RequestNotification, _RequestNotification
+  , pattern RequestNotification
+  , _RequestNotification
   , Notification(..)
   , Notification_
 

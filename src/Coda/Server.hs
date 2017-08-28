@@ -13,35 +13,41 @@ module Coda.Server
   ) where
 
 import Coda.Server.Options
+import Coda.Message.Builder
+import Coda.Message.Sink
 -- import Coda.Util.Async
--- import Control.Concurrent.MVar
+import Control.Concurrent.MVar
 import Control.Lens
 import Control.Logging
--- import Data.ByteString.Lazy as Lazy
--- import Data.String
--- import Data.Text
+import Data.Aeson
+import Data.ByteString.Lazy as Lazy
+import Data.String
+import Data.Text
 
 withLogging :: ServerOptions -> IO () -> IO ()
 withLogging opts m = case opts^.serverOptionsLog of
   Nothing -> withStderrLogging m
   Just f -> withFileLogging f m
 
--- jsonRpc :: Text
--- jsonRpc = fromString "JSON-RPC"
+jsonRpc :: Text
+jsonRpc = fromString "JSON-RPC"
 
--- withMVar_ :: MVar a -> IO b -> IO b
--- withMVar_ v m = withMVar v (const m)
+withMVar_ :: MVar a -> IO b -> IO b
+withMVar_ v m = withMVar v (const m)
 
 server :: ServerOptions -> IO ()
 server opts = withLogging opts $ do
   setLogLevel $ if opts^.serverOptionsDebug then LevelDebug else LevelWarn
-  print opts
-
-{-
   outputLock <- newMVar ()
   let output :: Sink Encoding
-      output = Sink (withMVar_ outputLock . putRpc)
-  input <- Lazy.getContents
+      output = Sink (withMVar_ outputLock . putEncoding)
+  _input <- Lazy.getContents
+  loggingLogger LevelError jsonRpc $ show opts
+  sink output $ toEncoding Null
+
+{-
+  -- now that we've got a place to write to and a supply of messages
+
   handle input output
  where
   handle :: Lazy.ByteString -> Sink Encoding -> IO ()
@@ -82,8 +88,8 @@ process value sink = case eitherDecode' value of
 batch :: Vector Value -> Sink Encoding -> IO ()
 batch xs =
 
-dispatch :: Request Value -> Sink Encoding -> IO ()
+dispatch :: Request_ -> Sink Encoding -> IO ()
 dispatch request out = do
 
-notification :: Notification Value -> Sink Encoding -> IO ()
+notification :: Notification_ -> Sink Encoding -> IO ()
 -}
