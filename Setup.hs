@@ -20,16 +20,16 @@ import Control.Monad (unless, when)
 import Data.Foldable (for_)
 import Data.List (intercalate)
 import Development.Shake as Shake
-import Development.Shake.FilePath
-import Distribution.Extra.Doctest (generateBuildModule)
-import Distribution.Package (pkgVersion)
-import Distribution.PackageDescription (PackageDescription, package)
-import Distribution.Simple (defaultMainWithHooks, UserHooks(..), simpleUserHooks)
-import Distribution.Simple.LocalBuildInfo (LocalBuildInfo(..))
-import Distribution.Simple.Program.Find (findProgramOnSearchPath, defaultProgramSearchPath)
-import Distribution.Simple.Setup (buildVerbosity, regVerbosity, copyVerbosity, testVerbosity, fromFlag, Flag(..))
+import Development.Shake.FilePath as Shake
+import Distribution.Extra.Doctest as Doctest
+import qualified Distribution.Package as Cabal
+import qualified Distribution.PackageDescription as Cabal hiding (Flag)
+import qualified Distribution.Simple as Cabal
+import qualified Distribution.Simple.LocalBuildInfo as Cabal
+import qualified Distribution.Simple.Program.Find as Cabal
+import qualified Distribution.Simple.Setup as Cabal
 import qualified Distribution.Verbosity as Cabal
-import Distribution.Version (Version(..))
+import Distribution.Version
 import System.Directory (makeAbsolute, copyFile, createDirectoryIfMissing, renameFile)
 import System.Environment (lookupEnv, withArgs)
 
@@ -43,49 +43,49 @@ reverb v
   | otherwise          = Shake.Diagnostic
 
 main :: IO ()
-main = defaultMainWithHooks simpleUserHooks
-  { buildHook = buildHook'
-  , regHook = regHook'
-  , testHook = testHook'
-  , copyHook = copyHook'
+main = Cabal.defaultMainWithHooks Cabal.simpleUserHooks
+  { Cabal.buildHook = buildHook'
+  , Cabal.regHook = regHook'
+  , Cabal.testHook = testHook'
+  , Cabal.copyHook = copyHook'
   } where
 
-  buildHook' pkg lbi hooks flags = build pkg lbi (buildVerbosity flags) "build" $ do
+  buildHook' pkg lbi hooks flags = build pkg lbi (Cabal.buildVerbosity flags) "build" $ do
     cabal <- newResource "cabal" 1
     "cabal-build" ~> do
       putLoud "Building with cabal"
       withResource cabal 1 $ liftIO $ do
         -- don't do these first two in parallel as they may clobber the same file!
-        generateBuildModule "doctest" flags pkg lbi
-        generateBuildModule "hlint" flags pkg lbi
-        buildHook simpleUserHooks pkg lbi hooks flags
+        Doctest.generateBuildModule "doctest" flags pkg lbi
+        Doctest.generateBuildModule "hlint" flags pkg lbi
+        Cabal.buildHook Cabal.simpleUserHooks pkg lbi hooks flags
 
-  regHook' pkg lbi hooks flags = build pkg lbi (regVerbosity flags) "register" $ do
+  regHook' pkg lbi hooks flags = build pkg lbi (Cabal.regVerbosity flags) "register" $ do
     cabal <- newResource "cabal" 1
     "cabal-build" ~> pure ()
     "cabal-register" ~> do
       putLoud "Registering with cabal"
-      withResource cabal 1 $ liftIO $ regHook simpleUserHooks pkg lbi hooks flags
+      withResource cabal 1 $ liftIO $ Cabal.regHook Cabal.simpleUserHooks pkg lbi hooks flags
 
-  copyHook' pkg lbi hooks flags = build pkg lbi (copyVerbosity flags) "copy" $ do
+  copyHook' pkg lbi hooks flags = build pkg lbi (Cabal.copyVerbosity flags) "copy" $ do
     cabal <- newResource "cabal" 1
     "cabal-build" ~> pure ()
     "cabal-copy" ~> do
       putLoud "Copying with cabal"
-      withResource cabal 1 $ liftIO $ copyHook simpleUserHooks pkg lbi hooks flags
+      withResource cabal 1 $ liftIO $ Cabal.copyHook Cabal.simpleUserHooks pkg lbi hooks flags
 
-  testHook' args pkg lbi hooks flags = build pkg lbi (testVerbosity flags) "test" $ do
+  testHook' args pkg lbi hooks flags = build pkg lbi (Cabal.testVerbosity flags) "test" $ do
     cabal <- newResource "cabal" 1
     "cabal-test" ~> do
       putLoud "Testing with cabal"
-      withResource cabal 1 $ liftIO $ testHook simpleUserHooks args pkg lbi hooks flags
+      withResource cabal 1 $ liftIO $ Cabal.testHook Cabal.simpleUserHooks args pkg lbi hooks flags
 
-build :: PackageDescription -> LocalBuildInfo -> Flag Cabal.Verbosity -> String -> Rules () -> IO ()
+build :: Cabal.PackageDescription -> Cabal.LocalBuildInfo -> Cabal.Flag Cabal.Verbosity -> String -> Shake.Rules () -> IO ()
 build pkg lbi verb xs extraRules = do
-  let ver = intercalate "." [ show x | x <- tail $ versionNumbers $ pkgVersion (package pkg) ]
-      vsix = buildDir lbi </> ("coda-" ++ ver) <.> "vsix"
-      extDir = buildDir lbi </> "ext"
-      coda_exe = buildDir lbi </> "coda" </> "coda" <.> exe
+  let ver = intercalate "." [ show x | x <- tail $ versionNumbers $ Cabal.pkgVersion (Cabal.package pkg) ]
+      vsix = Cabal.buildDir lbi </> ("coda-" ++ ver) <.> "vsix"
+      extDir = Cabal.buildDir lbi </> "ext"
+      coda_exe = Cabal.buildDir lbi </> "coda" </> "coda" <.> exe
       progress p = lookupEnv "CI" >>= \case
         Just "true" -> return ()
         _ -> do
@@ -96,17 +96,17 @@ build pkg lbi verb xs extraRules = do
   markdownFiles <- getDirectoryFilesIO "" ["*.md"]
   has_cached_vscode_d_ts <- not . null <$> getDirectoryFilesIO "var" ["vscode.d.ts"]
   has_cached_package_lock <- not . null <$> getDirectoryFilesIO "var" ["package-lock.json"]
-  let node_modules = buildDir lbi </> "ext_node_modules_installed"
+  let node_modules = Cabal.buildDir lbi </> "ext_node_modules_installed"
   let vscode_d_ts = extDir </> "node_modules/vscode/vscode.d.ts"
   let package_lock = extDir </> "package-lock.json"
   let extDirExtensionFiles = map (extDir </>) extensionFiles
 
   withArgs [xs] $ shakeArgs shakeOptions
-      { shakeFiles = buildDir lbi
+      { shakeFiles = Cabal.buildDir lbi
       , shakeThreads = 0
       , shakeProgress = progress
       , shakeLineBuffering = False
-      , shakeVerbosity = reverb (fromFlag verb)
+      , shakeVerbosity = reverb (Cabal.fromFlag verb)
       } $ do
     action $ putLoud $ "Running " ++ xs
 
@@ -120,7 +120,7 @@ build pkg lbi verb xs extraRules = do
 
     "copy" ~> do
       need ["cabal-copy", vsix]
-      liftIO (findProgramOnSearchPath Cabal.verbose defaultProgramSearchPath "code") >>= \case
+      liftIO (Cabal.findProgramOnSearchPath Cabal.verbose Cabal.defaultProgramSearchPath "code") >>= \case
         Just (code, _) -> do
           command_ [] code ["--install-extension", vsix]
           putNormal "Installed into Visual Studio Code"
