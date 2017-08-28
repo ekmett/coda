@@ -13,7 +13,6 @@ module Coda.Syntax.Line
   , AlexInput(..)
   , advanceInput
   , alexGetByte
-  , deltaInput
   ) where
 
 import Coda.Syntax.Delta
@@ -22,6 +21,7 @@ import Coda.Util.Primitive
 import Control.Lens (AsEmpty(..), prism)
 import Control.Monad.ST
 import Data.Bits
+import Data.ByteString.Internal
 import Data.Primitive.ByteArray
 import Data.Semigroup
 import Data.String
@@ -40,7 +40,9 @@ import Unsafe.Coerce
 -- | Invariants 
 --
 -- * The only occurrences of '\n', '\r' or "\r\n" are at the end of the ByteArray
+-- * Valid UTF-8 encoding
 -- TODO: store if the line is ASCII?
+
 newtype Line = Line ByteArray
 
 instance Eq Line where
@@ -53,13 +55,7 @@ size :: Line -> Int
 size (Line ba) = sizeofByteArray ba
 
 instance Show Line where
-  showsPrec d xs = showsPrec d (Exts.toList xs)
-
-write8_16 :: MutableByteArray s -> Int -> Word16 -> ST s ()
-write8_16 mba i a = writeByteArray mba i (fromIntegral a :: Word8)
-
-write8_32 :: MutableByteArray s -> Int -> Word32 -> ST s ()
-write8_32 mba i a = writeByteArray mba i (fromIntegral a :: Word8)
+  showsPrec d xs = showsPrec d $ unsafePackLenBytes (size xs) $ Exts.toList xs
 
 -- encoding error
 data EncodingError = EncodingError Delta String
@@ -77,20 +73,23 @@ encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
       Nothing              -> Right . Line <$> unsafeFreezeByteArray mba
       
   where
+    write8 :: Integral a => MutableByteArray s -> Int -> a -> ST s ()
+    write8 mba i a = writeByteArray mba i (fromIntegral a :: Word8)
+
     go :: MutableByteArray s -> ByteArray -> Int -> Int -> Int -> ST s (Maybe (Int,Int,String))
     go !mba !_ !_ 0 !boff = Nothing <$ shrinkMutableByteArray mba boff
     go mba tba toff tlen boff 
       | c < 0x80 = do
-        write8_16 mba boff c
+        write8 mba boff c
         go mba tba (toff+1) (tlen-1) (boff+1)
       | c < 0x800 = do
-        write8_16 mba boff     $ 0xc0 + unsafeShiftR c 6
-        write8_16 mba (boff+1) $ 0x80 + (c .&. 0x3f)
+        write8 mba boff     $ 0xc0 + unsafeShiftR c 6
+        write8 mba (boff+1) $ 0x80 + (c .&. 0x3f)
         go mba tba (toff+1) (tlen-1) (boff+2)
       | c < 0xd800 = do
-        write8_16 mba boff     $ 0xe0 + unsafeShiftR c 12
-        write8_16 mba (boff+1) $ 0x80 + (unsafeShiftR c 6 .&. 0x3f)
-        write8_16 mba (boff+2) $ 0x80 + (c .&. 0x3f)
+        write8 mba boff     $ 0xe0 + unsafeShiftR c 12
+        write8 mba (boff+1) $ 0x80 + (unsafeShiftR c 6 .&. 0x3f)
+        write8 mba (boff+2) $ 0x80 + (c .&. 0x3f)
         go mba tba (toff+1) (tlen-1) (boff+3)
       | c < 0xdc00 = 
         if tlen > 1 
@@ -100,20 +99,19 @@ encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
           then return $ Just (toff, boff, "expected low surrogate")
           else do
             let !w = unsafeShiftL (fromIntegral (c - 0xd800)) 10 + fromIntegral (c2 - 0xdc00) + 0x0010000 :: Word32
-            write8_32 mba boff     $ 0xf0 + unsafeShiftR w 18
-            write8_32 mba (boff+1) $ 0x80 + (unsafeShiftR w 12 .&. 0x3f)
-            write8_32 mba (boff+2) $ 0x80 + (unsafeShiftR w 6 .&. 0x3f)
-            write8_32 mba (boff+3) $ 0x80 + (w .&. 0x3f)
+            write8 mba boff     $ 0xf0 + unsafeShiftR w 18
+            write8 mba (boff+1) $ 0x80 + (unsafeShiftR w 12 .&. 0x3f)
+            write8 mba (boff+2) $ 0x80 + (unsafeShiftR w 6 .&. 0x3f)
+            write8 mba (boff+3) $ 0x80 + (w .&. 0x3f)
             go mba tba (toff+2) (tlen-2) (boff+4)
       | c <= 0xdfff = return $ Just (toff, boff, fail "unexpected low surrogate")
       | otherwise = do
-        write8_16 mba boff     $ 0xe0 + unsafeShiftR c 12
-        write8_16 mba (boff+1) $ 0x80 + (unsafeShiftR c 6 .&. 0x3f)
-        write8_16 mba (boff+2) $ 0x80 + (c .&. 0x3f)
+        write8 mba boff     $ 0xe0 + unsafeShiftR c 12
+        write8 mba (boff+1) $ 0x80 + (unsafeShiftR c 6 .&. 0x3f)
+        write8 mba (boff+2) $ 0x80 + (c .&. 0x3f)
         go mba tba (toff+1) (tlen-1) (boff+3)
       where !c = indexByteArray tba toff :: Word16
      
-      
 instance IsString Line where
   fromString xs = case encodeLine (Text.pack xs) of
     Left e -> error (show e)
@@ -131,7 +129,6 @@ instance IsList Line where
       go mba _ [] = unsafeFreezeByteArray mba
   toList l = (l!!) <$> [0 .. size l - 1]
 
-
 instance AsEmpty Line where
   _Empty = prism (const emptyLine) $ \l -> if size l == 0
     then Right ()
@@ -144,17 +141,15 @@ emptyLine = Line $ runST $ newPinnedByteArray 0 >>= unsafeFreezeByteArray
 -- |
 -- Invariants:
 --
--- * all lines in 'alexInputLines' are distinct
 -- * all lines in 'alexInputLines' are non-empty
 data AlexInput = AlexInput 
-  { alexInputCol8  :: {-# unpack #-} !Int
-  , alexInputCol16 :: {-# unpack #-} !Int
+  { alexInputDelta :: {-# unpack #-} !Delta
   , alexInputLines :: !(Multi Line)
   } deriving Show
 
 advanceInput :: AlexInput -> Delta -> AlexInput
-advanceInput (AlexInput a8 a16 xs) (Delta 0 b8 b16) = AlexInput (a8 + b8) (a16 + b16) xs
-advanceInput (AlexInput _ _    xs) (Delta l b8 b16) = AlexInput b8 b16 (Multi.drop l xs)
+advanceInput (AlexInput l xs) r = AlexInput (l <> r) (Multi.drop (deltaLine r) xs)
+{-# inline advanceInput #-}
 
 -- |
 -- Change in UTF-16 code unit count from a UTF-8 byte
@@ -176,31 +171,15 @@ bump16 w
 -- Ideally we'd simply provide a monoid 'Delta' that acts on 'AlexInput'
 -- but @alex@ isn't that sophisticated.
 --
--- >>> List.unfoldr alexGetByte (AlexInput 0 0 ["hello\n","world"])
+-- >>> List.unfoldr alexGetByte $ AlexInput mempty ["hello\n","world"]
 -- [104,101,108,108,111,10,119,111,114,108,100]
 
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte (AlexInput _ _ Nil) = Nothing
-alexGetByte (AlexInput c8 c16 lls@(Cons l ls))
+alexGetByte (AlexInput _ Nil) = Nothing
+alexGetByte (AlexInput (Delta p c8 c16) lls@(Cons l ls))
   | c8 < size l
-  , !w8 <- l !! c8 = Just (w8, AlexInput (c8+1) (c16 + bump16 w8) lls)
+  , !w8 <- l !! c8 = Just (w8, AlexInput (Delta p (c8+1) (c16 + bump16 w8)) lls)
   | otherwise = case remainder ls of
       Nil -> Nothing
-      lls'@(Cons l' _) | w8 <- l' !! 0 -> Just (w8, AlexInput 1 (bump16 w8) lls')
-
--- | Invariant:
---
--- @'delta' xs ys@ assumes @ys@ was derived from @xs@ by a series of calls to 'alexGetByte'
---
--- This should be used inside of the lexer to compute relative positions
---
--- O(n) in the number of lines between the start and ending position, usually just 0.
--- 
--- This allows AlexInput to avoid stashing the relative line the 
-deltaInput :: AlexInput -> AlexInput -> Delta
-deltaInput (AlexInput _ _ as) (AlexInput _ _ Nil) = Delta (Prelude.length as) 0 0
-deltaInput (AlexInput a80 a160 as0) (AlexInput b80 b160 (Cons bxs0 _)) = go b80 b160 bxs0 0 a80 a160 as0 where
-  go !_ !_ !_ !_ !_ !_ Nil = error "delta: position not found"
-  go b8 b16 bxs n a8 a16 (Cons axs q)
-    | axs == bxs = Delta n (b16 - a16) (b8 - a8)
-    | otherwise = go b8 b16 bxs (n+1) 0 0 (remainder q)
+      lls'@(Cons l' _) | w8 <- l' !! 0 -> Just (w8, AlexInput (Delta (p+1) 1 (bump16 w8)) lls')
+{-# inline alexGetByte #-}
