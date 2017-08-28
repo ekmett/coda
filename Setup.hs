@@ -101,7 +101,6 @@ build pkg lbi verb xs extraRules = do
   let package_lock = extDir </> "package-lock.json"
   let extDirExtensionFiles = map (extDir </>) extensionFiles
 
-
   withArgs [xs] $ shakeArgs shakeOptions
       { shakeFiles = buildDir lbi
       , shakeThreads = 0

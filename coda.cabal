@@ -37,10 +37,6 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
-flag use-path
-  default: False
-  manual: True
-
 flag test-doctests
   default: True
   manual: True
@@ -83,6 +79,7 @@ library
     containers           >= 0.5     && < 0.6,
     contravariant        >= 1.4     && < 2,
     exceptions           >= 0.8.2.1 && < 0.9,
+    ghc-prim,
     haskeline            >= 0.7.4   && < 0.8,
     hashable             >= 1.2.6   && < 1.3,
     hyphenation          >= 0.7     && < 0.8,
@@ -91,6 +88,7 @@ library
     logging              >= 3.0.4   && < 3.1,
     mtl                  >= 2.2.1   && < 2.3,
     optparse-applicative >= 0.14    && < 0.15,
+    primitive            >= 0.6     && < 0.7,
     unordered-containers >= 0.2     && < 0.3,
     scientific           >= 0.3     && < 0.4,
     split                >= 0.2     && < 0.3,
@@ -114,11 +112,14 @@ library
     Coda.Server
     Coda.Server.Options
     Coda.Syntax.Keywords
+    Coda.Syntax.Line
+    Coda.Syntax.Multi
+    Coda.Syntax.View
     Coda.Util.Instances
     Coda.Util.Aeson
     Coda.Util.Async
-    Coda.Util.Cat
     Coda.Util.Pretty
+    Coda.Util.Primitive
     Coda.Util.STM
     Coda.Version
 
