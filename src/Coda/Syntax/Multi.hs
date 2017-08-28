@@ -16,7 +16,7 @@
 ---
 ---------------------------------------------------------------------------------
 
-module Coda.Syntax.Multi 
+module Coda.Syntax.Multi
   ( Multi(..)
   , drop
   -- * Internals
@@ -43,7 +43,7 @@ data B a
   | B2 !(P a)
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
-data Q a 
+data Q a
   = Q0
   | Q1 a
   | QN !(B a) !(Q (P a)) !(B a)
@@ -70,10 +70,10 @@ instance ViewableL Q where
     EmptyL -> case r of
       B1 x -> Q1 x
       B2 (P x y) -> QN (B1 x) Q0 (B1 y)
-  
+
 -- | An Okasaki-style catenable list
--- 
--- 'mappend', 'cons', 'snoc', 'uncons' are all O(1)
+--
+-- 'mappend', 'cons', 'snoc', 'uncons' are all \(\mathcal{O}(1)\)
 data Multi a
   = Nil
   | Cons !a !(Q (Multi a))
@@ -122,9 +122,10 @@ link Nil s = s -- never happens
 linkAll :: Multi a -> Q (Multi a) -> Multi a
 linkAll t q' = case viewL q' of
   EmptyL -> t
-  x :< q'' -> link t (linkAll x q'') 
+  x :< q'' -> link t (linkAll x q'')
 
--- | /O(1 + e)/ where @e@ is the number of empty entries in Q
+-- |
+-- \(\mathcal{O}(1 + e)\) where @e@ is the number of empty entries in Q
 remainder :: Q (Multi a) -> Multi a
 remainder q = case viewL q of
   EmptyL -> Nil
@@ -143,7 +144,7 @@ instance Cons (Multi a) (Multi b) a b where
     project (Cons a q) = Right (a, remainder q)
 
 instance AsEmpty (Multi a) where
-  _Empty = prism (const Nil) $ \case 
+  _Empty = prism (const Nil) $ \case
     Nil -> Right ()
     x   -> Left x
 
@@ -159,7 +160,7 @@ instance IsList (Multi a) where
   fromList = foldr cons Nil
   toList = Foldable.toList
 
--- | /O(n)/
+-- | \(\mathcal{O}(k)\) in @k@ the number of characters being dropped.
 drop :: Int -> Multi a -> Multi a
 drop 0 !xs = xs
 drop _ Nil  = Nil
