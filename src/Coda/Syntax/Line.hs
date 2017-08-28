@@ -2,8 +2,8 @@
 {-# language BangPatterns #-}
 {-# language TypeFamilies #-}
 
-module Coda.Syntax.Line 
-  ( 
+module Coda.Syntax.Line
+  (
   -- * A UTF-8 encoded line
     Line(..)
   , (!!)
@@ -11,6 +11,7 @@ module Coda.Syntax.Line
   , EncodingError(..)
   -- * Alex Support
   , AlexInput(..)
+  , alexInputPrevChar
   , advanceInput
   , alexGetByte
   ) where
@@ -37,7 +38,7 @@ import Unsafe.Coerce
 -- >>> :set -XOverloadedStrings -XOverloadedLists
 -- >>> import Data.List as List (unfoldr)
 
--- | Invariants 
+-- | Invariants
 --
 -- * The only occurrences of '\n', '\r' or "\r\n" are at the end of the ByteArray
 -- * Valid UTF-8 encoding
@@ -71,14 +72,14 @@ encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
     go mba (ByteArray tba0) toff0 tlen0 0 >>= \case
       Just (toff,boff,msg) -> pure $ Left (EncodingError (Delta 0 (toff-toff0) boff) msg)
       Nothing              -> Right . Line <$> unsafeFreezeByteArray mba
-      
+
   where
     write8 :: Integral a => MutableByteArray s -> Int -> a -> ST s ()
     write8 mba i a = writeByteArray mba i (fromIntegral a :: Word8)
 
     go :: MutableByteArray s -> ByteArray -> Int -> Int -> Int -> ST s (Maybe (Int,Int,String))
     go !mba !_ !_ 0 !boff = Nothing <$ shrinkMutableByteArray mba boff
-    go mba tba toff tlen boff 
+    go mba tba toff tlen boff
       | c < 0x80 = do
         write8 mba boff c
         go mba tba (toff+1) (tlen-1) (boff+1)
@@ -91,11 +92,11 @@ encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
         write8 mba (boff+1) $ 0x80 + (unsafeShiftR c 6 .&. 0x3f)
         write8 mba (boff+2) $ 0x80 + (c .&. 0x3f)
         go mba tba (toff+1) (tlen-1) (boff+3)
-      | c < 0xdc00 = 
-        if tlen > 1 
+      | c < 0xdc00 =
+        if tlen > 1
         then return $ Just (toff, boff, "unpaired surrogate")
         else let !c2 = indexByteArray tba (toff+1) :: Word16 in
-          if 0xdc00 <= c2 && c2 < 0xe000 
+          if 0xdc00 <= c2 && c2 < 0xe000
           then return $ Just (toff, boff, "expected low surrogate")
           else do
             let !w = unsafeShiftL (fromIntegral (c - 0xd800)) 10 + fromIntegral (c2 - 0xdc00) + 0x0010000 :: Word32
@@ -111,7 +112,7 @@ encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
         write8 mba (boff+2) $ 0x80 + (c .&. 0x3f)
         go mba tba (toff+1) (tlen-1) (boff+3)
       where !c = indexByteArray tba toff :: Word16
-     
+
 instance IsString Line where
   fromString xs = case encodeLine (Text.pack xs) of
     Left e -> error (show e)
@@ -123,7 +124,7 @@ instance IsList Line where
   fromListN n xs0 = Line $ runST $ do
       mba <- newByteArray n
       go mba 0 xs0
-    where 
+    where
       go :: MutableByteArray s -> Int -> [Word8] -> ST s ByteArray
       go !mba !i (x:xs) = writeByteArray mba i x >> go mba (i + 1) xs
       go mba _ [] = unsafeFreezeByteArray mba
@@ -142,10 +143,28 @@ emptyLine = Line $ runST $ newPinnedByteArray 0 >>= unsafeFreezeByteArray
 -- Invariants:
 --
 -- * all lines in 'alexInputLines' are non-empty
-data AlexInput = AlexInput 
-  { alexInputDelta :: {-# unpack #-} !Delta
-  , alexInputLines :: !(Multi Line)
+data AlexInput = AlexInput
+  { alexInputDelta    :: {-# unpack #-} !Delta
+  , alexInputLines    :: !(Multi Line)
   } deriving Show
+
+-- |
+-- >>> alexInputPrevChar $ AlexInput (Delta 0 1 1) ["a"]
+-- 'a'
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (AlexInput (Delta _ _ b) (Cons l _))
+  = if b <= 0 then '\n'                                     else let !t0 = fromIntegral $ l!!(b-1)                             in
+    if hb t0  then toEnum (t0 .&. 0x7f)                     else let !t0' = t0 .&. 0x3f                         in
+    if b <= 1 then backtrackingError                        else let !t1 = fromIntegral $ l!!(b-2)                             in
+    if hb t1  then toEnum (unsafeShiftL (t1-192) 6 + t0')   else let !t1' = unsafeShiftL (t1 .&. 0x3f) 6 + t0'  in
+    if b <= 2 then backtrackingError                        else let !t2 = fromIntegral $ l!!(b-3)                             in
+    if hb t2  then toEnum (unsafeShiftL (t2-224) 12 + t1')  else let !t2' = unsafeShiftL (t2 .&. 0x3f) 12 + t1' in
+    if b <= 3 then backtrackingError                        else toEnum (unsafeShiftL (fromIntegral (l!!(b-4))-240) 18 + t2')
+  where hb x = x .&. 0xc0 /= 0x70 -- non 10xxxxxx UTF-8 tailbyte
+alexInputPrevChar _ = '\n'
+
+backtrackingError :: a
+backtrackingError = error "alexGetPrevChar: backtracking error"
 
 advanceInput :: AlexInput -> Delta -> AlexInput
 advanceInput (AlexInput l xs) r = AlexInput (l <> r) (Multi.drop (deltaLine r) xs)
@@ -167,7 +186,7 @@ bump16 w
   | w <= 223  = 1
   | otherwise = 2
 
--- | 
+-- |
 -- Ideally we'd simply provide a monoid 'Delta' that acts on 'AlexInput'
 -- but @alex@ isn't that sophisticated.
 --
