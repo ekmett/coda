@@ -56,7 +56,7 @@ main = defaultMainWithHooks simpleUserHooks
       putLoud "Building with cabal"
       withResource cabal 1 $ liftIO $ do
         -- don't do these first two in parallel as they may clobber the same file!
-        generateBuildModule "doctests" flags pkg lbi
+        generateBuildModule "doctest" flags pkg lbi
         generateBuildModule "hlint" flags pkg lbi
         buildHook simpleUserHooks pkg lbi hooks flags
 

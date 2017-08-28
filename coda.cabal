@@ -37,7 +37,7 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
-flag test-doctests
+flag test-doctest
   default: True
   manual: True
 
@@ -140,14 +140,14 @@ executable coda
   hs-source-dirs: main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
 
-test-suite doctests
+test-suite doctest
   type: exitcode-stdio-1.0
   default-language: Haskell2010
-  main-is: doctests.hs
+  main-is: doctest.hs
   hs-source-dirs: test/main
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   other-modules: Build
-  if !flag(test-doctests)
+  if !flag(test-doctest)
     buildable: False
   else
     build-tools: coda
@@ -191,7 +191,6 @@ test-suite tasty
   main-is: tasty.hs
   hs-source-dirs: test/main test/src
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  cpp-options: -DTEST_TASTY
   other-modules:
     Coda.Message.Test
   if !flag(test-tasty)
