@@ -265,7 +265,6 @@ licenseMap = Map.fromList
   , (Cabal.ISC,"ISC")
   ]
 
--- we can install this into the target bundle
 haskellLicenseList :: Map Cabal.License [InstalledPackageInfo] -> String
 haskellLicenseList byLicense = unlines $ fst $ do
   for_ (Map.toList byLicense) $ \(license, ipis) -> do
@@ -276,13 +275,15 @@ haskellLicenseList byLicense = unlines $ fst $ do
     put ""
     for_ (sortBy (compare `on` getName) ipis) $ \ipi -> do
       let name = getName ipi
-      put $ "- [" ++ name ++ "](http://hackage.haskell.org/package/" ++ name ++ ") by " ++ getAuthor ipi
-      -- traverse_ put $ (\x -> "  - " ++ dropWhile isSpace x) <$> lines (getCopyright ipi)
+      put $ "- [" ++ name ++ "](http://hackage.haskell.org/package/" ++ name ++ ") by " ++ getAuthorOrMaintainer ipi
   where
-    getName = Cabal.display . Cabal.pkgName . InstalledPackageInfo.sourcePackageId
-    -- getCopyright = InstalledPackageInfo.copyright
+    getName = Cabal.display . {- Cabal.pkgName . -} InstalledPackageInfo.sourcePackageId
     getAuthor = unwords . lines . InstalledPackageInfo.author
-    -- getSynopsis = InstalledPackageInfo.synopsis
+    getMaintainer = unwords . lines . InstalledPackageInfo.maintainer
+    getAuthorOrMaintainer ip
+      | a == ""   = getMaintainer ip
+      | otherwise = a
+      where a = getAuthor ip
 
 put :: String -> ([String],())
 put x = ([x],())
@@ -305,8 +306,7 @@ nodeLicenseList xs = case decode xs of
          let displayName = case repo of
                Just r -> "[" ++ pkg ++ "](" ++ r ++ ")"
                Nothing -> pkg
-         put $ "- " ++ displayName ++ maybe "" (" by " ++) publisher
-         put $ "  - " ++ "[License](" ++ licenseFile ++ ")"
+         put $ "- " ++ displayName ++ maybe "" (" by " ++) publisher ++ " [**[LICENSE]**](" ++ licenseFile ++ ")"
 
 #if !MIN_VERSION_Cabal(2,0,0)
 versionNumbers :: Version -> [Int]

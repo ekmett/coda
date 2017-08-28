@@ -83,7 +83,7 @@ License
 
 [BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause).
 
-See [LICENCE.md](LICENSE.md)
+See [LICENSE.md](LICENSE.md)
 
 Contact Information
 ===================
