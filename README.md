@@ -18,6 +18,7 @@ This also serves as an experiment in employing [`shake`][shake] inside of a cust
 - [Requirements](#requirements)
 - [Documentation](#documentation)
 - [Directories](#directories)
+- [License](#license)
 - [Contact Information](#contact-information)
 
 Installation
@@ -76,6 +77,13 @@ Directories
 | test/main | Where to find `Main.hs` for test suites |
 | test/src  | tasty tests |
 | var       | A cache that may (infrequently) be changed during the build. Can be safely deleted |
+
+License
+=======
+
+[BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause).
+
+See [LICENCE.md](LICENSE.md)
 
 Contact Information
 ===================

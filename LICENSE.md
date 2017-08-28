@@ -1,3 +1,5 @@
+# License
+
 Copyright 2017 Edward Kmett
 Copyright 2012-2014 Edward Kmett and Dan Doel
 

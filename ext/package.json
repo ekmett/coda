@@ -38,6 +38,7 @@
   "devDependencies": {
     "@types/mocha": "^2.2.33",
     "@types/node": "^6.0.52",
+    "license-checker": "^14.0.0",
     "tslint": "^5.6.0",
     "typescript": "^2.4.2",
     "vsce": "^1.30.0",
