@@ -4,7 +4,6 @@
 [![Appveyor Continuous Integration Status][appveyor-img]][appveyor]
 [![Circle Continuous Integration Status][circle-img]][circle]
 
-
 This package will eventually provide a toy compiler for experimenting with resumable parsing.
 
 The application is designed as a plugin for Visual Studio Code.
@@ -69,7 +68,7 @@ Directories
 | bin       | Executable scripts used by CI |
 | etc       | Configuration used by CI |
 | ext       | Template files used to build the extension |
-| ext/test  | The vscoe test suite for the extension |
+| ext/test  | The VS Code test suite for the extension |
 | main      | Where to find `Main.hs` for executable haskell files |
 | src       | coda library source code |
 | test/data | data files used by the test suite |
@@ -97,7 +96,7 @@ Please feel free to contact me through github or on the ##coda or #haskell IRC c
  [appveyor]: https://ci.appveyor.com/project/ekmett/coda
  [appveyor-img]: https://ci.appveyor.com/api/projects/status/github/ekmett/coda?branch=master&svg=true
  [circle]: https://circleci.com/gh/ekmett/coda
- [circle-img]: https://circleci.com/gh/ekmett/coda.png?style=shield
+ [circle-img]: https://img.shields.io/circleci/project/github/ekmett/coda.png
  [debugging-extensions]: https://code.visualstudio.com/docs/extensions/debugging-extensions
  [shake]: http://shakebuild.com/
  [travis]: http://travis-ci.org/ekmett/coda
