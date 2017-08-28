@@ -26,8 +26,8 @@
   "scripts": {
     "prepare": "node ./node_modules/vscode/bin/install && tsc -p ./",
     "lint": "tslint *.ts",
+    "watch": "tsc -watch -p ./",
     "compile": "tsc -p ./",
-    "watch": "tsc -w -p ./",
     "update-vscode": "node ./node_modules/vscode/bin/install",
     "test": "node ./node_modules/vscode/bin/test"
   },
@@ -56,7 +56,8 @@
         ],
         "aliases": [
           "Coda"
-        ]
+        ],
+        "configuration": "./coda.configuration.json"
       }
     ]
   }
