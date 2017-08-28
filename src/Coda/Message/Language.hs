@@ -6,6 +6,7 @@
 {-# language DeriveDataTypeable #-}
 {-# language OverloadedStrings #-}
 {-# language GeneralizedNewtypeDeriving #-}
+
 --------------------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett 2017
@@ -16,6 +17,7 @@
 --
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md Language Server Protocol>
 --------------------------------------------------------------------------------
+
 module Coda.Message.Language
   (
   -- * Cancellation Support

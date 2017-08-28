@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+{-# options_ghc -fno-warn-type-defaults #-}
 
 --------------------------------------------------------------------
 -- |

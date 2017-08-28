@@ -2,6 +2,16 @@
 {-# language DeriveDataTypeable #-}
 {-# language DeriveGeneric #-}
 
+---------------------------------------------------------------------------------
+--- |
+--- Copyright :  (c) Edward Kmett 2017
+--- License   :  BSD2
+--- Maintainer:  Edward Kmett <ekmett@gmail.com>
+--- Stability :  experimental
+--- Portability: non-portable
+---
+---------------------------------------------------------------------------------
+
 module Coda.Syntax.View
   ( ViewL(..), ViewR(..)
   , ViewableL(..), ViewableR(..)
