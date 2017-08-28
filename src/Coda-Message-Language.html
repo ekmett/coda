@@ -80,10 +80,10 @@
 <a name="line-71"></a><span class='hs-comment'>--</span>
 <a name="line-72"></a><span class='hs-comment'>-- &lt;https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#-cancellation-support&gt;</span>
 <a name="line-73"></a>
-<a name="line-74"></a><a name="pattern"></a><span class='hs-definition'>pattern</span> <span class='hs-conid'>CancelRequest</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Id</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Notification</span> <span class='hs-conid'>Value</span>
+<a name="line-74"></a><a name="pattern"></a><span class='hs-definition'>pattern</span> <span class='hs-conid'>CancelRequest</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Id</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Notification_</span>
 <a name="line-75"></a><span class='hs-definition'>pattern</span> <span class='hs-conid'>CancelRequest</span> <span class='hs-varid'>identifier</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Notification</span> <span class='hs-str'>"$/cancelRequest"</span> <span class='hs-layout'>(</span><span class='hs-conid'>Value_</span> <span class='hs-varid'>identifier</span><span class='hs-layout'>)</span>
 <a name="line-76"></a>
-<a name="line-77"></a><span class='hs-sel'>_CancelRequest</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Prism'</span> <span class='hs-layout'>(</span><span class='hs-conid'>Notification</span> <span class='hs-conid'>Value</span><span class='hs-layout'>)</span> <span class='hs-conid'>Id</span>
+<a name="line-77"></a><span class='hs-sel'>_CancelRequest</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Prism'</span> <span class='hs-conid'>Notification_</span> <span class='hs-conid'>Id</span>
 <a name="line-78"></a><span class='hs-sel'>_CancelRequest</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>prism'</span> <span class='hs-conid'>CancelRequest</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-keyword'>case</span>
 <a name="line-79"></a>  <span class='hs-conid'>CancelRequest</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Just</span> <span class='hs-varid'>a</span>
 <a name="line-80"></a>  <span class='hs-keyword'>_</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Nothing</span>

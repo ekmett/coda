@@ -22,79 +22,85 @@
 <a name="line-13"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-14"></a>
 <a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Server</span><span class='hs-varop'>.</span><span class='hs-conid'>Options</span>
-<a name="line-16"></a><span class='hs-comment'>-- import Coda.Util.Async</span>
-<a name="line-17"></a><span class='hs-comment'>-- import Control.Concurrent.MVar</span>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
-<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Logging</span>
-<a name="line-20"></a><span class='hs-comment'>-- import Data.ByteString.Lazy as Lazy</span>
-<a name="line-21"></a><span class='hs-comment'>-- import Data.String</span>
-<a name="line-22"></a><span class='hs-comment'>-- import Data.Text</span>
-<a name="line-23"></a>
-<a name="line-24"></a><a name="withLogging"></a><span class='hs-definition'>withLogging</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
-<a name="line-25"></a><span class='hs-definition'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>case</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsLog</span> <span class='hs-keyword'>of</span>
-<a name="line-26"></a>  <span class='hs-conid'>Nothing</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withStderrLogging</span> <span class='hs-varid'>m</span>
-<a name="line-27"></a>  <span class='hs-conid'>Just</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withFileLogging</span> <span class='hs-varid'>f</span> <span class='hs-varid'>m</span>
-<a name="line-28"></a>
-<a name="line-29"></a><span class='hs-comment'>-- jsonRpc :: Text</span>
-<a name="line-30"></a><span class='hs-comment'>-- jsonRpc = fromString "JSON-RPC"</span>
+<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span>
+<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Sink</span>
+<a name="line-18"></a><span class='hs-comment'>-- import Coda.Util.Async</span>
+<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Concurrent</span><span class='hs-varop'>.</span><span class='hs-conid'>MVar</span>
+<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Logging</span>
+<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span>
+<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Lazy</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Lazy</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span>
+<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span>
+<a name="line-26"></a>
+<a name="line-27"></a><a name="withLogging"></a><span class='hs-definition'>withLogging</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
+<a name="line-28"></a><span class='hs-definition'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>case</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsLog</span> <span class='hs-keyword'>of</span>
+<a name="line-29"></a>  <span class='hs-conid'>Nothing</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withStderrLogging</span> <span class='hs-varid'>m</span>
+<a name="line-30"></a>  <span class='hs-conid'>Just</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withFileLogging</span> <span class='hs-varid'>f</span> <span class='hs-varid'>m</span>
 <a name="line-31"></a>
-<a name="line-32"></a><span class='hs-comment'>-- withMVar_ :: MVar a -&gt; IO b -&gt; IO b</span>
-<a name="line-33"></a><span class='hs-comment'>-- withMVar_ v m = withMVar v (const m)</span>
+<a name="line-32"></a><a name="jsonRpc"></a><span class='hs-definition'>jsonRpc</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Text</span>
+<a name="line-33"></a><span class='hs-definition'>jsonRpc</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>fromString</span> <span class='hs-str'>"JSON-RPC"</span>
 <a name="line-34"></a>
-<a name="line-35"></a><a name="server"></a><span class='hs-definition'>server</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
-<a name="line-36"></a><span class='hs-definition'>server</span> <span class='hs-varid'>opts</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>do</span>
-<a name="line-37"></a>  <span class='hs-varid'>setLogLevel</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>if</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsDebug</span> <span class='hs-keyword'>then</span> <span class='hs-conid'>LevelDebug</span> <span class='hs-keyword'>else</span> <span class='hs-conid'>LevelWarn</span>
-<a name="line-38"></a>  <span class='hs-varid'>print</span> <span class='hs-varid'>opts</span>
-<a name="line-39"></a>
-<a name="line-40"></a><span class='hs-comment'>{-
-<a name="line-41"></a>  outputLock &lt;- newMVar ()
-<a name="line-42"></a>  let output :: Sink Encoding
-<a name="line-43"></a>      output = Sink (withMVar_ outputLock . putRpc)
-<a name="line-44"></a>  input &lt;- Lazy.getContents
-<a name="line-45"></a>  handle input output
-<a name="line-46"></a> where
-<a name="line-47"></a>  handle :: Lazy.ByteString -&gt; Sink Encoding -&gt; IO ()
-<a name="line-48"></a>  handle input output = case runParser parseRpc input of
-<a name="line-49"></a>    Err -&gt; do
-<a name="line-50"></a>      loggingLogger LevelError JsonRpc "bad frame"
-<a name="line-51"></a>      exit $ ExitFailure 1 -- we're shutting down
-<a name="line-52"></a>   OK value input' -&gt; do
-<a name="line-53"></a>      loggingLogger LevelInfo JsonRpc (show value)
-<a name="line-54"></a>      case value of
-<a name="line-55"></a>        Array xs -&gt; do
-<a name="line-56"></a>          batch xs output
-<a name="line-57"></a>          handle input' output
-<a name="line-58"></a>        _ -&gt; process value output
-<a name="line-59"></a>
-<a name="line-60"></a>processRequest :: Request Id Value -&gt; Sink (Response Id Value) -&gt; IO (Async ())
-<a name="line-61"></a>
-<a name="line-62"></a>process :: Value -&gt; Sink Encoding -&gt; IO ()
-<a name="line-63"></a>process value sink = case eitherDecode' value of
-<a name="line-64"></a>  Left err -&gt; do
-<a name="line-65"></a>    loggingLogger LevelWarning JsonRpc err
-<a name="line-66"></a>    output
-<a name="line-67"></a>  Right (Request Nothing m p   -&gt; processNote (Notification m p)
-<a name="line-68"></a>  Right (Request mi m p) -&gt; do
-<a name="line-69"></a>    e &lt;- newEmptyMVar
-<a name="line-70"></a>    a &lt;- processRequest (Request i m p) $ Sink $ \response -&gt;
-<a name="line-71"></a>      if response^.id == i then putMVar () &gt;&gt; sink (toEncoding xs)
-<a name="line-72"></a>      else loggingLogger LevelWarn JsonRpc "bad response"
-<a name="line-73"></a>    concurrently a $ do
-<a name="line-74"></a>
-<a name="line-75"></a>
-<a name="line-76"></a>   : Request (Maybe Id) Value) -&gt; do
-<a name="line-77"></a>    requestId req
-<a name="line-78"></a>            handle input' output
-<a name="line-79"></a>          Right req -&gt; do
-<a name="line-80"></a>            dispatch req output
+<a name="line-35"></a><a name="withMVar_"></a><span class='hs-definition'>withMVar_</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>MVar</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-varid'>b</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-varid'>b</span>
+<a name="line-36"></a><span class='hs-definition'>withMVar_</span> <span class='hs-varid'>v</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>withMVar</span> <span class='hs-varid'>v</span> <span class='hs-layout'>(</span><span class='hs-varid'>const</span> <span class='hs-varid'>m</span><span class='hs-layout'>)</span>
+<a name="line-37"></a>
+<a name="line-38"></a><a name="server"></a><span class='hs-definition'>server</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
+<a name="line-39"></a><span class='hs-definition'>server</span> <span class='hs-varid'>opts</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>do</span>
+<a name="line-40"></a>  <span class='hs-varid'>setLogLevel</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>if</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsDebug</span> <span class='hs-keyword'>then</span> <span class='hs-conid'>LevelDebug</span> <span class='hs-keyword'>else</span> <span class='hs-conid'>LevelWarn</span>
+<a name="line-41"></a>  <span class='hs-varid'>outputLock</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>newMVar</span> <span class='hs-conid'>()</span>
+<a name="line-42"></a>  <span class='hs-keyword'>let</span> <span class='hs-varid'>output</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Sink</span> <span class='hs-conid'>Encoding</span>
+<a name="line-43"></a>      <span class='hs-varid'>output</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Sink</span> <span class='hs-layout'>(</span><span class='hs-varid'>withMVar_</span> <span class='hs-varid'>outputLock</span> <span class='hs-varop'>.</span> <span class='hs-varid'>putEncoding</span><span class='hs-layout'>)</span>
+<a name="line-44"></a>  <span class='hs-sel'>_input</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-conid'>Lazy</span><span class='hs-varop'>.</span><span class='hs-varid'>getContents</span>
+<a name="line-45"></a>  <span class='hs-varid'>loggingLogger</span> <span class='hs-conid'>LevelError</span> <span class='hs-varid'>jsonRpc</span> <span class='hs-varop'>$</span> <span class='hs-varid'>show</span> <span class='hs-varid'>opts</span>
+<a name="line-46"></a>  <span class='hs-varid'>sink</span> <span class='hs-varid'>output</span> <span class='hs-varop'>$</span> <span class='hs-varid'>toEncoding</span> <span class='hs-conid'>Null</span>
+<a name="line-47"></a>
+<a name="line-48"></a><span class='hs-comment'>{-
+<a name="line-49"></a>  -- now that we've got a place to write to and a supply of messages
+<a name="line-50"></a>
+<a name="line-51"></a>  handle input output
+<a name="line-52"></a> where
+<a name="line-53"></a>  handle :: Lazy.ByteString -&gt; Sink Encoding -&gt; IO ()
+<a name="line-54"></a>  handle input output = case runParser parseRpc input of
+<a name="line-55"></a>    Err -&gt; do
+<a name="line-56"></a>      loggingLogger LevelError JsonRpc "bad frame"
+<a name="line-57"></a>      exit $ ExitFailure 1 -- we're shutting down
+<a name="line-58"></a>   OK value input' -&gt; do
+<a name="line-59"></a>      loggingLogger LevelInfo JsonRpc (show value)
+<a name="line-60"></a>      case value of
+<a name="line-61"></a>        Array xs -&gt; do
+<a name="line-62"></a>          batch xs output
+<a name="line-63"></a>          handle input' output
+<a name="line-64"></a>        _ -&gt; process value output
+<a name="line-65"></a>
+<a name="line-66"></a>processRequest :: Request Id Value -&gt; Sink (Response Id Value) -&gt; IO (Async ())
+<a name="line-67"></a>
+<a name="line-68"></a>process :: Value -&gt; Sink Encoding -&gt; IO ()
+<a name="line-69"></a>process value sink = case eitherDecode' value of
+<a name="line-70"></a>  Left err -&gt; do
+<a name="line-71"></a>    loggingLogger LevelWarning JsonRpc err
+<a name="line-72"></a>    output
+<a name="line-73"></a>  Right (Request Nothing m p   -&gt; processNote (Notification m p)
+<a name="line-74"></a>  Right (Request mi m p) -&gt; do
+<a name="line-75"></a>    e &lt;- newEmptyMVar
+<a name="line-76"></a>    a &lt;- processRequest (Request i m p) $ Sink $ \response -&gt;
+<a name="line-77"></a>      if response^.id == i then putMVar () &gt;&gt; sink (toEncoding xs)
+<a name="line-78"></a>      else loggingLogger LevelWarn JsonRpc "bad response"
+<a name="line-79"></a>    concurrently a $ do
+<a name="line-80"></a>
 <a name="line-81"></a>
-<a name="line-82"></a>batch :: Vector Value -&gt; Sink Encoding -&gt; IO ()
-<a name="line-83"></a>batch xs =
-<a name="line-84"></a>
-<a name="line-85"></a>dispatch :: Request Value -&gt; Sink Encoding -&gt; IO ()
-<a name="line-86"></a>dispatch request out = do
+<a name="line-82"></a>   : Request (Maybe Id) Value) -&gt; do
+<a name="line-83"></a>    requestId req
+<a name="line-84"></a>            handle input' output
+<a name="line-85"></a>          Right req -&gt; do
+<a name="line-86"></a>            dispatch req output
 <a name="line-87"></a>
-<a name="line-88"></a>notification :: Notification Value -&gt; Sink Encoding -&gt; IO ()
-<a name="line-89"></a>-}</span>
+<a name="line-88"></a>batch :: Vector Value -&gt; Sink Encoding -&gt; IO ()
+<a name="line-89"></a>batch xs =
+<a name="line-90"></a>
+<a name="line-91"></a>dispatch :: Request_ -&gt; Sink Encoding -&gt; IO ()
+<a name="line-92"></a>dispatch request out = do
+<a name="line-93"></a>
+<a name="line-94"></a>notification :: Notification_ -&gt; Sink Encoding -&gt; IO ()
+<a name="line-95"></a>-}</span>
 </pre></body>
 </html>
