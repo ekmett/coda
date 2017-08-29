@@ -1,7 +1,7 @@
 name:          coda
 category:      Language
 version:       0.0.1.0
-license:       BSD3
+license:       BSD2
 cabal-version: >= 1.24
 license-file:  LICENSE.md
 author:        Edward A. Kmett
@@ -11,27 +11,18 @@ homepage:      http://github.com/ekmett/coda/
 bug-reports:   http://github.com/ekmett/coda/issues
 copyright:     Copyright (C) 2017 Edward A. Kmett
 build-type:    Custom
-synopsis:      Coda
+synopsis:      The coda compiler
 
 description:
-  This package provides Coda, an experimental Visual Studio Code langauge server.
+  This package provides Coda, a Visual Studio Code language experiment.
 
 extra-source-files:
   .hlint.yaml
   CHANGELOG.md
   README.md
-  ext/.npmignore
-  ext/.vscode/*.json
-  ext/.vscodeignore
-  ext/bin/coda.sh
-  ext/*.ts
-  ext/test/*.ts
-  ext/*.json
   test/data/message/*.golden
   test/shim/Coda/Console/Unicode.hs
   test/src/Coda/Message/Test.hs
-  var/package-lock.json
-  var/vscode.d.ts
 
 source-repository head
   type: git
@@ -55,20 +46,43 @@ flag test-tasty
 
 custom-setup
   setup-depends:
-    aeson                >= 1.1     && < 1.3,
     base                 >= 4       && < 5,
-    bytestring           >= 0.10.8  && < 0.11,
     Cabal,
-    cabal-doctest        >= 1       && < 1.1,
-    containers           >= 0.5.7   && < 0.6,
-    directory            >= 1.2     && < 1.4,
-    extra                >= 1.5     && < 1.7,
-    filepath             >= 1.4.1   && <1.5,
-    process              >= 1.4.2   && < 1.7,
-    shake                >= 0.15    && < 0.16
+    cabal-doctest        >= 1       && < 1.1
 
 library
   default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src
+  exposed-modules:
+    Coda.Console
+    Coda.Console.Command
+    Coda.Console.Completion
+    Coda.Console.Options
+    Coda.Console.Unicode
+    Coda.Message.Base
+    Coda.Message.Builder
+    Coda.Message.Language
+    Coda.Message.Parser
+    Coda.Message.Severity
+    Coda.Message.Sink
+    Coda.Server
+    Coda.Server.Options
+    Coda.Syntax.Keywords
+    Coda.Syntax.Line
+    Coda.Syntax.Multi
+    Coda.Syntax.View
+    Coda.Util.Instances
+    Coda.Util.Aeson
+    Coda.Util.Async
+    Coda.Util.Pretty
+    Coda.Util.Primitive
+    Coda.Util.STM
+    Coda.Version
+
+  other-modules:
+    Paths_coda
+
   build-depends:
     aeson                >= 1.1     && < 1.3,
     ansi-wl-pprint       >= 0.6     && < 0.7,
@@ -101,48 +115,16 @@ library
     transformers         >= 0.5     && < 0.6,
     transformers-base    >= 0.4.4   && < 0.5
 
-  exposed-modules:
-    Coda.Console
-    Coda.Console.Command
-    Coda.Console.Completion
-    Coda.Console.Options
-    Coda.Console.Unicode
-    Coda.Message.Base
-    Coda.Message.Builder
-    Coda.Message.Language
-    Coda.Message.Parser
-    Coda.Message.Severity
-    Coda.Message.Sink
-    Coda.Server
-    Coda.Server.Options
-    Coda.Syntax.Keywords
-    Coda.Syntax.Line
-    Coda.Syntax.Multi
-    Coda.Syntax.View
-    Coda.Util.Instances
-    Coda.Util.Aeson
-    Coda.Util.Async
-    Coda.Util.Pretty
-    Coda.Util.Primitive
-    Coda.Util.STM
-    Coda.Version
-
-  other-modules:
-    Paths_coda
-
-  ghc-options: -Wall
-  hs-source-dirs: src
-
 executable coda
   default-language: Haskell2010
+  main-is: coda.hs
+  hs-source-dirs: main
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     base,
     coda,
     lens,
     optparse-applicative
-  main-is: coda.hs
-  hs-source-dirs: main
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
 
 test-suite doctest
   type: exitcode-stdio-1.0

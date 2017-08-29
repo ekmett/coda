@@ -1,79 +1,129 @@
 {
-    "version": "2.0.0",
-    "tasks": [
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "taskName": "npm build",
+      "command": "npm",
+      "isShellCommand": true,
+      "options": {
+        "cwd": "${workspaceRoot}/client"
+      },
+      "showOutput": "silent",
+      "args": [
+        "run",
+        "build",
+        "--loglevel",
+        "silent"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "base": "$tsc",
+        "fileLocation": [
+          "relative",
+          "${workspaceRoot}/client"
+        ]
+      }
+    },
+    {
+      "taskName": "npm watch",
+      "command": "npm",
+      "isShellCommand": true,
+      "options": {
+        "cwd": "${workspaceRoot}/client"
+      },
+      "showOutput": "silent",
+      "args": [
+        "run",
+        "watch",
+        "--loglevel",
+        "silent"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "fileLocation": [
+          "relative",
+          "${workspaceRoot}/client"
+        ]
+      }
+    },
+    {
+      "taskName": "cabal install",
+      "command": "cabal",
+      "isShellCommand": true,
+      "args": [
+        "install",
+        "-j4"
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}/coda"
+      },
+      "problemMatcher": [
         {
-            "taskName": "Client Build",
-            "command": "npm",
-            "isShellCommand": true,
-            "options": {
-                "cwd": "${workspaceRoot}/client"
+          "owner": "cabal",
+          "fileLocation": [
+            "relative",
+            "${workspaceRoot}/coda"
+          ],
+          "pattern": [
+            {
+              "regexp": "^(.*):(\\d+):(\\d+):$",
+              "file": 1,
+              "line": 2,
+              "column": 3
             },
-           // "showOutput": "silent",
-            "args": ["run", "compile"], // , "--loglevel", "silent"],
-            "isBackground": true,
-            "problemMatcher": "$tsc-watch"
+            {
+              "regexp": "^\\s+(.*)$",
+              "message": 1
+            }
+          ]
         },
         {
-            "taskName": "Server Build",
-            "command": "cabal",
-            "isShellCommand": true,
-            "args": ["install"],
-            "options": {
-                "cwd": "${workspaceRoot}/coda"
-            },
-            "problemMatcher": [
-                {
-                    "owner": "cabal",
-                    "fileLocation": ["relative", "${workspaceRoot}/coda"],
-                    "pattern": [
-                        {
-                            "regexp": "^(.*):(\\d+):(\\d+):$",
-                            "file": 1,
-                            "line": 2,
-                            "column": 3
-                        },
-                        {
-                            "regexp": "^\\s+(.*)$",
-                            "message": 1
-                        }
-                    ]
-                },
-                {
-                    "owner": "cabal",
-                    "fileLocation": ["relative", "${workspaceRoot}/coda"],
-                    "pattern": [
-                        {
-                            "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning):\\s+(.*)$",
-                            "file": 1,
-                            "line": 2,
-                            "column": 3,
-                            "severity": 4,
-                            "message": 5
-                        }
-                    ]
-                },
-                {
-                    "owner": "cabal",
-                    "fileLocation": ["relative", "${workspaceRoot}/coda"],
-                    "pattern": [
-                        {
-                            "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning|Error):$",
-                            "file": 1,
-                            "line": 2,
-                            "column": 3,
-                            "severity": 4
-                        },
-                        {
-                            "regexp": "^\\s+(.*)$",
-                            "message": 1
-                        }
-                    ]
-                }
-            ]
+          "owner": "cabal",
+          "fileLocation": [
+            "relative",
+            "${workspaceRoot}/coda"
+          ],
+          "pattern": [
+            {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning):\\s+(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+            }
+          ]
         },
         {
-            "taskName": "Build",
-            "dependsOn": ["Client Build", "Server Build"]
+          "owner": "cabal",
+          "fileLocation": [
+            "relative",
+            "${workspaceRoot}/coda"
+          ],
+          "pattern": [
+            {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning|Error):$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4
+            },
+            {
+              "regexp": "^\\s+(.*)$",
+              "message": 1
+            }
+          ]
         }
-    ],
+      ]
+    },
+    {
+      "taskName": "build",
+      "dependsOn": [
+        "npm build",
+        "cabal install"
+      ],
+      "problemMatcher": []
+    }
+  ]
 }
