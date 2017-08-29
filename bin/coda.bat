@@ -1,7 +1,7 @@
 @echo off
 
 set CODA_SERVER_PATH=
-for /f "delims=" %%p in ('where hie') do set CODA_SERVER_PATH=%%p
+for /f "delims=" %%p in ('where coda') do set CODA_SERVER_PATH=%%p
 
 if [%CODA_SERVER_PATH%] == [] (
   echo Content-Length: 101
