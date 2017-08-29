@@ -159,6 +159,10 @@ data AlexInput = AlexInput
   } deriving Show
 
 -- |
+
+-- >>> alexInputPrevChar $ AlexInput (Delta 0 0 0) ["a"]
+-- '\n'
+--
 -- >>> alexInputPrevChar $ AlexInput (Delta 0 1 1) ["a"]
 -- 'a'
 alexInputPrevChar :: AlexInput -> Char
