@@ -2,20 +2,15 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "moduleResolution": "node",
     "strictNullChecks": true,
     "noImplicitAny": true,
     "lib": [ "es2016" ],
-    "sourceMap": true
+    "sourceMap": true,
+    "outDir": "out",
+    "rootDir": "."
   },
-  "files": [
-    "extension.ts",
-    "test/index.ts",
-    "test/extension.test.ts"
-  ],
   "exclude": [
     "node_modules",
-    "bin",
     ".vscode-test"
   ]
 }

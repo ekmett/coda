@@ -3,6 +3,7 @@
 .DS_Store
 .hsenv
 .stack-work
+.vscode-test
 *.o
 *.hi
 *.swo
@@ -13,13 +14,11 @@
 cabal.project.local
 cabal.sandbox.config
 codex.tags
-dist/
+dist
 dist-newstyle
 docs
-ext/.vscode-test
-ext/node_modules
+node_modules
 old
-TAGS
 tags
 TODO.txt
 wiki

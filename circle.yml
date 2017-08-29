@@ -17,14 +17,13 @@ dependencies:
     - sudo apt-get update && sudo apt-get install stack -y
 
   override:
-    - STACK_YAML=etc/stack.yaml stack setup
-    - STACK_YAML=etc/stack.yaml stack build -j 2 :
+    - stack setup
+    - stack build -j 2 :
         timeout: 3600
-    - STACK_YAML=etc/stack.yaml stack build -j 2 --test --only-dependencies :
+    - stack build -j 2 --test --only-dependencies :
         timeout: 3600
 
 test:
   override:
-    - STACK_YAML=etc/stack.yaml stack test coda :
+    - stack test coda :
         timeout: 3600
-

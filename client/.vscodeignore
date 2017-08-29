@@ -1,6 +1,9 @@
 .npmignore
 .vscode/**
+.vscode-test/**
+out/test/**
 test/**
+src/**
 tsconfig.json
 tslint.json
 **/*.map
