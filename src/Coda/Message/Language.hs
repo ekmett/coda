@@ -38,7 +38,6 @@ module Coda.Message.Language
   , VersionedTextDocumentIdentifier(..)
   , TextDocumentItem(..)
   , TextDocumentEdit(..)
-  , UriMap(..)
   , WorkspaceEdit(..)
   -- * Overloading
   , HasRange(..)
@@ -440,6 +439,15 @@ instance HasVersionedTextDocumentIdentifier VersionedTextDocumentIdentifier wher
 -- TextDocumentEdit
 --------------------------------------------------------------------------------
 
+-- |
+-- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#new-textdocumentedit>
+--
+-- @
+-- export interface 'TextDocumentEdit' {
+--   textDocument: 'VersionedTextDocumentIdentifier';
+--   edits: 'TextEdit'[];
+-- }
+-- @
 data TextDocumentEdit = TextDocumentEdit
   { textDocumentEditTextDocument :: !VersionedTextDocumentIdentifier
   , textDocumentEditEdits :: [TextEdit]
@@ -475,21 +483,33 @@ instance HasVersionedTextDocumentIdentifier TextDocumentEdit where
 -- WorkspaceEdit
 --------------------------------------------------------------------------------
 
-newtype UriMap a = UriMap { runUriMap :: HashMap Text a }
-  deriving (Eq, Show, Read, Functor, Data, Generic, Generic1, Foldable, Traversable, Hashable1, Hashable)
-
-instance ToJSON1 UriMap where
-  liftToJSON sa _ (UriMap hm) = object $ HashMap.foldrWithKey (\k v m -> (k, sa v) : m) [] hm
-  liftToEncoding sa _ (UriMap hm) = pairs $ HashMap.foldrWithKey (\k v m -> pair k (sa v) <> m) mempty hm
-
-instance ToJSON a => ToJSON (UriMap a) where
-  toJSON = toJSON1
-  toEncoding = toEncoding1
+-- |
+-- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#workspaceedit>
+--
+-- @
+-- export interface 'WorkspaceEdit' {
+--   changes?: { [uri: string]: 'TextEdit'[]; };
+--   documentChanges?: 'TextDocumentEdit'[];
+-- }
+-- @
 
 data WorkspaceEdit = WorkspaceEdit
-  { workspaceEditChanges :: !(Maybe (UriMap [TextEdit])) -- object mapping uris to [TextEdit]
+  { workspaceEditChanges         :: !(HashMap Text [TextEdit])
   , workspaceEditDocumentChanges :: !(Maybe [TextDocumentEdit])
   } deriving (Eq, Show, Read, Data, Generic)
+
+instance ToJSON WorkspaceEdit where
+  toJSON (WorkspaceEdit c d) = object $
+    "change" !~ c <> "documentChanges" ?~ d
+  toEncoding (WorkspaceEdit c d) = pairs $
+    "change" !~ c <> "documentChanges" ?~ d
+
+instance FromJSON WorkspaceEdit where
+  parseJSON = withObject "WorkspaceEdit" $ \v -> WorkspaceEdit
+    <$> v .: "change"
+    <*> v .:? "documentChanges"
+
+instance Hashable WorkspaceEdit
 
 --------------------------------------------------------------------------------
 -- TextDocumentItem
