@@ -19,6 +19,7 @@ dist-newstyle
 docs
 node_modules
 old
+out
 tags
 TODO.txt
 wiki
