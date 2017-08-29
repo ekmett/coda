@@ -1,21 +1,21 @@
 {
   "files.exclude": {
     "**.js" : true,
-    ""**/.git": true,
-    ""**/.DS_Store": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
     "dist" : true,
     "dist-newstyle" : true,
     "old" : true,
-    "client/out": true
+    "out": true
   },
   "search.exclude": {
     "**.js" : true,
-    ""**/.git": true,
+    "**/.git": true,
     ""**/.DS_Store": true,
     "dist" : true,
     "dist-newstyle" : true,
     ".stack-work" : true,
     "old" : true,
-    "client/out": true
+    "out": true
   }
 }

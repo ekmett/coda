@@ -15,7 +15,7 @@
 
 module Main where
 
-import Coda.Message.Test
+import MessageTest
 import Test.Tasty
 
 main :: IO ()

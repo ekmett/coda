@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 $env:PATH += ";$PWD"
 $env:STACK_ROOT = 'c:\sr'
-$env:GNUPGHOME = '/c/project/coda/ci'
+$env:GNUPGHOME = '/c/project/coda'
 
 if ($phase -eq "install") {
   "> download stack"

@@ -6,6 +6,7 @@
 .vscode-test
 *.o
 *.hi
+*.log
 *.swo
 *.swp
 *.vsix

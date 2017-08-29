@@ -6,10 +6,10 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["--extensionDevelopmentPath=${workspaceRoot}/client" ],
+            "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
             "stopOnEntry": false,
             "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/client/out/src/**/*.js" ],
+            "outFiles": [ "${workspaceRoot}/out/code/**/*.js" ],
             "preLaunchTask": "build"
         },
         {
@@ -17,10 +17,10 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["--extensionDevelopmentPath=${workspaceRoot}/client", "--extensionTestsPath=${workspaceRoot}/client/test" ],
+            "args": ["--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test/code" ],
             "stopOnEntry": false,
             "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/client/out/test/**/*.js" ],
+            "outFiles": [ "${workspaceRoot}/out/test/code/**/*.js" ],
             "preLaunchTask": "build"
         }
     ]

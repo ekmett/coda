@@ -9,8 +9,8 @@
     "outDir": "out",
     "rootDir": "."
   },
-  "exclude": [
-    "node_modules",
-    ".vscode-test"
+  "include": [
+     "code/**/*",
+     "test/code/**/*"
   ]
 }

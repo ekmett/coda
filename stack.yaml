@@ -1,6 +1,5 @@
 resolver: lts-9.2
 flags: {}
 packages:
- - 'coda-api'
- - 'coda-ide'
+ - '.'
 extra-deps: []

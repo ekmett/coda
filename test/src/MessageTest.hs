@@ -11,7 +11,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Message.Test
+module MessageTest
   ( test_message
   ) where
 

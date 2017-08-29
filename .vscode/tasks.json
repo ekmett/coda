@@ -5,31 +5,27 @@
       "taskName": "npm build",
       "command": "npm",
       "isShellCommand": true,
-      "options": {
-        "cwd": "${workspaceRoot}/client"
-      },
       "showOutput": "silent",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
       "args": [
         "run",
         "build",
         "--loglevel",
         "silent"
       ],
-      "isBackground": true,
-      "problemMatcher": {
-        "base": "$tsc",
-        "fileLocation": [
-          "relative",
-          "${workspaceRoot}/client"
-        ]
-      }
+      "isBackground": false,
+      "problemMatcher": "$tsc"
     },
     {
-      "taskName": "npm watch",
+      "taskName": "watch",
+      "type": "shell",
       "command": "npm",
-      "isShellCommand": true,
-      "options": {
-        "cwd": "${workspaceRoot}/client"
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
       },
       "showOutput": "silent",
       "args": [
@@ -39,32 +35,25 @@
         "silent"
       ],
       "isBackground": true,
-      "problemMatcher": {
-        "base": "$tsc-watch",
-        "fileLocation": [
-          "relative",
-          "${workspaceRoot}/client"
-        ]
-      }
+      "problemMatcher": "$tsc-watch"
     },
     {
       "taskName": "cabal install",
+      "type": "shell",
       "command": "cabal",
-      "isShellCommand": true,
+      "isBackground": false,
       "args": [
         "install",
         "-j4"
       ],
-      "options": {
-        "cwd": "${workspaceRoot}/coda"
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
       },
       "problemMatcher": [
         {
           "owner": "cabal",
-          "fileLocation": [
-            "relative",
-            "${workspaceRoot}/coda"
-          ],
+          "fileLocation": "relative",
           "pattern": [
             {
               "regexp": "^(.*):(\\d+):(\\d+):$",
@@ -80,10 +69,7 @@
         },
         {
           "owner": "cabal",
-          "fileLocation": [
-            "relative",
-            "${workspaceRoot}/coda"
-          ],
+          "fileLocation": "relative",
           "pattern": [
             {
               "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning):\\s+(.*)$",
@@ -97,10 +83,7 @@
         },
         {
           "owner": "cabal",
-          "fileLocation": [
-            "relative",
-            "${workspaceRoot}/coda"
-          ],
+          "fileLocation": "relative",
           "pattern": [
             {
               "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning|Error):$",
@@ -123,6 +106,11 @@
         "npm build",
         "cabal install"
       ],
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "lint",
       "problemMatcher": []
     }
   ]

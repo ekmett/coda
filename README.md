@@ -6,9 +6,9 @@
 
 This package will eventually provide a toy compiler for experimenting with resumable parsing.
 
-The application is designed as a plugin for Visual Studio Code.
+For now, it provides an entertaining series of crashes and confusing error messages.
 
-This also serves as an experiment in employing [`shake`][shake] inside of a custom cabal `Setup.hs`
+The application is designed as a plugin for Visual Studio Code.
 
 **Table of Contents**
 
@@ -23,17 +23,15 @@ This also serves as an experiment in employing [`shake`][shake] inside of a cust
 Installation
 ============
 
-To build:
+To install the `coda` executable run `cabal install` or `stack install` as usual with a Haskell project.
 
-1. Make sure you have `npm` and `Visual Studio Code` installed and that `code` invokes the latter from the command line.
+To work on the extension, you'll need to:
 
-2. Run `cabal install` or `stack install` to build and register the extension with Visual Studio Code.
+1. Download the repository from <https://github.com/ekmett/coda> if that isn't where you are reading this file from.
 
-If `code` is not in your path, or you want a manual install for some reason, you can use `cabal build`, open Visual Studio
-Code, type `⌘-Shift-P`, select `> Extensions: Install Extension from VSIX` from the resulting selection box, and finally pick out `dist/build/coda-<version>.vsix` in the finder dialogue to install the package.
+2. Run `code .` from root of that repository
 
-The instructions in [Running and Debugging Your Extension][debugging-extensions] can be readily tweaked to work here if you
-need more interactive debugging support when working on the compiler.
+3. Start debugging to launch the extension-host following the instructions in [Running and Debugging Your Extension][debugging-extensions].
 
 Autocompletion
 ==============
@@ -63,19 +61,17 @@ In the meantime, API documentation is available from https://ekmett.github.io/co
 Directories
 ===========
 
-| Directory | Usage |
-| --------- | --- |
-| bin       | Executable scripts used by CI |
-| etc       | Configuration used by CI |
-| ext       | Template files used to build the extension |
-| ext/test  | The VS Code test suite for the extension |
-| main      | Where to find `Main.hs` for executable haskell files |
-| src       | coda library source code |
-| test/data | data files used by the test suite |
-| test/shim | shims to work around doctest limitations |
-| test/main | Where to find `Main.hs` for test suites |
-| test/src  | tasty tests |
-| var       | A cache that may (infrequently) be changed during the build. Can be safely deleted |
+| Directory     | Usage |
+| ------------- | ----- |
+| .vscode       | Visual Studio Code configuration for the current workspace |
+| bin           | Executable scripts |
+| code          | The typescript source for the extension |
+| images        | The logo, etc. |
+| src           | coda library source code |
+| test/code     | typescript code for Visual Studio Code |
+| test/data     | data files used by the test suite |
+| test/shim     | shims to work around doctest limitations |
+| test/src      | tasty tests |
 
 License
 =======
