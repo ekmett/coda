@@ -27,7 +27,7 @@ module Coda.Syntax.Line
   ) where
 
 import Coda.Syntax.Delta
-import Coda.Syntax.Multi as Multi
+import Coda.Data.List as List
 import Coda.Util.Primitive
 import Control.Lens (AsEmpty(..), prism)
 import Control.Monad.ST
@@ -155,7 +155,7 @@ emptyLine = Line $ runST $ newPinnedByteArray 0 >>= unsafeFreezeByteArray
 -- * all lines in 'alexInputLines' are non-empty
 data AlexInput = AlexInput
   { alexInputDelta    :: {-# unpack #-} !Delta
-  , alexInputLines    :: !(Multi Line)
+  , alexInputLines    :: !(List Line)
   } deriving Show
 
 -- |
@@ -177,7 +177,7 @@ backtrackingError :: a
 backtrackingError = error "alexGetPrevChar: backtracking error"
 
 advanceInput :: AlexInput -> Delta -> AlexInput
-advanceInput (AlexInput l xs) r = AlexInput (l <> r) (Multi.drop (deltaLine r) xs)
+advanceInput (AlexInput l xs) r = AlexInput (l <> r) (List.drop (deltaLine r) xs)
 {-# inline advanceInput #-}
 
 -- |
@@ -208,7 +208,7 @@ alexGetByte (AlexInput _ Nil) = Nothing
 alexGetByte (AlexInput (Delta p c8 c16) lls@(Cons l ls))
   | c8 < size l
   , !w8 <- l !! c8 = Just (w8, AlexInput (Delta p (c8+1) (c16 + bump16 w8)) lls)
-  | otherwise = case remainder ls of
+  | otherwise = case flatten ls of
       Nil -> Nothing
       lls'@(Cons l' _) | w8 <- l' !! 0 -> Just (w8, AlexInput (Delta (p+1) 1 (bump16 w8)) lls')
 {-# inline alexGetByte #-}

@@ -8,7 +8,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Message.Sink 
+module Coda.Data.Sink 
   ( Sink(..)
   ) where
 

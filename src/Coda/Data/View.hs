@@ -12,7 +12,7 @@
 ---
 ---------------------------------------------------------------------------------
 
-module Coda.Syntax.View
+module Coda.Data.View
   ( ViewL(..), ViewR(..)
   , ViewableL(..), ViewableR(..)
   ) where

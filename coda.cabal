@@ -59,18 +59,19 @@ library
     Coda.Console.Completion
     Coda.Console.Options
     Coda.Console.Unicode
+    Coda.Data.List
+    Coda.Data.Queue
+    Coda.Data.Sink
+    Coda.Data.View
     Coda.Message.Base
     Coda.Message.Builder
     Coda.Message.Language
     Coda.Message.Parser
     Coda.Message.Severity
-    Coda.Message.Sink
     Coda.Server
     Coda.Server.Options
     Coda.Syntax.Keywords
     Coda.Syntax.Line
-    Coda.Syntax.Multi
-    Coda.Syntax.View
     Coda.Util.Instances
     Coda.Util.Aeson
     Coda.Util.Async

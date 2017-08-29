@@ -12,9 +12,9 @@ module Coda.Server
   ( server
   ) where
 
-import Coda.Server.Options
+import Coda.Data.Sink
 import Coda.Message.Builder
-import Coda.Message.Sink
+import Coda.Server.Options
 -- import Coda.Util.Async
 import Control.Concurrent.MVar
 import Control.Lens
