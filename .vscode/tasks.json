@@ -1,0 +1,79 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "taskName": "Client Build",
+            "command": "npm",
+            "isShellCommand": true,
+            "options": {
+                "cwd": "${workspaceRoot}/client"
+            },
+           // "showOutput": "silent",
+            "args": ["run", "compile"], // , "--loglevel", "silent"],
+            "isBackground": true,
+            "problemMatcher": "$tsc-watch"
+        },
+        {
+            "taskName": "Server Build",
+            "command": "cabal",
+            "isShellCommand": true,
+            "args": ["install"],
+            "options": {
+                "cwd": "${workspaceRoot}/coda"
+            },
+            "problemMatcher": [
+                {
+                    "owner": "cabal",
+                    "fileLocation": ["relative", "${workspaceRoot}/coda"],
+                    "pattern": [
+                        {
+                            "regexp": "^(.*):(\\d+):(\\d+):$",
+                            "file": 1,
+                            "line": 2,
+                            "column": 3
+                        },
+                        {
+                            "regexp": "^\\s+(.*)$",
+                            "message": 1
+                        }
+                    ]
+                },
+                {
+                    "owner": "cabal",
+                    "fileLocation": ["relative", "${workspaceRoot}/coda"],
+                    "pattern": [
+                        {
+                            "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning):\\s+(.*)$",
+                            "file": 1,
+                            "line": 2,
+                            "column": 3,
+                            "severity": 4,
+                            "message": 5
+                        }
+                    ]
+                },
+                {
+                    "owner": "cabal",
+                    "fileLocation": ["relative", "${workspaceRoot}/coda"],
+                    "pattern": [
+                        {
+                            "regexp": "^(.*):(\\d+):(\\d+):\\s+(Warning|Error):$",
+                            "file": 1,
+                            "line": 2,
+                            "column": 3,
+                            "severity": 4
+                        },
+                        {
+                            "regexp": "^\\s+(.*)$",
+                            "message": 1
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "taskName": "Build",
+            "dependsOn": ["Client Build", "Server Build"]
+        }
+    ],
+}
