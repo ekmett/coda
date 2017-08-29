@@ -14,4 +14,4 @@ env 1>&2
 
 tee ~/input.log | (sleep 10 && coda $@) | tee ~/output.log
 
-#coda $@
+#exec coda $@
