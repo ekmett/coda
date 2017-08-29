@@ -39,17 +39,24 @@ module Coda.Message.Language
   , TextDocumentItem(..)
   , TextDocumentEdit(..)
   , WorkspaceEdit(..)
+  , DocumentFilter(..)
+  , DocumentSelector
+  , TextDocumentPositionParams(..)
+  , WorkspaceClientCapabilities
+  -- * Protocol
+  , TextDocumentClientCapabilities
+  , ClientCapabilities(..)
+  , InitializeParams(..)
   -- * Overloading
+  , HasPosition(..)
   , HasRange(..)
   , HasUri(..)
   , HasVersion(..)
-  , HasTextDocumentIdentifier(..)
-  , HasVersionedTextDocumentIdentifier(..)
   ) where
 
 import Coda.Message.Base
 import Coda.Util.Aeson
-import Control.Lens.Operators ((<&>))
+import Control.Lens.Operators ((<&>),(??))
 import Control.Lens.Combinators
 import Coda.Message.Severity as Severity
 import Control.Monad
@@ -157,6 +164,19 @@ instance FromJSON Position where
     <*> v .: "character"
 
 instance Hashable Position
+
+class HasPosition p where
+  position :: Lens' p Position
+
+  line :: Lens' p Int
+  line = position.line
+  character :: Lens' p Int
+  character = position.character
+
+instance HasPosition Position where
+  position = id
+  line f (Position l c) = (Position ?? c) <$> f l
+  character f (Position l c) = Position l <$> f c
 
 --------------------------------------------------------------------------------
 -- Range
@@ -368,18 +388,6 @@ instance Hashable TextDocumentIdentifier
 instance HasUri TextDocumentIdentifier where
   uri f (TextDocumentIdentifier i) = TextDocumentIdentifier <$> f i
 
--- |
--- Law:
---
--- @
--- 'uri' = 'textDocumentIdentifier' '.' 'uri'
--- @
-class HasUri t => HasTextDocumentIdentifier t where
-  textDocumentIdentifier :: Lens' t TextDocumentIdentifier
-
-instance HasTextDocumentIdentifier TextDocumentIdentifier where
-  textDocumentIdentifier = id
-
 --------------------------------------------------------------------------------
 -- VersionTextDocumentIdentifier
 --------------------------------------------------------------------------------
@@ -405,10 +413,6 @@ instance HasVersion VersionedTextDocumentIdentifier where
 instance HasUri VersionedTextDocumentIdentifier where
   uri f (VersionedTextDocumentIdentifier u i) = f u <&> \u' -> VersionedTextDocumentIdentifier u' i
 
-instance HasTextDocumentIdentifier VersionedTextDocumentIdentifier where
-  textDocumentIdentifier f (VersionedTextDocumentIdentifier u i) = f (TextDocumentIdentifier u) <&>
-    \ (TextDocumentIdentifier u') -> VersionedTextDocumentIdentifier u' i
-
 instance ToJSON VersionedTextDocumentIdentifier where
   toJSON (VersionedTextDocumentIdentifier u i) = object $
     "uri" !~ u <> "version" !~ i
@@ -421,19 +425,6 @@ instance FromJSON VersionedTextDocumentIdentifier where
     <*> v .: "version"
 
 instance Hashable VersionedTextDocumentIdentifier
-
--- |
--- Laws:
---
--- @
--- 'textDocumentIdentifier' = 'versionedTextDocumentIdentifier' '.' 'textDocumentIdentifier'
--- 'version' = 'versionedTextDocumentIdentifier' '.' 'version'
--- @
-class (HasVersion t, HasTextDocumentIdentifier t) => HasVersionedTextDocumentIdentifier t where
-  versionedTextDocumentIdentifier :: Lens' t VersionedTextDocumentIdentifier
-
-instance HasVersionedTextDocumentIdentifier VersionedTextDocumentIdentifier where
-  versionedTextDocumentIdentifier = id
 
 --------------------------------------------------------------------------------
 -- TextDocumentEdit
@@ -467,17 +458,10 @@ instance FromJSON TextDocumentEdit where
 instance Hashable TextDocumentEdit
 
 instance HasUri TextDocumentEdit where
-  uri = versionedTextDocumentIdentifier.uri
-
-instance HasTextDocumentIdentifier TextDocumentEdit where
-  textDocumentIdentifier = versionedTextDocumentIdentifier.textDocumentIdentifier
+  uri f (TextDocumentEdit v es) = (TextDocumentEdit ?? es) <$> uri f v
 
 instance HasVersion TextDocumentEdit where
-  version = versionedTextDocumentIdentifier.version
-
-instance HasVersionedTextDocumentIdentifier TextDocumentEdit where
-  versionedTextDocumentIdentifier f (TextDocumentEdit v es) =
-    f v <&> \v' -> TextDocumentEdit v' es
+  version f (TextDocumentEdit v es) = (TextDocumentEdit ?? es) <$> version f v
 
 --------------------------------------------------------------------------------
 -- WorkspaceEdit
@@ -555,16 +539,154 @@ instance HasUri TextDocumentItem where
 instance HasVersion TextDocumentItem where
   version f t = f (textDocumentItemVersion t) <&> \v' -> t { textDocumentItemVersion = v' }
 
--- | morally exists
-instance HasTextDocumentIdentifier TextDocumentItem where
-  textDocumentIdentifier f (TextDocumentItem u l v t)
-     = f (TextDocumentIdentifier u) <&> \(TextDocumentIdentifier u') -> TextDocumentItem u' l v t
+--------------------------------------------------------------------------------
+-- DocumentFilter
+--------------------------------------------------------------------------------
 
--- | morally exists
-instance HasVersionedTextDocumentIdentifier TextDocumentItem where
-  versionedTextDocumentIdentifier f (TextDocumentItem u l v t)
-     = f (VersionedTextDocumentIdentifier u v) <&> \(VersionedTextDocumentIdentifier u' v') -> TextDocumentItem u' l v' t
+-- |
+--
+-- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#documentfilter>
+--
+-- @
+-- export interface 'DocumentFilter' {
+--	language?: string;
+--	scheme?: string;
+--	pattern?: string;
+-- }
+-- @
+data DocumentFilter = DocumentFilter
+  { documentFilterLanguage :: Maybe String
+  , documentFilterScheme :: Maybe String
+  , documentFilterPattern :: Maybe String
+  } deriving (Eq, Ord, Show, Read, Data, Generic)
+
+instance ToJSON DocumentFilter where
+  toJSON (DocumentFilter f s p) = object $
+    "language" ?~ f <> "scheme" ?~ s <> "pattern" ?~ p
+  toEncoding (DocumentFilter f s p) = pairs $
+    "language" ?~ f <> "scheme" ?~ s <> "pattern" ?~ p
+
+instance FromJSON DocumentFilter where
+  parseJSON = withObject "DocumentFilter" $ \v -> DocumentFilter
+    <$> v .:? "language"
+    <*> v .:? "scheme"
+    <*> v .:? "pattern"
+
+instance Hashable DocumentFilter
+
+--------------------------------------------------------------------------------
+-- DocumentSelector
+--------------------------------------------------------------------------------
+
+type DocumentSelector = [DocumentFilter]
 
 --------------------------------------------------------------------------------
 -- TextDocumentPositionParams
 --------------------------------------------------------------------------------
+
+-- |
+-- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#textdocumentpositionparams>
+--
+
+data TextDocumentPositionParams = TextDocumentPositionParams
+  { textDocumentPositionParamsTextDocument :: TextDocumentIdentifier
+  , textDocumentPositionParamsPosition     :: Position
+ -- ^ Fun fact: This field name has the same length as
+ -- supercalifragilisticexpialidocious
+  } deriving (Eq, Ord, Show, Read, Data, Generic)
+
+instance ToJSON TextDocumentPositionParams where
+  toJSON (TextDocumentPositionParams t p) = object $
+    "textDocument" !~ t <> "position" !~ p
+
+instance FromJSON TextDocumentPositionParams where
+  parseJSON = withObject "TextDocumentPositionParams" $ \v -> TextDocumentPositionParams
+    <$> v .: "textDocument"
+    <*> v .: "position"
+
+instance HasUri TextDocumentPositionParams where
+  uri f (TextDocumentPositionParams d p) = (TextDocumentPositionParams ?? p) <$> uri f d
+
+instance HasPosition TextDocumentPositionParams where
+  position f (TextDocumentPositionParams d p) = TextDocumentPositionParams d <$> f p
+
+data Trace
+  = TraceOff
+  | TraceMessages
+  | TraceVerbose
+  deriving (Eq,Ord,Show,Read,Data,Generic,Ix,Bounded,Enum)
+
+instance Hashable Trace
+
+instance ToJSON Trace where
+  toJSON TraceOff = String "off"
+  toJSON TraceMessages = String "messages"
+  toJSON TraceVerbose = String "verbose"
+
+instance FromJSON Trace where
+  parseJSON = withText "Trace" $ \case
+    "off"      -> pure TraceOff
+    "messages" -> pure TraceMessages
+    "verbose"  -> pure TraceVerbose
+
+--------------------------------------------------------------------------------
+-- Boilerplate
+--------------------------------------------------------------------------------
+
+type WorkspaceClientCapabilities = Value
+type TextDocumentClientCapabilities = Value
+
+--------------------------------------------------------------------------------
+-- ClientCapabilities
+--------------------------------------------------------------------------------
+
+data ClientCapabilities = ClientCapabilities
+  { clientCapabilitiesWorkspace    :: Maybe WorkspaceClientCapabilities
+  , clientCapabilitiesTextDocument :: Maybe TextDocumentClientCapabilities
+  , clientCapabilitiesExperiment   :: Maybe Value
+  } deriving (Eq,Show,Read,Data,Generic)
+
+instance ToJSON ClientCapabilities where
+  toJSON (ClientCapabilities w t e) = object $
+    "workspace" ?~ w <> "textDocument" ?~ t <> "experimental" ?~ e
+
+instance FromJSON ClientCapabilities where
+  parseJSON = withObject "ClientCapabilities" $ \v -> ClientCapabilities
+    <$> v .:? "workspace"
+    <*> v .:? "textDocument"
+    <*> v .:? "experimental"
+
+instance Hashable ClientCapabilities
+
+--------------------------------------------------------------------------------
+-- InitializeParams
+--------------------------------------------------------------------------------
+
+data InitializeParams = InitializeParams
+  { initializeParamsProcessId             :: Maybe Int
+  , initializeParamsRootPath              :: Maybe (Maybe String) -- deprecated
+  , initializeParamsRootUri               :: Maybe DocumentUri
+  , initializeParamsInitializationOptions :: Maybe Value
+  , initializeParamsCapabilities          :: ClientCapabilities
+  , initializeParamsTrace                 :: Trace
+  } deriving (Eq,Show,Read,Data,Generic)
+
+instance ToJSON InitializeParams where
+  toJSON (InitializeParams p rp ru o c t) = object
+     $ "processId" !~ p
+    <> "rootPath"  ?~ rp
+    <> "rootUri"   !~ ru
+    <> "initializationOptions" ?~ o
+    <> "capabilities" !~ c
+    <> "trace" !~ t
+
+instance FromJSON InitializeParams where
+  parseJSON = withObject "InitializeParams" $ \v -> InitializeParams
+    <$> v .: "processId"
+    <*> v .:? "rootPath"
+    <*> v .:? "rootUri"
+    <*> v .:? "initializationOptions"
+    <*> v .: "capabilities"
+    <*> v .:? "trace" .!= TraceOff
+
+instance Hashable InitializeParams
