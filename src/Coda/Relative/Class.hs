@@ -27,7 +27,6 @@ import Coda.Relative.Delta
 import Data.Bifunctor
 import Data.Coerce
 import Data.List.NonEmpty
-import Data.Primitive.Array
 import Data.Profunctor.Unsafe
 import Data.Semigroup
 import GHC.Generics
@@ -61,7 +60,6 @@ instance (Relative a, Relative b) => Relative (a, b) where rel = birel
 instance (Relative a, Relative b) => Relative (Either a b) where rel = birel
 instance Relative a => Relative [a] where rel = frel
 instance Relative a => Relative (NonEmpty a) where rel = frel
-instance Relative a => Relative (Array a) where rel = frel
   
 class GRelative f where
   grel' :: Delta -> f a -> f a

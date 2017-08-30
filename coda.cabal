@@ -76,7 +76,6 @@ library
     Coda.Relative.Delta
     Coda.Relative.List
 
-
     Coda.Server
     Coda.Server.Options
     Coda.Syntax.Keywords
@@ -87,7 +86,6 @@ library
     Coda.Util.Async
     Coda.Util.Instances
     Coda.Util.Pretty
-    Coda.Util.Primitive
     Coda.Util.STM
 
     Coda.Version
@@ -119,7 +117,6 @@ library
     logging              >= 3.0.4   && < 3.1,
     mtl                  >= 2.2.1   && < 2.3,
     optparse-applicative >= 0.14    && < 0.15,
-    primitive            >= 0.6.2   && < 0.7,
     profunctors          >= 5.2     && < 5.3,
     unordered-containers >= 0.2     && < 0.3,
     scientific           >= 0.3     && < 0.4,
