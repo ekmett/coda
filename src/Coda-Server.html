@@ -7,100 +7,162 @@
 <link type='text/css' rel='stylesheet' href='hscolour.css' />
 </head>
 <body>
-<pre><a name="line-1"></a><span class='hs-comment'>--------------------------------------------------------------------</span>
-<a name="line-2"></a><span class='hs-comment'>-- |</span>
-<a name="line-3"></a><span class='hs-comment'>-- Copyright :  (c) Edward Kmett 2017</span>
-<a name="line-4"></a><span class='hs-comment'>-- License   :  BSD2</span>
-<a name="line-5"></a><span class='hs-comment'>-- Maintainer:  Edward Kmett &lt;ekmett@gmail.com&gt;</span>
-<a name="line-6"></a><span class='hs-comment'>-- Stability :  experimental</span>
-<a name="line-7"></a><span class='hs-comment'>-- Portability: non-portable</span>
-<a name="line-8"></a><span class='hs-comment'>--</span>
-<a name="line-9"></a><span class='hs-comment'>--------------------------------------------------------------------</span>
-<a name="line-10"></a>
-<a name="line-11"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Server</span>
-<a name="line-12"></a>  <span class='hs-layout'>(</span> <span class='hs-varid'>server</span>
-<a name="line-13"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-14"></a>
-<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Sink</span>
-<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span>
-<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Server</span><span class='hs-varop'>.</span><span class='hs-conid'>Options</span>
-<a name="line-18"></a><span class='hs-comment'>-- import Coda.Util.Async</span>
-<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Concurrent</span><span class='hs-varop'>.</span><span class='hs-conid'>MVar</span>
-<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
-<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Logging</span>
-<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span>
-<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Lazy</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Lazy</span>
-<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span>
-<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span>
-<a name="line-26"></a>
-<a name="line-27"></a><a name="withLogging"></a><span class='hs-definition'>withLogging</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
-<a name="line-28"></a><span class='hs-definition'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>case</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsLog</span> <span class='hs-keyword'>of</span>
-<a name="line-29"></a>  <span class='hs-conid'>Nothing</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withStderrLogging</span> <span class='hs-varid'>m</span>
-<a name="line-30"></a>  <span class='hs-conid'>Just</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withFileLogging</span> <span class='hs-varid'>f</span> <span class='hs-varid'>m</span>
-<a name="line-31"></a>
-<a name="line-32"></a><a name="jsonRpc"></a><span class='hs-definition'>jsonRpc</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Text</span>
-<a name="line-33"></a><span class='hs-definition'>jsonRpc</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>fromString</span> <span class='hs-str'>"JSON-RPC"</span>
-<a name="line-34"></a>
-<a name="line-35"></a><a name="withMVar_"></a><span class='hs-definition'>withMVar_</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>MVar</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-varid'>b</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-varid'>b</span>
-<a name="line-36"></a><span class='hs-definition'>withMVar_</span> <span class='hs-varid'>v</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>withMVar</span> <span class='hs-varid'>v</span> <span class='hs-layout'>(</span><span class='hs-varid'>const</span> <span class='hs-varid'>m</span><span class='hs-layout'>)</span>
-<a name="line-37"></a>
-<a name="line-38"></a><a name="server"></a><span class='hs-definition'>server</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
-<a name="line-39"></a><span class='hs-definition'>server</span> <span class='hs-varid'>opts</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>do</span>
-<a name="line-40"></a>  <span class='hs-varid'>setLogLevel</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>if</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsDebug</span> <span class='hs-keyword'>then</span> <span class='hs-conid'>LevelDebug</span> <span class='hs-keyword'>else</span> <span class='hs-conid'>LevelWarn</span>
-<a name="line-41"></a>  <span class='hs-varid'>outputLock</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>newMVar</span> <span class='hs-conid'>()</span>
-<a name="line-42"></a>  <span class='hs-keyword'>let</span> <span class='hs-varid'>output</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Sink</span> <span class='hs-conid'>Encoding</span>
-<a name="line-43"></a>      <span class='hs-varid'>output</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Sink</span> <span class='hs-layout'>(</span><span class='hs-varid'>withMVar_</span> <span class='hs-varid'>outputLock</span> <span class='hs-varop'>.</span> <span class='hs-varid'>putEncoding</span><span class='hs-layout'>)</span>
-<a name="line-44"></a>  <span class='hs-sel'>_input</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-conid'>Lazy</span><span class='hs-varop'>.</span><span class='hs-varid'>getContents</span>
-<a name="line-45"></a>  <span class='hs-varid'>loggingLogger</span> <span class='hs-conid'>LevelError</span> <span class='hs-varid'>jsonRpc</span> <span class='hs-varop'>$</span> <span class='hs-varid'>show</span> <span class='hs-varid'>opts</span>
-<a name="line-46"></a>  <span class='hs-varid'>sink</span> <span class='hs-varid'>output</span> <span class='hs-varop'>$</span> <span class='hs-varid'>toEncoding</span> <span class='hs-conid'>Null</span>
-<a name="line-47"></a>
-<a name="line-48"></a><span class='hs-comment'>{-
-<a name="line-49"></a>  -- now that we've got a place to write to and a supply of messages
-<a name="line-50"></a>
-<a name="line-51"></a>  handle input output
-<a name="line-52"></a> where
-<a name="line-53"></a>  handle :: Lazy.ByteString -&gt; Sink Encoding -&gt; IO ()
-<a name="line-54"></a>  handle input output = case runParser parseRpc input of
-<a name="line-55"></a>    Err -&gt; do
-<a name="line-56"></a>      loggingLogger LevelError JsonRpc "bad frame"
-<a name="line-57"></a>      exit $ ExitFailure 1 -- we're shutting down
-<a name="line-58"></a>   OK value input' -&gt; do
-<a name="line-59"></a>      loggingLogger LevelInfo JsonRpc (show value)
-<a name="line-60"></a>      case value of
-<a name="line-61"></a>        Array xs -&gt; do
-<a name="line-62"></a>          batch xs output
-<a name="line-63"></a>          handle input' output
-<a name="line-64"></a>        _ -&gt; process value output
-<a name="line-65"></a>
-<a name="line-66"></a>processRequest :: Request Id Value -&gt; Sink (Response Id Value) -&gt; IO (Async ())
+<pre><a name="line-1"></a><span class='hs-comment'>{-# language LambdaCase #-}</span>
+<a name="line-2"></a><span class='hs-comment'>{-# language TemplateHaskell #-}</span>
+<a name="line-3"></a><span class='hs-comment'>{-# language OverloadedStrings #-}</span>
+<a name="line-4"></a><span class='hs-comment'>{-# language ScopedTypeVariables #-}</span>
+<a name="line-5"></a>
+<a name="line-6"></a><span class='hs-comment'>--------------------------------------------------------------------</span>
+<a name="line-7"></a><span class='hs-comment'>-- |</span>
+<a name="line-8"></a><span class='hs-comment'>-- Copyright :  (c) Edward Kmett 2017</span>
+<a name="line-9"></a><span class='hs-comment'>-- License   :  BSD2</span>
+<a name="line-10"></a><span class='hs-comment'>-- Maintainer:  Edward Kmett &lt;ekmett@gmail.com&gt;</span>
+<a name="line-11"></a><span class='hs-comment'>-- Stability :  experimental</span>
+<a name="line-12"></a><span class='hs-comment'>-- Portability: non-portable</span>
+<a name="line-13"></a><span class='hs-comment'>--</span>
+<a name="line-14"></a><span class='hs-comment'>--------------------------------------------------------------------</span>
+<a name="line-15"></a>
+<a name="line-16"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Server</span>
+<a name="line-17"></a>  <span class='hs-layout'>(</span> <span class='hs-varid'>server</span>
+<a name="line-18"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>logMessage</span>
+<a name="line-19"></a>  <span class='hs-layout'>,</span> <span class='hs-varid'>telemetryEvent</span>
+<a name="line-20"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-21"></a>
+<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Base</span>
+<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Language</span>
+<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Parser</span>
+<a name="line-26"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Message</span><span class='hs-varop'>.</span><span class='hs-conid'>Severity</span>
+<a name="line-27"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Server</span><span class='hs-varop'>.</span><span class='hs-conid'>Options</span>
+<a name="line-28"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Util</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span>
+<a name="line-29"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Applicative</span>
+<a name="line-30"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span><span class='hs-varop'>.</span><span class='hs-conid'>Class</span>
+<a name="line-31"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span><span class='hs-varop'>.</span><span class='hs-conid'>State</span>
+<a name="line-32"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span><span class='hs-varop'>.</span><span class='hs-conid'>Reader</span>
+<a name="line-33"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span> <span class='hs-varid'>hiding</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>.=</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-34"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Logging</span>
+<a name="line-35"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span>
+<a name="line-36"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Lazy</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Lazy</span>
+<a name="line-37"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Monoid</span>
+<a name="line-38"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span>
+<a name="line-39"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Text</span>
+<a name="line-40"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Exit</span>
+<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span>
+<a name="line-42"></a>
+<a name="line-43"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-44"></a><span class='hs-comment'>-- Logging</span>
+<a name="line-45"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-46"></a>
+<a name="line-47"></a><a name="withLogging"></a><span class='hs-definition'>withLogging</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
+<a name="line-48"></a><span class='hs-definition'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>case</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsLog</span> <span class='hs-keyword'>of</span>
+<a name="line-49"></a>  <span class='hs-conid'>Nothing</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withStderrLogging</span> <span class='hs-varid'>m</span>
+<a name="line-50"></a>  <span class='hs-conid'>Just</span> <span class='hs-varid'>f</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>withFileLogging</span> <span class='hs-varid'>f</span> <span class='hs-varid'>m</span>
+<a name="line-51"></a>
+<a name="line-52"></a><a name="jsonRpc"></a><span class='hs-definition'>jsonRpc</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Text</span>
+<a name="line-53"></a><span class='hs-definition'>jsonRpc</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>fromString</span> <span class='hs-str'>"JSON-RPC"</span>
+<a name="line-54"></a>
+<a name="line-55"></a><a name="putError"></a><span class='hs-definition'>putError</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Maybe</span> <span class='hs-conid'>Id</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>ErrorCode</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>m</span> <span class='hs-conid'>()</span>
+<a name="line-56"></a><span class='hs-definition'>putError</span> <span class='hs-varid'>i</span> <span class='hs-varid'>code</span> <span class='hs-varid'>text</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>do</span>
+<a name="line-57"></a>  <span class='hs-varid'>putMessage</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Response</span> <span class='hs-varid'>i</span> <span class='hs-conid'>Nothing</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-layout'>(</span><span class='hs-conid'>ResponseError</span> <span class='hs-varid'>code</span> <span class='hs-varid'>text</span> <span class='hs-conid'>Nothing</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-58"></a>  <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>loggingLogger</span> <span class='hs-conid'>LevelError</span> <span class='hs-varid'>jsonRpc</span> <span class='hs-varid'>text</span>
+<a name="line-59"></a>
+<a name="line-60"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-61"></a><span class='hs-comment'>-- State</span>
+<a name="line-62"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-63"></a>
+<a name="line-64"></a><a name="ServerState"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ServerState</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>ServerState</span>
+<a name="line-65"></a>  <span class='hs-layout'>{</span> <span class='hs-sel'>_input</span> <span class='hs-keyglyph'>::</span> <span class='hs-varop'>!</span><span class='hs-conid'>Lazy</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span>
+<a name="line-66"></a>  <span class='hs-layout'>}</span> <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Show</span><span class='hs-layout'>)</span>
 <a name="line-67"></a>
-<a name="line-68"></a>process :: Value -&gt; Sink Encoding -&gt; IO ()
-<a name="line-69"></a>process value sink = case eitherDecode' value of
-<a name="line-70"></a>  Left err -&gt; do
-<a name="line-71"></a>    loggingLogger LevelWarning JsonRpc err
-<a name="line-72"></a>    output
-<a name="line-73"></a>  Right (Request Nothing m p   -&gt; processNote (Notification m p)
-<a name="line-74"></a>  Right (Request mi m p) -&gt; do
-<a name="line-75"></a>    e &lt;- newEmptyMVar
-<a name="line-76"></a>    a &lt;- processRequest (Request i m p) $ Sink $ \response -&gt;
-<a name="line-77"></a>      if response^.id == i then putMVar () &gt;&gt; sink (toEncoding xs)
-<a name="line-78"></a>      else loggingLogger LevelWarn JsonRpc "bad response"
-<a name="line-79"></a>    concurrently a $ do
-<a name="line-80"></a>
-<a name="line-81"></a>
-<a name="line-82"></a>   : Request (Maybe Id) Value) -&gt; do
-<a name="line-83"></a>    requestId req
-<a name="line-84"></a>            handle input' output
-<a name="line-85"></a>          Right req -&gt; do
-<a name="line-86"></a>            dispatch req output
-<a name="line-87"></a>
-<a name="line-88"></a>batch :: Vector Value -&gt; Sink Encoding -&gt; IO ()
-<a name="line-89"></a>batch xs =
+<a name="line-68"></a><a name="makeClassy"></a><span class='hs-definition'>makeClassy</span> <span class='hs-chr'>'</span><span class='hs-chr'>'</span><span class='hs-conid'>ServerState</span>
+<a name="line-69"></a>
+<a name="line-70"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-71"></a><span class='hs-comment'>-- Listening</span>
+<a name="line-72"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-73"></a>
+<a name="line-74"></a><a name="listen"></a><span class='hs-definition'>listen</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span><span class='hs-layout'>,</span> <span class='hs-conid'>MonadState</span> <span class='hs-varid'>s</span> <span class='hs-varid'>m</span><span class='hs-layout'>,</span> <span class='hs-conid'>HasServerState</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-varid'>m</span> <span class='hs-layout'>(</span><span class='hs-conid'>Either</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Request</span><span class='hs-keyglyph'>]</span> <span class='hs-conid'>Request</span><span class='hs-layout'>)</span>
+<a name="line-75"></a><span class='hs-definition'>listen</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>do</span>
+<a name="line-76"></a>  <span class='hs-varid'>i</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>use</span> <span class='hs-varid'>input</span>
+<a name="line-77"></a>  <span class='hs-keyword'>case</span> <span class='hs-varid'>runParser</span> <span class='hs-varid'>message</span> <span class='hs-varid'>i</span> <span class='hs-keyword'>of</span>
+<a name="line-78"></a>    <span class='hs-conid'>Err</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-79"></a>      <span class='hs-varid'>putError</span> <span class='hs-conid'>Nothing</span> <span class='hs-conid'>InvalidRequest</span> <span class='hs-str'>"Unparseable JSON-RPC Request Frame Received. Shutting Down."</span>
+<a name="line-80"></a>      <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>exitWith</span> <span class='hs-varop'>$</span> <span class='hs-conid'>ExitFailure</span> <span class='hs-num'>1</span>
+<a name="line-81"></a>    <span class='hs-conid'>OK</span> <span class='hs-varid'>value</span> <span class='hs-varid'>i'</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-82"></a>      <span class='hs-varid'>assign</span> <span class='hs-varid'>input</span> <span class='hs-varid'>i'</span>
+<a name="line-83"></a>      <span class='hs-keyword'>let</span> <span class='hs-varid'>req</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Left</span>  <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>eitherDecode'</span> <span class='hs-varid'>value</span>
+<a name="line-84"></a>            <span class='hs-varop'>&lt;|&gt;</span> <span class='hs-conid'>Right</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>eitherDecode'</span> <span class='hs-varid'>value</span> 
+<a name="line-85"></a>      <span class='hs-keyword'>case</span> <span class='hs-varid'>req</span> <span class='hs-keyword'>of</span>
+<a name="line-86"></a>        <span class='hs-conid'>Left</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-87"></a>          <span class='hs-varid'>putError</span> <span class='hs-conid'>Nothing</span> <span class='hs-conid'>ParseError</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-varid'>pack</span> <span class='hs-varid'>s</span>
+<a name="line-88"></a>          <span class='hs-varid'>listen</span>
+<a name="line-89"></a>        <span class='hs-conid'>Right</span> <span class='hs-varid'>e</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>return</span> <span class='hs-varid'>e</span>
 <a name="line-90"></a>
-<a name="line-91"></a>dispatch :: Request_ -&gt; Sink Encoding -&gt; IO ()
-<a name="line-92"></a>dispatch request out = do
-<a name="line-93"></a>
-<a name="line-94"></a>notification :: Notification_ -&gt; Sink Encoding -&gt; IO ()
-<a name="line-95"></a>-}</span>
+<a name="line-91"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-92"></a><span class='hs-comment'>-- Server -&gt; Client Notifications</span>
+<a name="line-93"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-94"></a>
+<a name="line-95"></a><a name="logMessage"></a><span class='hs-definition'>logMessage</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Severity</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>m</span> <span class='hs-conid'>()</span>
+<a name="line-96"></a><span class='hs-definition'>logMessage</span> <span class='hs-varid'>s</span> <span class='hs-varid'>t</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>putMessage</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Request</span> <span class='hs-conid'>Nothing</span> <span class='hs-str'>"window/logMessage"</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Just</span> <span class='hs-varop'>$</span> <span class='hs-varid'>object</span> <span class='hs-varop'>$</span>
+<a name="line-97"></a>  <span class='hs-str'>"type"</span> <span class='hs-varop'>!~</span> <span class='hs-varid'>s</span> <span class='hs-varop'>&lt;&gt;</span> <span class='hs-str'>"message"</span> <span class='hs-varop'>!~</span> <span class='hs-varid'>t</span>
+<a name="line-98"></a>
+<a name="line-99"></a><a name="showMessage"></a><span class='hs-definition'>showMessage</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Severity</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>m</span> <span class='hs-conid'>()</span>
+<a name="line-100"></a><span class='hs-definition'>showMessage</span> <span class='hs-varid'>s</span> <span class='hs-varid'>t</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>putMessage</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Request</span> <span class='hs-conid'>Nothing</span> <span class='hs-str'>"window/showMessage"</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Just</span> <span class='hs-varop'>$</span> <span class='hs-varid'>object</span> <span class='hs-varop'>$</span>
+<a name="line-101"></a>  <span class='hs-str'>"type"</span> <span class='hs-varop'>!~</span> <span class='hs-varid'>s</span> <span class='hs-varop'>&lt;&gt;</span> <span class='hs-str'>"message"</span> <span class='hs-varop'>!~</span> <span class='hs-varid'>t</span>
+<a name="line-102"></a>
+<a name="line-103"></a><a name="telemetryEvent"></a><span class='hs-definition'>telemetryEvent</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Value</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>m</span> <span class='hs-conid'>()</span>
+<a name="line-104"></a><span class='hs-definition'>telemetryEvent</span> <span class='hs-varid'>v</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>putMessage</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Request</span> <span class='hs-conid'>Nothing</span> <span class='hs-str'>"telemetry/event"</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-varid'>v</span><span class='hs-layout'>)</span>
+<a name="line-105"></a>
+<a name="line-106"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-107"></a><span class='hs-comment'>-- Server</span>
+<a name="line-108"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-109"></a>
+<a name="line-110"></a><a name="server"></a><span class='hs-definition'>server</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ServerOptions</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
+<a name="line-111"></a><span class='hs-definition'>server</span> <span class='hs-varid'>opts</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>withLogging</span> <span class='hs-varid'>opts</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>do</span>
+<a name="line-112"></a>  <span class='hs-varid'>setLogLevel</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>if</span> <span class='hs-varid'>opts</span><span class='hs-varop'>^.</span><span class='hs-varid'>serverOptionsDebug</span> <span class='hs-keyword'>then</span> <span class='hs-conid'>LevelDebug</span> <span class='hs-keyword'>else</span> <span class='hs-conid'>LevelWarn</span>
+<a name="line-113"></a>  <span class='hs-varid'>c</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-conid'>Lazy</span><span class='hs-varop'>.</span><span class='hs-varid'>getContents</span>
+<a name="line-114"></a>  <span class='hs-varid'>runReaderT</span> <span class='hs-varop'>??</span> <span class='hs-varid'>opts</span> <span class='hs-varop'>$</span> <span class='hs-varid'>evalStateT</span> <span class='hs-varop'>??</span> <span class='hs-conid'>ServerState</span> <span class='hs-varid'>c</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>do</span>
+<a name="line-115"></a>    <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>hSetBuffering</span> <span class='hs-varid'>stdout</span> <span class='hs-conid'>NoBuffering</span>
+<a name="line-116"></a>    <span class='hs-varid'>initializeServer</span>
+<a name="line-117"></a>    <span class='hs-varid'>loop</span>
+<a name="line-118"></a>
+<a name="line-119"></a><a name="ok"></a><span class='hs-definition'>ok</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span><span class='hs-layout'>,</span> <span class='hs-conid'>ToJSON</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Id</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>m</span> <span class='hs-conid'>()</span>
+<a name="line-120"></a><span class='hs-definition'>ok</span> <span class='hs-varid'>i</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>putMessage</span> <span class='hs-varop'>$</span> <span class='hs-conid'>Response</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-varid'>i</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-layout'>(</span><span class='hs-varid'>toJSON</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-conid'>Nothing</span>
+<a name="line-121"></a>
+<a name="line-122"></a><a name="initializeServer"></a><span class='hs-definition'>initializeServer</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>MonadState</span> <span class='hs-varid'>s</span> <span class='hs-varid'>m</span><span class='hs-layout'>,</span> <span class='hs-conid'>HasServerState</span> <span class='hs-varid'>s</span><span class='hs-layout'>,</span> <span class='hs-conid'>MonadReader</span> <span class='hs-varid'>e</span> <span class='hs-varid'>m</span><span class='hs-layout'>,</span> <span class='hs-conid'>HasServerOptions</span> <span class='hs-varid'>e</span><span class='hs-layout'>,</span> <span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-varid'>m</span> <span class='hs-conid'>()</span>
+<a name="line-123"></a><span class='hs-definition'>initializeServer</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>listen</span> <span class='hs-varop'>&gt;&gt;=</span> <span class='hs-keyglyph'>\</span><span class='hs-keyword'>case</span>
+<a name="line-124"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-varid'>i</span><span class='hs-layout'>)</span> <span class='hs-str'>"initialize"</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-layout'>(</span><span class='hs-conid'>JSON</span> <span class='hs-layout'>(</span><span class='hs-sel'>_ip</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>InitializeParams</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-125"></a>    <span class='hs-varid'>ok</span> <span class='hs-varid'>i</span> <span class='hs-varop'>$</span> <span class='hs-varid'>object</span>
+<a name="line-126"></a>      <span class='hs-keyglyph'>[</span> <span class='hs-str'>"capabilities"</span> <span class='hs-varop'>.=</span> <span class='hs-varid'>object</span>
+<a name="line-127"></a>        <span class='hs-keyglyph'>[</span> <span class='hs-str'>"textDocumentSync"</span> <span class='hs-varop'>.=</span> <span class='hs-varid'>object</span>
+<a name="line-128"></a>          <span class='hs-keyglyph'>[</span> <span class='hs-str'>"openClose"</span> <span class='hs-varop'>.=</span> <span class='hs-varid'>toJSON</span> <span class='hs-conid'>True</span>
+<a name="line-129"></a>          <span class='hs-layout'>,</span> <span class='hs-str'>"change"</span> <span class='hs-varop'>.=</span> <span class='hs-varid'>toJSON</span> <span class='hs-conid'>True</span>
+<a name="line-130"></a>          <span class='hs-layout'>,</span> <span class='hs-str'>"save"</span> <span class='hs-varop'>.=</span> <span class='hs-varid'>toJSON</span> <span class='hs-conid'>True</span>
+<a name="line-131"></a>          <span class='hs-keyglyph'>]</span>
+<a name="line-132"></a>        <span class='hs-keyglyph'>]</span>
+<a name="line-133"></a>      <span class='hs-keyglyph'>]</span>
+<a name="line-134"></a>  <span class='hs-comment'>-- Right (Request Nothing "shutdown" Nothing) -&gt; liftIO $ pure (); -- exitWith ExitSuccess -- totally wrong</span>
+<a name="line-135"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-conid'>Nothing</span> <span class='hs-str'>"exit"</span> <span class='hs-conid'>Nothing</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-varid'>exitWith</span> <span class='hs-conid'>ExitSuccess</span>
+<a name="line-136"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-keyword'>_</span> <span class='hs-varid'>m</span> <span class='hs-keyword'>_</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>|</span> <span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-varid'>isPrefixOf</span> <span class='hs-str'>"$/"</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>initializeServer</span> <span class='hs-comment'>-- ignore extensions</span>
+<a name="line-137"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-conid'>Nothing</span> <span class='hs-keyword'>_</span> <span class='hs-keyword'>_</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>initializeServer</span>               <span class='hs-comment'>-- ignore notifications</span>
+<a name="line-138"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-varid'>i</span><span class='hs-layout'>)</span> <span class='hs-keyword'>_</span> <span class='hs-keyword'>_</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-139"></a>    <span class='hs-varid'>putError</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-varid'>i</span><span class='hs-layout'>)</span> <span class='hs-conid'>ServerNotInitialized</span> <span class='hs-str'>"waiting for initialization"</span>
+<a name="line-140"></a>    <span class='hs-varid'>initializeServer</span> 
+<a name="line-141"></a>  <span class='hs-conid'>Left</span> <span class='hs-keyword'>_</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-142"></a>    <span class='hs-varid'>putError</span> <span class='hs-conid'>Nothing</span> <span class='hs-conid'>InternalError</span> <span class='hs-str'>"batch commands not yet implemented"</span>
+<a name="line-143"></a>    <span class='hs-varid'>initializeServer</span>
+<a name="line-144"></a>
+<a name="line-145"></a><a name="loop"></a><span class='hs-definition'>loop</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>MonadState</span> <span class='hs-varid'>s</span> <span class='hs-varid'>m</span><span class='hs-layout'>,</span> <span class='hs-conid'>HasServerState</span> <span class='hs-varid'>s</span><span class='hs-layout'>,</span> <span class='hs-conid'>MonadReader</span> <span class='hs-varid'>e</span> <span class='hs-varid'>m</span><span class='hs-layout'>,</span> <span class='hs-conid'>HasServerOptions</span> <span class='hs-varid'>e</span><span class='hs-layout'>,</span> <span class='hs-conid'>MonadIO</span> <span class='hs-varid'>m</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-varid'>m</span> <span class='hs-conid'>()</span>
+<a name="line-146"></a><span class='hs-definition'>loop</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>listen</span> <span class='hs-varop'>&gt;&gt;=</span> <span class='hs-keyglyph'>\</span><span class='hs-keyword'>case</span>
+<a name="line-147"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-conid'>Nothing</span> <span class='hs-str'>"exit"</span> <span class='hs-conid'>Nothing</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>liftIO</span> <span class='hs-varop'>$</span> <span class='hs-keyword'>do</span>
+<a name="line-148"></a>  <span class='hs-comment'>--  loggingLogger LevelInfo "shutting down as requested"</span>
+<a name="line-149"></a>    <span class='hs-varid'>exitWith</span> <span class='hs-conid'>ExitSuccess</span>
+<a name="line-150"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-keyword'>_</span> <span class='hs-varid'>m</span> <span class='hs-keyword'>_</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>|</span> <span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-varid'>isPrefixOf</span> <span class='hs-str'>"$/"</span> <span class='hs-varid'>m</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>loop</span> <span class='hs-comment'>-- ignore extensions for now</span>
+<a name="line-151"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-varid'>i</span><span class='hs-layout'>)</span> <span class='hs-keyword'>_</span> <span class='hs-keyword'>_</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-152"></a>    <span class='hs-varid'>putError</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-varid'>i</span><span class='hs-layout'>)</span> <span class='hs-conid'>InvalidRequest</span> <span class='hs-str'>"unsupported request"</span>
+<a name="line-153"></a>    <span class='hs-varid'>loop</span>
+<a name="line-154"></a>  <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-conid'>Request</span> <span class='hs-keyword'>_</span> <span class='hs-varid'>m</span> <span class='hs-keyword'>_</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>logMessage</span> <span class='hs-conid'>Information</span> <span class='hs-varid'>m</span>
+<a name="line-155"></a>  <span class='hs-conid'>Left</span> <span class='hs-keyword'>_</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
+<a name="line-156"></a>    <span class='hs-varid'>putError</span> <span class='hs-conid'>Nothing</span> <span class='hs-conid'>InternalError</span> <span class='hs-str'>"batch commands not yet implemented"</span>
+<a name="line-157"></a>    <span class='hs-varid'>loop</span>
 </pre></body>
 </html>
