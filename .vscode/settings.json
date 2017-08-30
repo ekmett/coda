@@ -8,10 +8,13 @@
     "old" : true,
     "out": true
   },
+  "files.associations": {
+    "*.hsc": "haskell"
+  },
   "search.exclude": {
     "**.js" : true,
     "**/.git": true,
-    ""**/.DS_Store": true,
+    "**/.DS_Store": true,
     "dist" : true,
     "dist-newstyle" : true,
     ".stack-work" : true,
