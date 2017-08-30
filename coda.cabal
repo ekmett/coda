@@ -61,8 +61,8 @@ library
     Coda.Console.Unicode
 
     Coda.Data.Dyn
-    Coda.Data.List
     Coda.Data.Queue
+    Coda.Data.Seq
     Coda.Data.Sink
     Coda.Data.View
 
