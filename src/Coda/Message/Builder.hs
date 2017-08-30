@@ -22,6 +22,7 @@ module Coda.Message.Builder
   , putEncoding
   ) where
 
+import Control.Monad.IO.Class
 import Data.Aeson
 import Data.ByteString.Builder
 import Data.ByteString.Lazy as Lazy
@@ -43,17 +44,17 @@ buildEncoding a
   where content = toLazyByteString (fromEncoding a)
 
 -- | Write a JSON-RPC 2.0 message to a given file handle
-hPutMessage :: ToJSON a => Handle -> a -> IO ()
+hPutMessage :: (MonadIO m, ToJSON a) => Handle -> a -> m ()
 hPutMessage h = hPutEncoding h . toEncoding
 
 -- | Write a JSON-RPC 2.0 message to a given file handle from an Encoding
-hPutEncoding :: Handle -> Encoding -> IO ()
-hPutEncoding h = hPutBuilder h . buildEncoding
+hPutEncoding :: MonadIO m => Handle -> Encoding -> m ()
+hPutEncoding h = liftIO . hPutBuilder h . buildEncoding
 
 -- | Write a JSON-RPC 2.0 message to stdout
-putMessage :: ToJSON a => a -> IO ()
+putMessage :: (MonadIO m, ToJSON a) => a -> m ()
 putMessage = putEncoding . toEncoding
 
 -- | Write a JSON-RPC 2.0 message to stdout from an Encoding
-putEncoding :: Encoding -> IO ()
-putEncoding = hPutEncoding stdout
+putEncoding :: MonadIO m => Encoding -> m ()
+putEncoding = liftIO . hPutEncoding stdout

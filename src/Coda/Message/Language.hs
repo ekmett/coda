@@ -22,7 +22,6 @@ module Coda.Message.Language
   (
   -- * Cancellation Support
     pattern CancelRequest
-  , _CancelRequest
   , pattern RequestCancelled
   , cancelledResponse
   -- * Language Server Protocol
@@ -79,21 +78,16 @@ import GHC.Generics
 --
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#-cancellation-support>
 
-pattern CancelRequest :: Id -> Notification_
-pattern CancelRequest identifier = Notification "$/cancelRequest" (Value_ identifier)
-
-_CancelRequest :: Prism' Notification_ Id
-_CancelRequest = prism' CancelRequest $ \case
-  CancelRequest a -> Just a
-  _ -> Nothing
+pattern CancelRequest :: Id -> Request
+pattern CancelRequest identifier = Request Nothing "$/cancelRequest" (Just (Value_ identifier))
 
 pattern RequestCancelled :: ErrorCode
 pattern RequestCancelled = ErrorCode (-32800)
 
 -- We don't reply to the CancelRequest, as it is a notification, but we should
 -- cause the computation that was cancelled to respond with something like this:
-cancelledResponse :: Id -> Response Value Id Value
-cancelledResponse i = Response i Null (Just (ResponseError RequestCancelled "request cancelled" Null))
+cancelledResponse :: Id -> Response
+cancelledResponse i = Response (Just i) Nothing (Just (ResponseError RequestCancelled "request cancelled" Nothing))
 
 --------------------------------------------------------------------------------
 -- DocumentUri

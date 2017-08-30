@@ -9,9 +9,10 @@ if [ "X" = "X$CODA_SERVER_PATH" ]; then
   exit 1
 fi
 
-echo "Starting directory: `pwd`" 1>&2
-env 1>&2
+echo "Starting" 1>&2
 
-tee ~/input.log | (sleep 10 && coda $@) | tee ~/output.log
+tee ~/input.log | coda $@ | tee ~/output.log
+
+echo "Shutting Down" 1>&2
 
 #exec coda $@
