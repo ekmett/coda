@@ -40,9 +40,6 @@ import Data.Text (Text)
 import qualified Data.Text.Unsafe as Text
 import GHC.Generics
 
--- $setup
--- >>> :set -XOverloadedStrings -XOverloadedLists
-
 -- | Invariants
 --
 -- * The only occurrences of '\n', '\r' or "\r\n" are at the end of the Text
@@ -74,12 +71,12 @@ instance HasLine Line where
 -- This measures line count and total number of code-units over all lines
 -- not the number of code-units on the current line.
 --
--- This makes the result a proper abelian group, not just a monoid.
+-- This makes the result a proper Abelian group, not just a Monoid.
 --
--- Also when used to measure a finger-tree you can use the finger tree to convert
--- back and forth between Delta and Position in log time, while still letting
--- us use the compact single-int (abelian group) 'Delta' representation internally
--- for almost all positioning.
+-- Also when used to measure a 'FingerTree' you can use the 'FingerTree' to convert
+-- back and forth between 'Delta' and 'Position' in /O(log l)/ time, while still
+-- letting us use the compact single-integer Abelian group 'Delta' representation
+-- internally for almost all positioning.
 data LineMeasure = LineMeasure !Int !Int
   deriving (Eq,Ord,Show,Read,Data,Generic)
 
@@ -117,11 +114,11 @@ instance HasLineMeasure LineMeasure where
 -- Takes /O(log l)/ where l is the number of lines
 deltaToPosition :: (Measured v a, HasLineMeasure v) => FingerTree v a -> Delta -> Position
 deltaToPosition t (Delta d) = case split (\x -> delta x >= d) t of
-    (l, _) | ml <- measure l -> Position (lineCount ml) (d - delta ml)
+  (l, _) | ml <- measure l -> Position (lineCount ml) (d - delta ml)
 
 -- | Convert from a Language Server Protocol 'Position' to a 'Delta' given the associated text.
 --
--- /O(log l)/
+-- /O(log l)/ where l is the number of lines
 positionToDelta :: (Measured v a, HasLineMeasure v) => FingerTree v a -> Position -> Delta
 positionToDelta t (Position nl c16) = case split (\x -> lineCount x >= nl) t of
-    (l, _) -> Delta $ delta (measure l) + c16
+  (l, _) -> Delta $ delta (measure l) + c16
