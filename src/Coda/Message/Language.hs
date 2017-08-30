@@ -54,11 +54,12 @@ module Coda.Message.Language
   , HasVersion(..)
   ) where
 
+
 import Coda.Message.Base
+import Coda.Message.Severity as Severity
 import Coda.Util.Aeson
 import Control.Lens.Operators ((<&>),(??))
 import Control.Lens.Combinators
-import Coda.Message.Severity as Severity
 import Control.Monad
 import Data.Aeson hiding (Error)
 import Data.Aeson.Encoding.Internal
@@ -628,6 +629,7 @@ instance FromJSON Trace where
     "off"      -> pure TraceOff
     "messages" -> pure TraceMessages
     "verbose"  -> pure TraceVerbose
+    _ -> mzero
 
 --------------------------------------------------------------------------------
 -- Boilerplate

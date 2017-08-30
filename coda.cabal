@@ -59,6 +59,7 @@ library
     Coda.Console.Completion
     Coda.Console.Options
     Coda.Console.Unicode
+    Coda.Data.Dyn
     Coda.Data.List
     Coda.Data.Queue
     Coda.Data.Sink
@@ -68,6 +69,10 @@ library
     Coda.Message.Language
     Coda.Message.Parser
     Coda.Message.Severity
+    Coda.Relative.Class
+    Coda.Relative.Delta
+    Coda.Relative.Functor
+    Coda.Relative.List
     Coda.Server
     Coda.Server.Options
     Coda.Syntax.Keywords
@@ -106,7 +111,8 @@ library
     logging              >= 3.0.4   && < 3.1,
     mtl                  >= 2.2.1   && < 2.3,
     optparse-applicative >= 0.14    && < 0.15,
-    primitive            >= 0.6     && < 0.7,
+    primitive            >= 0.6.2   && < 0.7,
+    profunctors          >= 5.2     && < 5.3,
     unordered-containers >= 0.2     && < 0.3,
     scientific           >= 0.3     && < 0.4,
     split                >= 0.2     && < 0.3,

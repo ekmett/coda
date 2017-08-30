@@ -34,7 +34,7 @@ import Data.Semigroup
 import GHC.Exts as Exts (IsList(..))
 import Prelude hiding (drop)
 
--- | An Okasaki-style catenable list
+-- | An Okasaki-style catenable list / output-restricted deque
 --
 -- 'mappend', 'cons', 'snoc', 'uncons' are all \(\mathcal{O}(1)\)
 --

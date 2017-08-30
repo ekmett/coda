@@ -26,7 +26,8 @@ module Coda.Syntax.Line
   , alexGetByte
   ) where
 
-import Coda.Syntax.Delta
+import Coda.Relative.Delta
+import Coda.Relative.Class
 import Coda.Data.List as List
 import Coda.Util.Primitive
 import Control.Lens (AsEmpty(..), prism)

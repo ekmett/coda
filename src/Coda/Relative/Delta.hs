@@ -12,9 +12,8 @@
 ---
 ---------------------------------------------------------------------------------
 
-module Coda.Syntax.Delta 
+module Coda.Relative.Delta 
   ( Delta(..)
-  , Relative(..)
   ) where
 
 import Data.Data
@@ -22,7 +21,7 @@ import Data.Hashable
 import Data.Semigroup
 import GHC.Generics
 
--- | @AlexInput@ torsor, this is a (potentially relative) position
+-- | This is a (potentially relative) position
 data Delta = Delta
   { deltaLine  :: !Int -- 0-based line offset
   , deltaCol16 :: !Int -- utf-16 code unit offset into the current line
@@ -36,17 +35,3 @@ instance Semigroup Delta where
 instance Monoid Delta where
   mempty = Delta 0 0 0
   mappend = (<>)
-
-instance Relative Delta where
-  rel = (<>)
-
--- | Applying a relative position change as a left monoid action
---
--- Laws:
---
--- @
--- 'rel' 'mempty' ≡ 'id'
--- 'rel' (m '<>' n) ≡ 'rel' m . 'rel' n
--- @
-class Relative t where
-  rel :: Delta -> t -> t
