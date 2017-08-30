@@ -9,7 +9,6 @@ module Coda.Relative.List
 
 import Coda.Relative.Class
 import Coda.Relative.Delta
-import Coda.Relative.Functor
 import Control.Lens (AsEmpty(..),Cons(..), prism, uncons)
 import Data.Function (on)
 import Data.List (unfoldr)
@@ -61,7 +60,3 @@ instance Relative a => Cons (List a) (List b) a b where
   _Cons = prism (uncurry (Cons mempty)) $ \case
     Nil -> Left Nil
     Cons d a as -> Right (rel d a, rel d as)
-
-instance RelativeFunctor List where
-  relmap _ Nil = Nil
-  relmap f (Cons d a as) = Cons d (f a) (relmap f as)

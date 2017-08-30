@@ -71,7 +71,6 @@ library
     Coda.Message.Severity
     Coda.Relative.Class
     Coda.Relative.Delta
-    Coda.Relative.Functor
     Coda.Relative.List
     Coda.Server
     Coda.Server.Options
