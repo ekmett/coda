@@ -41,8 +41,8 @@ import GHC.Generics
 -- Laws:
 --
 -- @
--- 'rel' 'mempty' ≡ 'id'
--- 'rel' (m '<>' n) ≡ 'rel' m . 'rel' n
+-- 'rel' 0 ≡ 'id'
+-- 'rel' (m '+' n) ≡ 'rel' m . 'rel' n
 -- @
 class Relative a where
   rel :: Delta -> a -> a

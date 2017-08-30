@@ -59,29 +59,37 @@ library
     Coda.Console.Completion
     Coda.Console.Options
     Coda.Console.Unicode
+
     Coda.Data.Dyn
     Coda.Data.List
     Coda.Data.Queue
     Coda.Data.Sink
     Coda.Data.View
+
     Coda.Message.Base
     Coda.Message.Builder
     Coda.Message.Language
     Coda.Message.Parser
     Coda.Message.Severity
+
     Coda.Relative.Class
     Coda.Relative.Delta
     Coda.Relative.List
+
+
     Coda.Server
     Coda.Server.Options
     Coda.Syntax.Keywords
     Coda.Syntax.Line
-    Coda.Util.Instances
+
     Coda.Util.Aeson
+    Coda.Util.Alex
     Coda.Util.Async
+    Coda.Util.Instances
     Coda.Util.Pretty
     Coda.Util.Primitive
     Coda.Util.STM
+
     Coda.Version
 
   other-modules:
@@ -101,6 +109,7 @@ library
     contravariant        >= 1.4     && < 2,
     exceptions           >= 0.8.2.1 && < 0.9,
     final-pretty-printer >= 0.1     && < 0.2,
+    fingertree           >= 0.1.1   && < 0.2,
     ghc-prim,
     haskeline            >= 0.7.4   && < 0.8,
     hashable             >= 1.2.6   && < 1.3,

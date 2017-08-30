@@ -1,6 +1,8 @@
 {-# language LambdaCase #-}
 {-# language BangPatterns #-}
 {-# language TypeFamilies #-}
+{-# language DeriveDataTypeable #-}
+{-# language DeriveGeneric #-}
 
 ---------------------------------------------------------------------------------
 --- |
@@ -14,18 +16,21 @@
 
 module Coda.Syntax.Line
   (
-  -- * A UTF-8 encoded line
+  -- * Lines
     Line(..)
+  , HasLine(..)
   , (!!)
   , encodeLine
   , EncodingError(..)
-  -- * Alex Support
-  , AlexInput(..)
-  , alexInputPrevChar
-  , advanceInput
-  , alexGetByte
+  -- * Summarizing Lines
+  , LineMeasure(..)
+  , HasLineMeasure(..)
+  -- * Position <-> Delta
+  , positionToDelta
+  , deltaToPosition
   ) where
 
+import Coda.Message.Language (Position(..))
 import Coda.Relative.Delta
 import Coda.Relative.Class
 import Coda.Data.List as List
@@ -34,62 +39,83 @@ import Control.Lens (AsEmpty(..), prism)
 import Control.Monad.ST
 import Data.Bits
 import Data.ByteString.Internal
+import Data.Data
+import Data.FingerTree
+import Data.Function (on)
+import Data.Hashable
 import Data.Primitive.ByteArray
 import Data.Semigroup
 import Data.String
-import Data.Text as Text
-import Data.Text.Internal as Text
-import Data.Text.Array as Text
+import qualified Data.Text as Text
+import qualified Data.Text.Internal as Text
+import Data.Text.Internal (Text(..))
+import qualified Data.Text.Array as Text
 import GHC.Word
 import GHC.Exts as Exts (IsList(..))
+import GHC.Generics
 import Prelude hiding ((!!))
 import Unsafe.Coerce
 
 -- $setup
 -- >>> :set -XOverloadedStrings -XOverloadedLists
--- >>> import Data.List as List (unfoldr)
 
 -- | Invariants
 --
 -- * The only occurrences of '\n', '\r' or "\r\n" are at the end of the ByteArray
+--
 -- * Valid UTF-8 encoding
--- TODO: store if the line is ASCII?
-
-newtype Line = Line ByteArray
+--
+-- TODO: store a flag if the line is ASCII? Common enough in code.
+--
+-- TODO: Store in the ByteArray' a 'Word32' length, UTF-8 content, then pad to
+-- integral multiple of 64, then store the middle two levels of a poppy index
+-- interleaved. This would ensure that we only ever scan at most 512 bytes during
+-- conversions of column counts, giving an O(1) conversion from byte count to code
+-- unit count, and O(log c) conversion from code unit to byte count in exchange
+-- for 8 bytes for every 2k in the line, and no index if the line is < 512
+-- characters long. Kind of overkill at this point unless we start wanting to deal
+-- with lots of parse errors in minified or machine generated pathological code.
+data Line = Line ByteArray !(Relative.List EncodingError)
 
 instance Eq Line where
-  (==) = unsafeCoerce sameMutableByteArray
+  (==) = (==) `on` Exts.toList
+
+instance Ord Line where
+  compare = compare `on` Exts.toList
+
+instance Hashable Line where
+  hashWithSalt s l = hashWithSalt s (Exts.toList l)
 
 (!!) :: Line -> Int -> Word8
-Line ba !! i = indexByteArray ba i
-
-size :: Line -> Int
-size (Line ba) = sizeofByteArray ba
+Line ba _ !! i = indexByteArray ba i
 
 instance Show Line where
-  showsPrec d xs = showsPrec d $ unsafePackLenBytes (size xs) $ Exts.toList xs
+  showsPrec d xs = showsPrec d $ unsafePackLenBytes (delta xs) $ Exts.toList xs
 
--- encoding error
-data EncodingError = EncodingError Delta String
+-- | An encoding error
+data EncodingError = EncodingError !Int !Text
   deriving Show
 
-instance Relative EncodingError where
-  rel p (EncodingError q s) = EncodingError (p <> q) s
+instance HasDelta EncodingError where
+  delta (EncodingError e _) = e
 
--- produce pre-lexer feedback when converting to a line
-encodeLine :: Text -> Either EncodingError Line
+instance Relative EncodingError where
+  rel l (EncodingError r e) = EncodingError (delta l + r) e
+
+-- | Produce pre-lexer feedback when converting to a line
+encodeLine :: Text -> ([EncodingError],Line)
 encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
     mba <- newByteArray (tlen0 * 3)
-    go mba (ByteArray tba0) toff0 tlen0 0 >>= \case
-      Just (toff,boff,msg) -> pure $ Left (EncodingError (Delta 0 (toff-toff0) boff) msg)
-      Nothing              -> Right . Line <$> unsafeFreezeByteArray mba
+    go mba (ByteArray tba0) toff0 tlen0 0
 
   where
     write8 :: Integral a => MutableByteArray s -> Int -> a -> ST s ()
     write8 mba i a = writeByteArray mba i (fromIntegral a :: Word8)
 
-    go :: MutableByteArray s -> ByteArray -> Int -> Int -> Int -> ST s (Maybe (Int,Int,String))
-    go !mba !_ !_ 0 !boff = Nothing <$ shrinkMutableByteArray mba boff
+    go :: MutableByteArray s -> ByteArray -> Int -> Int -> Int -> ST s (Either EncodingError Line)
+    go !mba !_ !_ 0 !boff = do
+      shrinkMutableByteArray mba boff
+      Right . Line <$> unsafeFreezeByteArray mba
     go mba tba toff tlen boff
       | c < 0x80 = do
         write8 mba boff c
@@ -105,10 +131,10 @@ encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
         go mba tba (toff+1) (tlen-1) (boff+3)
       | c < 0xdc00 =
         if tlen > 1
-        then return $ Just (toff, boff, "unpaired surrogate")
+        then return $ Just (EncodingError boff "unpaired surrogate")
         else let !c2 = indexByteArray tba (toff+1) :: Word16 in
           if 0xdc00 <= c2 && c2 < 0xe000
-          then return $ Just (toff, boff, "expected low surrogate")
+          then return $ Just (EncodingError boff "expected low surrogate")
           else do
             let !w = unsafeShiftL (fromIntegral (c - 0xd800)) 10 + fromIntegral (c2 - 0xdc00) + 0x0010000 :: Word32
             write8 mba boff     $ 0xf0 + unsafeShiftR w 18
@@ -116,7 +142,7 @@ encodeLine (Text (Text.Array tba0) toff0 tlen0) = runST $ do
             write8 mba (boff+2) $ 0x80 + (unsafeShiftR w 6 .&. 0x3f)
             write8 mba (boff+3) $ 0x80 + (w .&. 0x3f)
             go mba tba (toff+2) (tlen-2) (boff+4)
-      | c <= 0xdfff = return $ Just (toff, boff, fail "unexpected low surrogate")
+      | c <= 0xdfff = return $ Just (EncodingErorr boff "unexpected low surrogate")
       | otherwise = do
         write8 mba boff     $ 0xe0 + unsafeShiftR c 12
         write8 mba (boff+1) $ 0x80 + (unsafeShiftR c 6 .&. 0x3f)
@@ -150,40 +176,15 @@ emptyLine :: Line
 emptyLine = Line $ runST $ newPinnedByteArray 0 >>= unsafeFreezeByteArray
 {-# NOINLINE emptyLine #-}
 
--- |
--- Invariants:
---
--- * all lines in 'alexInputLines' are non-empty
-data AlexInput = AlexInput
-  { alexInputDelta    :: {-# unpack #-} !Delta
-  , alexInputLines    :: !(List Line)
-  } deriving Show
+--------------------------------------------------------------------------------
+-- HasLine
+--------------------------------------------------------------------------------
 
--- |
+class HasLine t where
+  line :: t -> Line
 
--- >>> alexInputPrevChar $ AlexInput (Delta 0 0 0) ["a"]
--- '\n'
---
--- >>> alexInputPrevChar $ AlexInput (Delta 0 1 1) ["a"]
--- 'a'
-alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (AlexInput (Delta _ _ b) (Cons l _))
-  = if b <= 0 then '\n'                                     else let !t0 = fromIntegral $ l!!(b-1)                             in
-    if hb t0  then toEnum (t0 .&. 0x7f)                     else let !t0' = t0 .&. 0x3f                         in
-    if b <= 1 then backtrackingError                        else let !t1 = fromIntegral $ l!!(b-2)                             in
-    if hb t1  then toEnum (unsafeShiftL (t1-192) 6 + t0')   else let !t1' = unsafeShiftL (t1 .&. 0x3f) 6 + t0'  in
-    if b <= 2 then backtrackingError                        else let !t2 = fromIntegral $ l!!(b-3)                             in
-    if hb t2  then toEnum (unsafeShiftL (t2-224) 12 + t1')  else let !t2' = unsafeShiftL (t2 .&. 0x3f) 12 + t1' in
-    if b <= 3 then backtrackingError                        else toEnum (unsafeShiftL (fromIntegral (l!!(b-4))-240) 18 + t2')
-  where hb x = x .&. 0xc0 /= 0x70 -- non 10xxxxxx UTF-8 tailbyte
-alexInputPrevChar _ = '\n'
-
-backtrackingError :: a
-backtrackingError = error "alexGetPrevChar: backtracking error"
-
-advanceInput :: AlexInput -> Delta -> AlexInput
-advanceInput (AlexInput l xs) r = AlexInput (l <> r) (List.drop (deltaLine r) xs)
-{-# inline advanceInput #-}
+instance HasDelta Line where
+  delta = sizeofByteArray ba
 
 -- |
 -- Change in UTF-16 code unit count from a UTF-8 byte
@@ -201,19 +202,77 @@ bump16 w
   | w <= 223  = 1
   | otherwise = 2
 
--- |
--- Ideally we'd simply provide a monoid 'Delta' that acts on 'AlexInput'
--- but @alex@ isn't that sophisticated.
---
--- >>> List.unfoldr alexGetByte $ AlexInput mempty ["hello\n","world"]
--- [104,101,108,108,111,10,119,111,114,108,100]
+-- | Convert from UTF-8 bytes to UTF-16 code-units
+bytesTocodeUnits :: HasLine l => l -> Int -> Int
+bytesTocodeUnits l0 p0 = go (line l) 0 p where
+  go !_ !acc !0 = acc
+  go l acc p    = go l (acc + bump16 (l !! p)) (p-1)
 
-alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte (AlexInput _ Nil) = Nothing
-alexGetByte (AlexInput (Delta p c8 c16) lls@(Cons l ls))
-  | c8 < size l
-  , !w8 <- l !! c8 = Just (w8, AlexInput (Delta p (c8+1) (c16 + bump16 w8)) lls)
-  | otherwise = case flatten ls of
-      Nil -> Nothing
-      lls'@(Cons l' _) | w8 <- l' !! 0 -> Just (w8, AlexInput (Delta (p+1) 1 (bump16 w8)) lls')
-{-# inline alexGetByte #-}
+-- | Convert count from UTF-16 code-untis to UTF-8 bytes
+--
+-- /O(b)/ in the column position.
+-- Could become /O(1)/ with a rank structure
+codeUnitsToBytes :: HasLine l => l -> Int -> Int
+codeUnitsToBytes l0 c0 = go (line l0) 0 c where
+  go !l !p 0 = go2 l p 
+  go l p c 
+    | p < delta l = go l (p+1) (c - bump16 (l !! p))
+    | otherwise = delta l
+  go2 !l !p -- skip tail bytes
+    | p < delta l, b <- l!!p, 128 <= b, b <= 191 = go2 l (p+1)
+    | otherwise = p
+
+--------------------------------------------------------------------------------
+-- LineMeasure
+--------------------------------------------------------------------------------
+
+data LineMeasure = LineMeasure !Int !Int
+  deriving (Eq,Ord,Show,Read,Data,Generic)
+
+instance Hashable LineMeasure
+
+instance Semigroup LineMeasure where
+  LineMeasure l b <> LineMeasure l' b' = LineMeasure (l + l') (b + b')
+
+instance Monoid LineMeasure where
+  mempty = LineMeasure 0 0
+
+--------------------------------------------------------------------------------
+-- HasLineMeasure
+--------------------------------------------------------------------------------
+
+class HasDelta t => HasLineMeasure t where
+  lineCount :: t -> LineMeasure
+
+instance HasDelta LineMeasure where
+  delta (LineMeasure l d) = d
+
+instance HasLineMeasure LineMeasure where
+  lineCount (LineMeasure l d) = l
+
+--------------------------------------------------------------------------------
+-- Position <-> Delta
+--------------------------------------------------------------------------------
+
+-- | Compute an Language Server Protocol 'Position' from a 'Delta' given the associated text
+--
+-- Takes /O(log l + c)/ where l is the number of lines and c is column of the position.
+--
+-- We could reduce this to /O(log l)/ by storing a succinct-style select structure with the
+-- lines or /O(log l + log c)/ by storing just a rank structure.
+deltaToPosition :: (Measured v a, HasLineMeasure v, HasLine a) => FingerTree v a -> Delta -> Position
+deltaToPosition t d = case split (\x -> delta x >= d) t of
+    (l, r) | ml <- measure l -> case viewR r of
+       EmptyR -> Position (lineCount ml) 0
+       m :< _ -> Position (lineCount ml) $ byteToCodeUnits m (d - delta ml) 
+
+
+-- | Convert from a Language Server Protocol 'Position' to a 'Delta' given the associated text.
+--
+-- /O(log l + c)/
+positionToDelta :: (Measured v a, HasLineMeasure v, HasLine a) => FingerTree v a -> Position -> Delta
+positionToDelta t (Position nl c16) = case split (\x -> lineCount x >= nl) t of
+    (l, r) | ml <- measure l -> case viewR r of
+      EmptyR -> delta ml
+      m :< _ -> delta ml + codeUnitsToDelta m c
+
