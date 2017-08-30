@@ -54,7 +54,6 @@ module Coda.Message.Language
   , HasVersion(..)
   ) where
 
-
 import Coda.Message.Base
 import Coda.Message.Severity as Severity
 import Coda.Util.Aeson

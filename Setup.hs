@@ -12,7 +12,7 @@
 
 module Main where
 
-import Distribution.Extra.Doctest as Doctest
+import qualified Distribution.Extra.Doctest as Doctest
 import qualified Distribution.Simple as Cabal
 
 main :: IO ()

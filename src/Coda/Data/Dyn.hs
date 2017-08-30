@@ -1,6 +1,16 @@
 {-# language DeriveFoldable #-}
 
-module Coda.Data.Dyn 
+---------------------------------------------------------------------------------
+--- |
+--- Copyright :  (c) Edward Kmett 2017
+--- License   :  BSD2
+--- Maintainer:  Edward Kmett <ekmett@gmail.com>
+--- Stability :  experimental
+--- Portability: portable
+---
+---------------------------------------------------------------------------------
+
+module Coda.Data.Dyn
   ( Dyn
   , dcons
   ) where
@@ -8,7 +18,7 @@ module Coda.Data.Dyn
 import Data.Monoid
 
 -- | A functional version of Overmars and Van Leeuwen's 1983
--- dynamization schema. 
+-- dynamization schema.
 --
 -- If your queries are monoid homomorphisms from 'a' this takes
 -- a static structure with an /O(n)/ ('<>') and gives you
@@ -19,7 +29,7 @@ data Dyn a
   | D2 !a !a a !(Dyn a)
   | D3 !a !a !a a !(Dyn a)
   deriving Foldable
-  
+
 dcons :: Monoid a => a -> Dyn a -> Dyn a
 dcons a D0 = D1 a
 dcons a (D1 b) = D2 a b (a <> b) D0
