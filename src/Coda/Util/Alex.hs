@@ -1,7 +1,8 @@
 {-# language LambdaCase #-}
 {-# language BangPatterns #-}
 {-# language TypeFamilies #-}
-{-# language ViewPatterns #-}
+{-# language DeriveGeneric #-}
+{-# language DeriveDataTypeable #-}
 
 ---------------------------------------------------------------------------------
 --- |
@@ -15,20 +16,30 @@
 
 module Coda.Util.Alex
   ( AlexInput(..)
+  , AlexInputState(..)
   , alexGetByte
   ) where
 
 import Coda.Relative.Delta
 import Data.Bits
+import Data.Data
+import Data.Hashable
 import Data.String
 import Data.Text
 import Data.Text.Unsafe as Text
 import Data.Word (Word8)
+import GHC.Generics
 import Prelude hiding ((!!))
 
 -- $setup
 -- >>> :set -XOverloadedStrings -XOverloadedLists
 -- >>> import Data.List as List (unfoldr)
+
+data AlexInputState
+  = S0 | S1 | S2 | S3
+  deriving (Eq, Ord, Show, Read, Data, Generic)
+
+instance Hashable AlexInputState
 
 -- |
 -- Invariants:
@@ -37,36 +48,36 @@ import Prelude hiding ((!!))
 -- 'delta' >= 0
 -- @
 data AlexInput = AlexInput
-  { alexInputState    :: {-# unpack #-} !Int
+  { alexInputState    :: !AlexInputState
   , alexInputPrevChar :: {-# unpack #-} !Char
   , alexInputDelta    :: {-# unpack #-} !Int
   , alexInputText     :: {-# unpack #-} !Text
-  }
+  } deriving (Eq, Ord, Show, Read, Data, Generic)
+
+instance Hashable AlexInput
 
 instance HasDelta AlexInput where
   delta = alexInputDelta
 
 instance IsString AlexInput where
-  fromString = AlexInput 0 '\n' 0 . fromString
+  fromString = AlexInput S0 '\n' 0 . fromString
 
-emit :: Int -> Int -> Int -> Text -> Int -> (Word8, AlexInput)
-emit !s !p !d !t !w = (b, i) where
-  !b = fromIntegral w
-  !i = AlexInput s (toEnum p) d t
-{-# inline emit #-}
+ok :: a -> b -> Maybe (a,b)
+ok !a !b = Just (a,b) where
 
 -- |
--- >>> List.unfoldr alexGetByte "hello world"
+-- >>> Prelude.take 20 $ List.unfoldr alexGetByte "hello world"
 -- [104,101,108,108,111,32,119,111,114,108,100]
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte (AlexInput !s (fromEnum -> !p) !d !t) = case s of
-  3 -> Just $! emit 2 p d t $! 0x80 + unsafeShiftR p 12 .&. 0x3f
-  2 -> Just $! emit 1 p d t $! 0x80 + unsafeShiftR p 6  .&. 0x3f
-  1 -> Just $! emit 0 p d t $! 0x80 + p                 .&. 0x3f
-  _ | d < Text.lengthWord16 t -> Just $! case Text.iter t d of
-      Text.Iter (fromEnum -> !i) d'
-        | i <= 0x7f   -> emit 0 i d' t i
-        | i <= 0x7ff  -> emit 1 i d' t $! 0xc0 + unsafeShiftR p 6
-        | i <= 0xffff -> emit 2 i d' t $! 0xe0 + unsafeShiftR p 12
-        | otherwise   -> emit 3 i d' t $! 0xf0 + unsafeShiftR p 18
+alexGetByte (AlexInput !s !c !d !t) = case s of
+  S3 | i <- fromEnum c -> ok (fromIntegral $ 0x80 + unsafeShiftR i 12 .&. 0x3f) (AlexInput S2 c (d+1) t)
+  S2 | i <- fromEnum c -> ok (fromIntegral $ 0x80 + unsafeShiftR i 6  .&. 0x3f) (AlexInput S1 c (d+1) t)
+  S1 | i <- fromEnum c -> ok (fromIntegral $ 0x80 + i .&. 0x3f)                 (AlexInput S0 c (d+1) t)
+  S0 | d < Text.lengthWord16 t -> case Text.iter t d of
+      Text.Iter c' d'
+        | i' <= 0x7f   -> ok (fromIntegral i')                                   (AlexInput S0 c' (d+d') t)
+        | i' <= 0x7ff  -> ok (fromIntegral $ 0xc0 + unsafeShiftR i' 6)           (AlexInput S1 c' (d+d') t)
+        | i' <= 0xffff -> ok (fromIntegral $ toEnum $ 0xe0 + unsafeShiftR i' 12) (AlexInput S2 c' (d+d') t)
+        | otherwise    -> ok (fromIntegral $ toEnum $ 0xf0 + unsafeShiftR i' 18) (AlexInput S3 c' (d+d') t)
+        where i' = fromEnum c'
     | otherwise -> Nothing
