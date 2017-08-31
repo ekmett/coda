@@ -1,4 +1,4 @@
-{-# language CPP #-}
+{-# language LambdaCase #-}
 {-# language OverloadedStrings #-}
 
 -----------------------------------------------------------------------------
@@ -15,47 +15,50 @@ module MessageTest
   ( test_message
   ) where
 
-import Coda.Message.Parser
-import Coda.Message.Builder
-import Coda.Message.Base
 import Coda.Util.Instances ()
-import Data.Aeson (ToJSON, FromJSON, Value(..))
+import Control.Lens ((<&>))
+import Data.Aeson (ToJSON, FromJSON, Value(..), fromJSON, toJSON, Result(..))
 import Data.ByteString.Builder
-import Data.ByteString.Lazy as Lazy
 import Data.Tagged
+import Language.Server.Parser
+import Language.Server.Builder
+import Language.Server.Base
 import System.FilePath
+import System.IO
 import Test.Tasty
 import Test.Tasty.Golden
+import Test.Tasty.HUnit
 import Test.Tasty.Providers as Tasty
 
 goldenFile :: TestName -> FilePath
 goldenFile name = "test" </> "data" </> "message" </> name <.> "golden"
 
-data ParseTest = ParseTest TestName (Lazy.ByteString -> Tasty.Result)
-
+newtype ParseTest = ParseTest (IO Tasty.Result)
 instance IsTest ParseTest where
-  run _opts (ParseTest name process) _progress = process <$> Lazy.readFile (goldenFile name)
+  run _ (ParseTest r) _ = r
   testOptions = Tagged []
 
--- perform a golden file test and round
-golden :: (ToJSON a, FromJSON a, Eq a) => TestName -> a -> TestTree
-golden name content 
+-- | perform a golden file test and round-trip test
+golden :: (ToJSON a, FromJSON a, Show a, Eq a) => TestName -> a -> TestTree
+golden name content
   = testGroup name
-  [ goldenVsString "builder" (goldenFile name) $ pure $ toLazyByteString $ buildMessage content
-  , singleTest "parser" $ ParseTest name $ \lbs -> case runParser eitherDecodeMessage' lbs of
-      Err -> testFailed "bad content wrapper"
-      OK esr rest 
-        | not (Lazy.null rest) -> testFailed "leftover content"
-        | otherwise -> case esr of
-          Left err -> testFailed $ "json parse failure: " ++ err
-          Right content'
-            | content' /= content  -> testFailed "content mismatch"
-            | otherwise            -> testPassed ""
+  [ goldenVsString "encoding" (goldenFile name) $
+      pure $ toLazyByteString $ buildMessage content
+  , singleTest "parser" $ ParseTest $
+      withFile (goldenFile name) ReadMode $ \handle ->
+        parse eitherDecodeMessage' handle >>= \case
+          Left e         -> pure $ testFailed $ "bad JSON-RPC frame: " ++ e
+          Right (Left e) -> pure $ testFailed $ "bad JSON message: " ++ e
+          Right (Right content')
+            | content' /= content -> pure $ testFailed "content mismatch"
+            | otherwise -> hIsEOF handle <&> \fin -> if fin
+              then testPassed ""
+              else testFailed "leftover content"
+  , testCase "value" $ fromJSON (toJSON content) @=? Success content
   ]
 
 test_message :: TestTree
 test_message = testGroup "message"
-  [ golden "request"      (Request (IntId 1) "request" Null :: Request Id Value)
-  , golden "notification" (Notification "notification" [1,2] :: Notification [Int])
-  , golden "response"     (Response "id" 2 Nothing :: Response Value Id Int)
+  [ golden "request" $ Request (Just (IntId 1)) "request" Nothing
+  , golden "response" $ Response (Just "id") (Just (Number 2)) Nothing
   ]

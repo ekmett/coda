@@ -68,6 +68,7 @@ import Data.Data
 import Data.Hashable
 import Data.Ix
 import Data.Maybe (catMaybes)
+import Data.Monoid ((<>))
 import Data.String
 import Data.Text
 import GHC.Generics
@@ -138,11 +139,16 @@ instance FromJSON Request where
 instance ToJSON Request where
   toJSON (Request mi m mp) = object $
     [ "jsonrpc" .= jsonRpcVersion
-    , "method" .= m 
+    , "method" .= m
     ] ++ catMaybes
     [ ("id" .=) <$> mi
     , ("params" .=) <$> mp
     ]
+  toEncoding (Request mi m mp) = pairs
+    $ "jsonrpc" .= jsonRpcVersion
+   <> foldMap ("id" .=) mi
+   <> "method" .= m
+   <> foldMap ("params" .=) mp
 
 instance Hashable Request
 
@@ -244,9 +250,14 @@ instance ToJSON Response where
     [ "jsonrpc" .= jsonRpcVersion
     , "id" .= mi
     ] ++ catMaybes
-    [ ("result" .=) <$> m 
+    [ ("result" .=) <$> m
     , ("error" .=) <$> mp
     ]
+  toEncoding (Response mi m mp) = pairs
+    $ "jsonrpc" .= jsonRpcVersion
+   <> "id" .= mi
+   <> foldMap ("result" .=) m
+   <> foldMap ("error" .=) mp
 
 instance FromJSON Response where
   parseJSON = withObject "Response" $ \v -> do
