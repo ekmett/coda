@@ -17,13 +17,10 @@ module Coda.Server
   ( server
   , logMessage
   , telemetryEvent
+  , showMessage
   ) where
 
-import Coda.Message.Base
-import Coda.Message.Builder
-import Coda.Message.Language
-import Coda.Message.Parser
-import Coda.Message.Severity
+
 import Coda.Server.Options
 import Coda.Util.Aeson
 import Control.Applicative
@@ -31,12 +28,15 @@ import Control.Monad.IO.Class
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Lens hiding ((.=))
-import Control.Logging
 import Data.Aeson
 import Data.ByteString.Lazy as Lazy
 import Data.Monoid
-import Data.String
 import Data.Text as Text
+import Language.Server.Base
+import Language.Server.Builder
+import Language.Server.Protocol
+import Language.Server.Parser
+import Language.Server.Severity
 import System.Exit
 import System.IO
 
@@ -44,18 +44,10 @@ import System.IO
 -- Logging
 --------------------------------------------------------------------------------
 
-withLogging :: ServerOptions -> IO () -> IO ()
-withLogging opts m = case opts^.serverOptionsLog of
-  Nothing -> withStderrLogging m
-  Just f -> withFileLogging f m
-
-jsonRpc :: Text
-jsonRpc = fromString "JSON-RPC"
-
 putError :: MonadIO m => Maybe Id -> ErrorCode -> Text -> m ()
-putError i code text = do
-  putMessage $ Response i Nothing (Just (ResponseError code text Nothing))
-  liftIO $ loggingLogger LevelError jsonRpc text
+putError i c t = -- do
+  putMessage $ Response i Nothing (Just (ResponseError c t Nothing))
+--  liftIO $ loggingLogger LevelError jsonRpc text
 
 --------------------------------------------------------------------------------
 -- State
@@ -63,6 +55,7 @@ putError i code text = do
 
 data ServerState = ServerState
   { _input :: !Lazy.ByteString
+  , _shutdownRequested :: !Bool
   } deriving (Show)
 
 makeClassy ''ServerState
@@ -72,21 +65,23 @@ makeClassy ''ServerState
 --------------------------------------------------------------------------------
 
 listen :: (MonadIO m, MonadState s m, HasServerState s) => m (Either [Request] Request)
-listen = do
-  i <- use input
-  case runParser message i of
-    Err -> do
-      putError Nothing InvalidRequest "Unparseable JSON-RPC Request Frame Received. Shutting Down."
-      liftIO $ exitWith $ ExitFailure 1
-    OK value i' -> do
-      assign input i'
-      let req = Left  <$> eitherDecode' value
-            <|> Right <$> eitherDecode' value 
-      case req of
-        Left s -> do
-          putError Nothing ParseError $ Text.pack s
-          listen
-        Right e -> return e
+listen = use input >>= \i -> case runParser parseMessage i of
+  Err -> do
+    liftIO $ hPutStrLn stderr "Bad..."
+    putError Nothing InvalidRequest "Unparseable JSON-RPC Request Frame Received. Shutting Down."
+    liftIO $ exitWith $ ExitFailure 1
+  OK value i' -> do
+    liftIO $ hPutStrLn stderr "<"
+    liftIO $ Lazy.hPutStr stderr value
+    liftIO $ hPutStrLn stderr ">"
+    assign input i'
+    let req = Left  <$> eitherDecode' value
+          <|> Right <$> eitherDecode' value 
+    case req of
+      Left s -> do
+        putError Nothing ParseError $ Text.pack s
+        listen
+      Right e -> return e
 
 --------------------------------------------------------------------------------
 -- Server -> Client Notifications
@@ -108,12 +103,24 @@ telemetryEvent v = liftIO $ putMessage $ Request Nothing "telemetry/event" (Just
 --------------------------------------------------------------------------------
 
 server :: ServerOptions -> IO ()
-server opts = withLogging opts $ do
-  setLogLevel $ if opts^.serverOptionsDebug then LevelDebug else LevelWarn
+server opts = do
+  liftIO $ hSetBuffering stdin NoBuffering
+  liftIO $ hSetEncoding stdin utf8
   c <- Lazy.getContents
-  runReaderT ?? opts $ evalStateT ?? ServerState c $ do
+  runReaderT ?? opts $ evalStateT ?? ServerState c False $ do
+    liftIO $ hPutStrLn stderr "Starting!"
+
     liftIO $ hSetBuffering stdout NoBuffering
+    liftIO $ hSetEncoding stdout utf8
+    liftIO $ hFlush stdout
+
+    liftIO $ hSetBuffering stderr NoBuffering
+    liftIO $ hSetEncoding stderr utf8
+    liftIO $ hFlush stderr
+
+    liftIO $ hPutStrLn stderr "Initializing!"
     initializeServer
+    liftIO $ hPutStrLn stderr "Initialized..."
     loop
 
 ok :: (MonadIO m, ToJSON a) => Id -> a -> m ()
@@ -131,9 +138,13 @@ initializeServer = listen >>= \case
           ]
         ]
       ]
-  -- Right (Request Nothing "shutdown" Nothing) -> liftIO $ pure (); -- exitWith ExitSuccess -- totally wrong
-  Right (Request Nothing "exit" Nothing) -> liftIO $ exitWith ExitSuccess
-  Right (Request _ m _) | Text.isPrefixOf "$/" m -> initializeServer -- ignore extensions
+  Right (Request Nothing "shutdown" Nothing) -> do
+    assign shutdownRequested True
+    initializeServer
+  Right (Request Nothing "exit" Nothing) -> 
+    use shutdownRequested >>= \b -> liftIO $ exitWith $ if b then ExitSuccess else ExitFailure 1
+  Right (Request _ m _) 
+    | Text.isPrefixOf "$/" m -> initializeServer -- ignore extensions
   Right (Request Nothing _ _) -> initializeServer               -- ignore notifications
   Right (Request (Just i) _ _) -> do
     putError (Just i) ServerNotInitialized "waiting for initialization"
@@ -144,9 +155,9 @@ initializeServer = listen >>= \case
 
 loop :: (MonadState s m, HasServerState s, MonadReader e m, HasServerOptions e, MonadIO m) => m ()
 loop = listen >>= \case
-  Right (Request Nothing "exit" Nothing) -> liftIO $ do
-  --  loggingLogger LevelInfo "shutting down as requested"
-    exitWith ExitSuccess
+  Right (Request Nothing "shutdown" Nothing) -> loop
+  Right (Request Nothing "exit" Nothing) -> 
+    use shutdownRequested >>= \b -> liftIO $ exitWith $ if b then ExitSuccess else ExitFailure 1
   Right (Request _ m _) | Text.isPrefixOf "$/" m -> loop -- ignore extensions for now
   Right (Request (Just i) _ _) -> do
     putError (Just i) InvalidRequest "unsupported request"

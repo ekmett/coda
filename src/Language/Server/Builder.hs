@@ -13,7 +13,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Message.Builder
+module Language.Server.Builder
   ( buildMessage
   , buildEncoding
   , hPutMessage
@@ -43,13 +43,15 @@ buildEncoding a
    <> lazyByteString content
   where content = toLazyByteString (fromEncoding a)
 
--- | Write a JSON-RPC 2.0 message to a given file handle
-hPutMessage :: (MonadIO m, ToJSON a) => Handle -> a -> m ()
-hPutMessage h = hPutEncoding h . toEncoding
-
 -- | Write a JSON-RPC 2.0 message to a given file handle from an Encoding
 hPutEncoding :: MonadIO m => Handle -> Encoding -> m ()
-hPutEncoding h = liftIO . hPutBuilder h . buildEncoding
+hPutEncoding h a = liftIO $ do
+  hPutBuilder h $ buildEncoding a
+  hFlush h
+
+-- | Write a JSON-RPC 2.0 message to a given file handle
+hPutMessage :: (MonadIO m, ToJSON a) => Handle -> a -> m ()
+hPutMessage h a = hPutEncoding h (toEncoding a)
 
 -- | Write a JSON-RPC 2.0 message to stdout
 putMessage :: (MonadIO m, ToJSON a) => a -> m ()
@@ -57,4 +59,4 @@ putMessage = putEncoding . toEncoding
 
 -- | Write a JSON-RPC 2.0 message to stdout from an Encoding
 putEncoding :: MonadIO m => Encoding -> m ()
-putEncoding = liftIO . hPutEncoding stdout
+putEncoding a = hPutEncoding stdout a

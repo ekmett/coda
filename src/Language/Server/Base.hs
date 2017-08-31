@@ -2,10 +2,15 @@
 {-# language TypeFamilies #-}
 {-# language DeriveGeneric #-}
 {-# language PatternSynonyms #-}
+{-# language TemplateHaskell #-}
 {-# language FlexibleContexts #-}
+{-# language FlexibleInstances #-}
 {-# language DeriveTraversable #-}
 {-# language OverloadedStrings #-}
 {-# language DeriveDataTypeable #-}
+{-# language DuplicateRecordFields #-}
+{-# language MultiParamTypeClasses #-}
+{-# language FunctionalDependencies #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -20,7 +25,7 @@
 -- <http://www.jsonrpc.org/specification>
 -----------------------------------------------------------------------------
 
-module Coda.Message.Base
+module Language.Server.Base
   (
     -- * JSON-RPC 2.0
     Id(..)
@@ -44,23 +49,21 @@ module Coda.Message.Base
   , pattern ServerNotInitialized
   , pattern UnknownErrorCode
 
-    -- * Overloading
-  , HasParams(..)
-  , HasMethod(..)
+  -- * Aeson Options
+  , omitOptions
+  , keepOptions
   ) where
 
-import Coda.Util.Aeson
 import Control.Applicative
-import Control.Lens.Operators ((??))
-import Control.Lens.Combinators
 import Control.Monad
 import Data.Aeson
 import Data.Aeson.Encoding
 import Data.Aeson.Internal
+import Data.Aeson.TH
 import Data.Data
 import Data.Hashable
 import Data.Ix
-import Data.Monoid ((<>))
+import Data.Maybe (catMaybes)
 import Data.String
 import Data.Text
 import GHC.Generics
@@ -77,9 +80,7 @@ jsonRpcVersion = fromString "2.0"
 --------------------------------------------------------------------------------
 
 -- | A JSON-RPC message identifier
-data Id
-  = IntId !Int
-  | TextId !Text
+data Id = IntId !Int | TextId !Text
   deriving (Eq, Ord, Show, Read, Data, Generic)
 
 instance ToJSON Id where
@@ -102,16 +103,6 @@ instance Hashable Id where
   hash (TextId j) = hash j
 
 --------------------------------------------------------------------------------
--- Overloads
---------------------------------------------------------------------------------
-
-class HasMethod t where
-  method :: Lens' t Text
-
-class HasParams t where
-  params :: Lens' t (Maybe Value)
-
---------------------------------------------------------------------------------
 -- Request
 --------------------------------------------------------------------------------
 
@@ -126,16 +117,11 @@ class HasParams t where
 -- }
 -- @
 data Request = Request
-  { requestId     :: !(Maybe Id)
-  , requestMethod :: !Text
-  , requestParams :: !(Maybe Value)
+  { _id     :: !(Maybe Id)
+  , _method :: !Text
+  , _params :: !(Maybe Value)
   } deriving (Eq, Show, Read, Data, Generic)
 
-instance HasMethod Request where
-  method f (Request i m p) = (Request i ?? p) <$> f m
-
-instance HasParams Request where
-  params f (Request i m p) = Request i m <$> f p
 
 instance FromJSON Request where
   parseJSON = withObject "Request" $ \v -> do
@@ -146,56 +132,15 @@ instance FromJSON Request where
             <*> v .:? "params"
 
 instance ToJSON Request where
-  toJSON (Request i m a)     = object $
-    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ?~ a
-  toEncoding (Request i m a) = pairs $
-    "jsonrpc" !~ jsonRpcVersion <> "id" ?~ i <> "method" !~ m <> "params" ?~ a
+  toJSON (Request mi m mp) = object $
+    [ "jsonrpc" .= jsonRpcVersion
+    , "method" .= m 
+    ] ++ catMaybes
+    [ ("id" .=) <$> mi
+    , ("params" .=) <$> mp
+    ]
 
 instance Hashable Request
-
---------------------------------------------------------------------------------
--- Response
---------------------------------------------------------------------------------
-
--- |
--- <http://www.jsonrpc.org/specification#response_object>
---
--- @
--- interface ResponseMessage extends Message {
---   id: number | string | null;
---   result?: any;
---   error?: ResponseError<any>;
--- }
--- @
-data Response = Response
-  { responseId     :: !(Maybe Id)
-  , responseResult :: !(Maybe Value)
-  , responseError  :: !(Maybe ResponseError)
-  } deriving (Eq, Show, Read, Data, Generic)
-
-instance ToJSON Response where
-  toJSON (Response i r e) = object $
-       "jsonrpc" !~ jsonRpcVersion
-    <> "id"      !~ i
-    <> "result"  ?~ r
-    <> "error"   ?~ e
-
-  toEncoding (Response i r e) = pairs $
-       "jsonrpc" !~ jsonRpcVersion
-    <> "id"      !~ i
-    <> "result"  ?~ r
-    <> "error"   ?~ e
-
-instance FromJSON Response where
-  parseJSON = withObject "Response" $ \v -> do
-    ver <- v .: "jsonrpc"
-    when (ver /= jsonRpcVersion) $ fail "invalid JSON-RPC version" <?> Key "jsonrpc"
-    Response
-      <$> v .: "id"
-      <*> v .:? "result"
-      <*> v .:? "error"
-
-instance Hashable Response
 
 --------------------------------------------------------------------------------
 -- ErrorCode
@@ -258,21 +203,55 @@ pattern UnknownErrorCode = ErrorCode (-32001)
 -- @
 
 data ResponseError = ResponseError
-  { responseErrorCode    :: !ErrorCode
-  , responseErrorMessage :: !Text
-  , responseErrorData    :: !(Maybe Value)
+  { _code    :: !ErrorCode
+  , _message :: !Text
+  , _data    :: !(Maybe Value)
   } deriving (Eq, Show, Read, Data, Generic)
 
-instance FromJSON ResponseError where
-  parseJSON = withObject "ResponseError" $ \v -> ResponseError
-    <$> v .:  "code"
-    <*> v .:  "message"
-    <*> v .:? "data"
-
-instance ToJSON ResponseError where
-  toJSON (ResponseError c m d) = object $
-    "code" !~ c <> "message" !~ m <> "data" ?~ d
-  toEncoding (ResponseError c m d) = pairs $
-    "code" !~ c <> "message" !~ m <> "data" ?~ d
+deriveJSON defaultOptions { fieldLabelModifier = Prelude.drop 1, omitNothingFields = True } ''ResponseError
 
 instance Hashable ResponseError
+
+--------------------------------------------------------------------------------
+-- Response
+--------------------------------------------------------------------------------
+
+-- |
+-- <http://www.jsonrpc.org/specification#response_object>
+--
+-- @
+-- interface ResponseMessage extends Message {
+--   id: number | string | null;
+--   result?: any;
+--   error?: ResponseError<any>;
+-- }
+-- @
+data Response = Response
+  { _id     :: !(Maybe Id)
+  , _result :: !(Maybe Value)
+  , _error  :: !(Maybe ResponseError)
+  } deriving (Eq, Show, Read, Data, Generic)
+
+instance ToJSON Response where
+  toJSON (Response mi m mp) = object $
+    [ "jsonrpc" .= jsonRpcVersion
+    , "id" .= mi
+    ] ++ catMaybes
+    [ ("result" .=) <$> m 
+    , ("error" .=) <$> mp
+    ]
+
+instance FromJSON Response where
+  parseJSON = withObject "Response" $ \v -> do
+    ver <- v .: "jsonrpc"
+    when (ver /= jsonRpcVersion) $ fail "invalid JSON-RPC version" <?> Key "jsonrpc"
+    Response
+      <$> v .: "id"
+      <*> v .:? "result"
+      <*> v .:? "error"
+
+instance Hashable Response
+
+omitOptions, keepOptions :: Options
+omitOptions = defaultOptions { fieldLabelModifier = Prelude.drop 1, omitNothingFields = True }
+keepOptions = defaultOptions { fieldLabelModifier = Prelude.drop 1, omitNothingFields = False }

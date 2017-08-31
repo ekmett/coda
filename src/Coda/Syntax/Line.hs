@@ -29,7 +29,7 @@ module Coda.Syntax.Line
   , deltaToPosition
   ) where
 
-import Coda.Message.Language (Position(..))
+import Language.Server.Protocol (Position(..))
 import Coda.Relative.Delta
 import Data.Data
 import Data.FingerTree

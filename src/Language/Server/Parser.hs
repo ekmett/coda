@@ -15,10 +15,10 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Message.Parser 
+module Language.Server.Parser 
   ( Parser(..)
   , ParseResult(..)
-  , message
+  , parseMessage
   , decodeMessage
   , decodeMessage'
   , eitherDecodeMessage
@@ -161,25 +161,25 @@ bytes n = Parser $ \s -> case Lazy.splitAt n s of
 -- | This parses a JSON-RPC 2.0 message
 --
 -- This stops before we get to actually decoding the JSON message.
-message :: Parser Lazy.ByteString
-message = contentHeader >>= bytes
+parseMessage :: Parser Lazy.ByteString
+parseMessage = contentHeader >>= bytes
 
 -- | This decodes a JSON-RPC 2.0 message lazily
 --
 -- If the outer parser fails, then the message stream is unrecoverable. If decoding fails, we simply failed to read this message.
 decodeMessage :: FromJSON a => Parser (Maybe a)
-decodeMessage = decode <$> message
+decodeMessage = decode <$> parseMessage
 
 -- | This decodes a JSON-RPC 2.0 message eager
 --
 -- If the outer parser fails, then the message stream is unrecoverable. If decoding fails, we simply failed to read this message.
 decodeMessage' :: FromJSON a => Parser (Maybe a)
-decodeMessage' = decode' <$> message
+decodeMessage' = decode' <$> parseMessage
 
 -- | This decodes a JSON-RPC 2.0 message lazily with an error message on failure
 eitherDecodeMessage :: FromJSON a => Parser (Either String a)
-eitherDecodeMessage = eitherDecode <$> message
+eitherDecodeMessage = eitherDecode <$> parseMessage
 
 -- | This decodes a JSON-RPC 2.0 message eager with an error message on failure
 eitherDecodeMessage' :: FromJSON a => Parser (Either String a)
-eitherDecodeMessage' = eitherDecode' <$> message
+eitherDecodeMessage' = eitherDecode' <$> parseMessage

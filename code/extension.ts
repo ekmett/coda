@@ -15,6 +15,6 @@ export function activate(context: ExtensionContext) {
       fileEvents: workspace.createFileSystemWatcher('**/.codarc')
     }
   };
-  let disposable = new LanguageClient('coda', 'coda language server', serverOptions, clientOptions).start();
+  let disposable = new LanguageClient('coda', 'Coda Language Server', serverOptions, clientOptions).start();
   context.subscriptions.push(disposable);
 }

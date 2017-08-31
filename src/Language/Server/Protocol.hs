@@ -2,9 +2,15 @@
 {-# language ViewPatterns #-}
 {-# language DeriveGeneric #-}
 {-# language PatternSynonyms #-}
+{-# language TemplateHaskell #-}
+{-# language OverloadedStrings #-}
+{-# language FlexibleInstances #-}
 {-# language DeriveTraversable #-}
 {-# language DeriveDataTypeable #-}
-{-# language OverloadedStrings #-}
+{-# language DuplicateRecordFields #-}
+{-# language MultiParamTypeClasses #-}
+{-# language TypeSynonymInstances #-}
+{-# language FunctionalDependencies #-}
 {-# language GeneralizedNewtypeDeriving #-}
 
 --------------------------------------------------------------------------------
@@ -18,20 +24,20 @@
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md Language Server Protocol>
 --------------------------------------------------------------------------------
 
-module Coda.Message.Language
+module Language.Server.Protocol
   (
   -- * Cancellation Support
     pattern CancelRequest
   , pattern RequestCancelled
   , cancelledResponse
   -- * Language Server Protocol
+  , Severity(..)
   , DocumentUri
   , Position(..)
   , Range(..)
   , Location(..)
   , Diagnostic(..)
   , Command(..)
-  , Command_
   , TextEdit(..)
   , TextDocumentIdentifier(..)
   , VersionedTextDocumentIdentifier(..)
@@ -40,7 +46,7 @@ module Coda.Message.Language
   , WorkspaceEdit(..)
   , DocumentFilter(..)
   , DocumentSelector
-  , TextDocumentPositionParams(..)
+  , TextDocumentPositionParams(..), TDPP
   , WorkspaceClientCapabilities
   -- * Protocol
   , TextDocumentClientCapabilities
@@ -51,24 +57,51 @@ module Coda.Message.Language
   , HasRange(..)
   , HasUri(..)
   , HasVersion(..)
+  , HasLine(..)
+  , HasCharacter(..)
+  , HasEnd(..)
+  , HasStart(..) 
+  , HasMessage(..)
+  , HasCode(..)
+  , HasSeverity(..)
+  , HasSource(..)
+  , HasCommand(..)
+  , HasArguments(..)
+  , HasTitle(..)
+  , HasNewText(..)
+  , HasTextDocument(..)
+  , HasEdits(..)
+  , HasChanges(..)
+  , HasDocumentChanges(..)
+  , HasText(..)
+  , HasLanguageId(..)
+  , HasPattern(..)
+  , HasLanguage(..)
+  , HasScheme(..)
+  , HasExperiment(..)
+  , HasWorkspace(..)
+  , HasTrace(..) 
+  , HasProcessId(..)
+  , HasRootPath(..)
+  , HasRootUri(..)
+  , HasInitializationOptions(..)
+  , HasCapabilities(..)
   ) where
 
-import Coda.Message.Base
-import Coda.Message.Severity as Severity
 import Coda.Util.Aeson
-import Control.Lens.Operators ((<&>),(??))
 import Control.Lens.Combinators
 import Control.Monad
 import Data.Aeson hiding (Error)
-import Data.Aeson.Encoding.Internal
+import Data.Aeson.TH
 import Data.Data
 import Data.Hashable
-import Data.Hashable.Lifted
 import Data.HashMap.Strict as HashMap
-import Data.Ix
-import Data.Monoid
+import Data.Ix (Ix)
+import Data.Maybe (catMaybes)
 import Data.Text as Text
 import GHC.Generics
+import Language.Server.Base
+import Language.Server.Severity as Severity
 
 --------------------------------------------------------------------------------
 -- Cancellation Notification
@@ -98,37 +131,6 @@ cancelledResponse i = Response (Just i) Nothing (Just (ResponseError RequestCanc
 
 type DocumentUri = Text
 
-class HasUri t where
-  uri :: Lens' t DocumentUri
-
---------------------------------------------------------------------------------
--- Line Endings
---------------------------------------------------------------------------------
-
--- |
--- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#text-documents>
---
--- @
--- export const EOL: string[] = ['\n', '\r\n', '\r'];
--- @
-
-data LineEnding = LineEndingCR | LineEndingLF | LineEndingCRLF
-  deriving (Eq, Ord, Show, Read, Ix, Enum, Bounded, Data, Generic)
-
-instance ToJSON LineEnding where
-  toJSON LineEndingCR   = String "\r"
-  toJSON LineEndingLF   = String "\n"
-  toJSON LineEndingCRLF = String "\r\n"
-  toEncoding LineEndingCR   = string "\r"
-  toEncoding LineEndingLF   = string "\n"
-  toEncoding LineEndingCRLF = string "\r\n"
-
-instance FromJSON LineEnding where
-  parseJSON (String "\r")   = pure LineEndingCR
-  parseJSON (String "\n")   = pure LineEndingLF
-  parseJSON (String "\r\n") = pure LineEndingCRLF
-  parseJSON _ = mzero
-
 --------------------------------------------------------------------------------
 -- Position
 --------------------------------------------------------------------------------
@@ -144,33 +146,13 @@ instance FromJSON LineEnding where
 -- @
 
 data Position = Position
-  { positionLine      :: !Int -- ^ 0-based line number
-  , positionCharacter :: !Int -- ^ 0-based count of utf-16 words (not code-points!)
+  { _line :: !Int -- ^ 0-based line number
+  , _character :: !Int -- ^ 0-based count of utf-16 words (not code-points!)
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON Position where
-  toJSON     (Position l c) = object $ "line" !~ l <> "character" !~ c
-  toEncoding (Position l c) = pairs  $ "line" !~ l <> "character" !~ c
-
-instance FromJSON Position where
-  parseJSON = withObject "Position" $ \v -> Position
-    <$> v .: "line"
-    <*> v .: "character"
-
+deriveJSON keepOptions ''Position
+makeFieldsNoPrefix ''Position
 instance Hashable Position
-
-class HasPosition p where
-  position :: Lens' p Position
-
-  line :: Lens' p Int
-  line = position.line
-  character :: Lens' p Int
-  character = position.character
-
-instance HasPosition Position where
-  position = id
-  line f (Position l c) = (Position ?? c) <$> f l
-  character f (Position l c) = Position l <$> f c
 
 --------------------------------------------------------------------------------
 -- Range
@@ -186,25 +168,12 @@ instance HasPosition Position where
 -- }
 -- @
 data Range = Range
-  { _rangeStart :: !Position
-  , _rangeEnd   :: !Position
+  { _start :: !Position
+  , _end   :: !Position
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON Range where
-  toJSON     (Range s e) = object $ "start" !~ s <> "end" !~ e
-  toEncoding (Range s e) = pairs  $ "start" !~ s <> "end" !~ e
-
-class HasRange t where
-  range :: Lens' t Range
-
-instance HasRange Range where
-  range = id
-
-instance FromJSON Range where
-  parseJSON = withObject "Range" $ \v -> Range
-    <$> v .: "start"
-    <*> v .: "end"
-
+deriveJSON keepOptions ''Range
+makeFieldsNoPrefix ''Range
 instance Hashable Range
 
 --------------------------------------------------------------------------------
@@ -221,26 +190,13 @@ instance Hashable Range
 -- }
 -- @
 data Location = Location
-  { locationUri   :: DocumentUri
-  , locationRange :: Range
+  { _uri   :: DocumentUri
+  , _range :: Range
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON Location where
-  toJSON     (Location u r) = object $ "uri" !~ u <> "range" !~ r
-  toEncoding (Location u r) = pairs $ "uri" !~ u <> "range" !~ r
-
-instance FromJSON Location where
-  parseJSON = withObject "Location" $ \v -> Location
-    <$> v .: "uri"
-    <*> v .: "range"
-
+deriveJSON keepOptions ''Location
+makeFieldsNoPrefix ''Location
 instance Hashable Location
-
-instance HasUri Location where
-  uri f (Location u r) = f u <&> \u' -> Location u' r
-
-instance HasRange Location where
-  range f (Location u r) = Location u <$> f r
 
 --------------------------------------------------------------------------------
 -- Diagnostic
@@ -259,31 +215,16 @@ instance HasRange Location where
 -- }
 -- @
 data Diagnostic = Diagnostic
-  { diagnosticRange    :: !Range
-  , diagnosticSeverity :: !(Maybe Severity)
-  , diagnosticCode     :: !(Maybe Id)
-  , diagnosticSource   :: !(Maybe Text)
-  , diagnosticMessage  :: !Text
+  { _range    :: !Range
+  , _severity :: !(Maybe Severity)
+  , _code     :: !(Maybe Id)
+  , _source   :: !(Maybe Text)
+  , _message  :: !Text
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON Diagnostic where
-  toJSON (Diagnostic r s c f m)    = object $
-    "range" !~ r <> "severity" ?~ s <> "code" ?~ c <> "source" ?~ f <> "message" !~ m
-  toEncoding (Diagnostic r s c f m) = pairs $
-    "range" !~ r <> "severity" ?~ s <> "code" ?~ c <> "source" ?~ f <> "message" !~ m
-
-instance FromJSON Diagnostic where
-  parseJSON = withObject "Diagnostic" $ \v -> Diagnostic
-    <$> v .: "range"
-    <*> v .:? "severity"
-    <*> v .:? "code"
-    <*> v .:? "source"
-    <*> v .: "message"
-
+deriveJSON omitOptions ''Diagnostic
+makeFieldsNoPrefix ''Diagnostic
 instance Hashable Diagnostic
-
-instance HasRange Diagnostic where
-  range f w = f (diagnosticRange w) <&> \r' -> w { diagnosticRange = r' }
 
 --------------------------------------------------------------------------------
 -- Command
@@ -300,30 +241,15 @@ instance HasRange Diagnostic where
 -- }
 -- @
 
-data Command a = Command
-  { commandTitle :: Text
-  , commandCommand :: Text
-  , commandArguments :: Maybe [a]
-  } deriving (Eq, Ord, Show, Read, Data, Generic, Generic1, Functor, Foldable, Traversable)
+data Command = Command
+  { _title  :: Text
+  , _command :: Text
+  , _arguments :: Maybe [Value]
+  } deriving (Eq, Show, Read, Data, Generic)
 
-type Command_ = Command Value
-
-instance ToJSON a => ToJSON (Command a) where
-  toJSON (Command t c a) = object $
-    "title" !~ t <> "command" !~ c <> "arguments" ?~ a
-  toEncoding (Command t c a) = pairs $
-    "title" !~ t <> "command" !~ c <> "arguments" ?~ a
-
-instance FromJSON a => FromJSON (Command a) where
-  parseJSON = withObject "Command" $ \v -> Command
-    <$> v .: "title"
-    <*> v .: "command"
-    <*> v .:? "arguments"
-
-instance Hashable1 Command
-
-instance Hashable a => Hashable (Command a) where
-  hashWithSalt = hashWithSalt1
+deriveJSON omitOptions ''Command
+makeFieldsNoPrefix ''Command
+instance Hashable Command
 
 --------------------------------------------------------------------------------
 -- TextEdit
@@ -338,21 +264,12 @@ instance Hashable a => Hashable (Command a) where
 -- }
 -- @
 data TextEdit = TextEdit
-  { textEditRange :: Range
-  , textEditNewText :: Text
+  { _range   :: !Range
+  , _newText :: !Text
   } deriving (Eq,Ord,Show,Read,Data,Generic)
 
-instance ToJSON TextEdit where
-  toJSON (TextEdit r t) = object $
-    "range" !~ r <> "newText" !~ t
-  toEncoding (TextEdit r t) = pairs $
-    "range" !~ r <> "newText" !~ t
-
-instance FromJSON TextEdit where
-  parseJSON = withObject "TextEdit" $ \v -> TextEdit
-    <$> v .: "range"
-    <*> v .: "newText"
-
+deriveJSON keepOptions ''TextEdit
+makeFieldsNoPrefix ''TextEdit
 instance Hashable TextEdit
 
 --------------------------------------------------------------------------------
@@ -367,20 +284,12 @@ instance Hashable TextEdit
 -- }
 -- @
 newtype TextDocumentIdentifier = TextDocumentIdentifier
-  { textDocumentIdentifierUri :: DocumentUri
+  { _uri :: DocumentUri
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON TextDocumentIdentifier where
-  toJSON (TextDocumentIdentifier u) = object $ "uri" !~ u
-  toEncoding (TextDocumentIdentifier u) = pairs $ "uri" !~ u
-
-instance FromJSON TextDocumentIdentifier where
-  parseJSON = withObject "TextDocumentIdentifier" $ \v -> TextDocumentIdentifier <$> v .: "uri"
-
+deriveJSON keepOptions ''TextDocumentIdentifier
+makeFieldsNoPrefix ''TextDocumentIdentifier
 instance Hashable TextDocumentIdentifier
-
-instance HasUri TextDocumentIdentifier where
-  uri f (TextDocumentIdentifier i) = TextDocumentIdentifier <$> f i
 
 --------------------------------------------------------------------------------
 -- VersionTextDocumentIdentifier
@@ -394,30 +303,12 @@ instance HasUri TextDocumentIdentifier where
 -- }
 -- @
 data VersionedTextDocumentIdentifier = VersionedTextDocumentIdentifier
-  { versionedTextDocumentIdentifierUri :: !DocumentUri
-  , versionedTextDocumentIdentifierVersion :: !Int
+  { _uri     :: !DocumentUri
+  , _version :: !Int
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-class HasVersion t where
-  version :: Lens' t Int
-
-instance HasVersion VersionedTextDocumentIdentifier where
-  version f (VersionedTextDocumentIdentifier u i) = VersionedTextDocumentIdentifier u <$> f i
-
-instance HasUri VersionedTextDocumentIdentifier where
-  uri f (VersionedTextDocumentIdentifier u i) = f u <&> \u' -> VersionedTextDocumentIdentifier u' i
-
-instance ToJSON VersionedTextDocumentIdentifier where
-  toJSON (VersionedTextDocumentIdentifier u i) = object $
-    "uri" !~ u <> "version" !~ i
-  toEncoding (VersionedTextDocumentIdentifier u i) = pairs $
-    "uri" !~ u <> "version" !~ i
-
-instance FromJSON VersionedTextDocumentIdentifier where
-  parseJSON = withObject "VersionedTextDocumentIdentifier" $ \v -> VersionedTextDocumentIdentifier
-    <$> v .: "uri"
-    <*> v .: "version"
-
+deriveJSON keepOptions ''VersionedTextDocumentIdentifier
+makeFieldsNoPrefix ''VersionedTextDocumentIdentifier
 instance Hashable VersionedTextDocumentIdentifier
 
 --------------------------------------------------------------------------------
@@ -434,28 +325,13 @@ instance Hashable VersionedTextDocumentIdentifier
 -- }
 -- @
 data TextDocumentEdit = TextDocumentEdit
-  { textDocumentEditTextDocument :: !VersionedTextDocumentIdentifier
-  , textDocumentEditEdits :: [TextEdit]
+  { _textDocument :: !VersionedTextDocumentIdentifier
+  , _edits        :: [TextEdit]
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON TextDocumentEdit where
-  toJSON (TextDocumentEdit i es) = object $
-    "textDocument" !~ i <> "edits" !~ es
-  toEncoding (TextDocumentEdit i es) = pairs $
-    "textDocument" !~ i <> "edits" !~ es
-
-instance FromJSON TextDocumentEdit where
-  parseJSON = withObject "TextDocumentEdit" $ \v -> TextDocumentEdit
-    <$> v .: "textDocument"
-    <*> v .: "edits"
-
+deriveJSON keepOptions ''TextDocumentEdit
+makeFieldsNoPrefix ''TextDocumentEdit
 instance Hashable TextDocumentEdit
-
-instance HasUri TextDocumentEdit where
-  uri f (TextDocumentEdit v es) = (TextDocumentEdit ?? es) <$> uri f v
-
-instance HasVersion TextDocumentEdit where
-  version f (TextDocumentEdit v es) = (TextDocumentEdit ?? es) <$> version f v
 
 --------------------------------------------------------------------------------
 -- WorkspaceEdit
@@ -472,21 +348,12 @@ instance HasVersion TextDocumentEdit where
 -- @
 
 data WorkspaceEdit = WorkspaceEdit
-  { workspaceEditChanges         :: !(HashMap Text [TextEdit])
-  , workspaceEditDocumentChanges :: !(Maybe [TextDocumentEdit])
+  { _changes         :: !(Maybe (HashMap Text [TextEdit]))
+  , _documentChanges :: !(Maybe [TextDocumentEdit])
   } deriving (Eq, Show, Read, Data, Generic)
 
-instance ToJSON WorkspaceEdit where
-  toJSON (WorkspaceEdit c d) = object $
-    "change" !~ c <> "documentChanges" ?~ d
-  toEncoding (WorkspaceEdit c d) = pairs $
-    "change" !~ c <> "documentChanges" ?~ d
-
-instance FromJSON WorkspaceEdit where
-  parseJSON = withObject "WorkspaceEdit" $ \v -> WorkspaceEdit
-    <$> v .: "change"
-    <*> v .:? "documentChanges"
-
+deriveJSON omitOptions ''WorkspaceEdit
+makeFieldsNoPrefix ''WorkspaceEdit
 instance Hashable WorkspaceEdit
 
 --------------------------------------------------------------------------------
@@ -506,32 +373,15 @@ instance Hashable WorkspaceEdit
 -- }
 -- @
 data TextDocumentItem = TextDocumentItem
-  { textDocumentItemUri :: !DocumentUri
-  , textDocumentItemLanguageId :: !Text
-  , textDocumentItemVersion :: !Int
-  , textDocumentItemText :: !Text
+  { _uri        :: !DocumentUri
+  , _languageId :: !Text
+  , _version    :: !Int
+  , _text       :: !Text
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
+deriveJSON keepOptions ''TextDocumentItem
+makeFieldsNoPrefix ''TextDocumentItem
 instance Hashable TextDocumentItem
-
-instance ToJSON TextDocumentItem where
-  toJSON (TextDocumentItem u l v t) = object $
-    "uri" !~ u <> "languageId" !~ l <> "version" !~ v <> "text" !~ t
-  toEncoding (TextDocumentItem u l v t) = pairs $
-    "uri" !~ u <> "languageId" !~ l <> "version" !~ v <> "text" !~ t
-
-instance FromJSON TextDocumentItem where
-  parseJSON = withObject "TextDocumentItem" $ \v -> TextDocumentItem
-    <$> v .: "uri"
-    <*> v .: "languageId"
-    <*> v .: "version"
-    <*> v .: "text"
-
-instance HasUri TextDocumentItem where
-  uri f t = f (textDocumentItemUri t) <&> \u' -> t { textDocumentItemUri = u' }
-
-instance HasVersion TextDocumentItem where
-  version f t = f (textDocumentItemVersion t) <&> \v' -> t { textDocumentItemVersion = v' }
 
 --------------------------------------------------------------------------------
 -- DocumentFilter
@@ -549,23 +399,13 @@ instance HasVersion TextDocumentItem where
 -- }
 -- @
 data DocumentFilter = DocumentFilter
-  { documentFilterLanguage :: Maybe String
-  , documentFilterScheme :: Maybe String
-  , documentFilterPattern :: Maybe String
+  { _language :: Maybe String
+  , _scheme   :: Maybe String
+  , _pattern  :: Maybe String
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON DocumentFilter where
-  toJSON (DocumentFilter f s p) = object $
-    "language" ?~ f <> "scheme" ?~ s <> "pattern" ?~ p
-  toEncoding (DocumentFilter f s p) = pairs $
-    "language" ?~ f <> "scheme" ?~ s <> "pattern" ?~ p
-
-instance FromJSON DocumentFilter where
-  parseJSON = withObject "DocumentFilter" $ \v -> DocumentFilter
-    <$> v .:? "language"
-    <*> v .:? "scheme"
-    <*> v .:? "pattern"
-
+deriveJSON omitOptions ''DocumentFilter
+makeFieldsNoPrefix ''DocumentFilter
 instance Hashable DocumentFilter
 
 --------------------------------------------------------------------------------
@@ -581,36 +421,26 @@ type DocumentSelector = [DocumentFilter]
 -- |
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#textdocumentpositionparams>
 --
-
 data TextDocumentPositionParams = TextDocumentPositionParams
-  { textDocumentPositionParamsTextDocument :: TextDocumentIdentifier
-  , textDocumentPositionParamsPosition     :: Position
- -- ^ Fun fact: This field name has the same length as
- -- supercalifragilisticexpialidocious
+  { _textDocument :: TextDocumentIdentifier
+  , _position     :: Position
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance ToJSON TextDocumentPositionParams where
-  toJSON (TextDocumentPositionParams t p) = object $
-    "textDocument" !~ t <> "position" !~ p
+type TDPP = TextDocumentPositionParams
 
-instance FromJSON TextDocumentPositionParams where
-  parseJSON = withObject "TextDocumentPositionParams" $ \v -> TextDocumentPositionParams
-    <$> v .: "textDocument"
-    <*> v .: "position"
+makeFieldsNoPrefix ''TextDocumentPositionParams
+deriveJSON keepOptions ''TextDocumentPositionParams
+instance Hashable TextDocumentPositionParams
 
-instance HasUri TextDocumentPositionParams where
-  uri f (TextDocumentPositionParams d p) = (TextDocumentPositionParams ?? p) <$> uri f d
-
-instance HasPosition TextDocumentPositionParams where
-  position f (TextDocumentPositionParams d p) = TextDocumentPositionParams d <$> f p
+--------------------------------------------------------------------------------
+-- Trace
+--------------------------------------------------------------------------------
 
 data Trace
   = TraceOff
   | TraceMessages
   | TraceVerbose
   deriving (Eq,Ord,Show,Read,Data,Generic,Ix,Bounded,Enum)
-
-instance Hashable Trace
 
 instance ToJSON Trace where
   toJSON TraceOff = String "off"
@@ -624,6 +454,8 @@ instance FromJSON Trace where
     "verbose"  -> pure TraceVerbose
     _ -> mzero
 
+instance Hashable Trace
+
 --------------------------------------------------------------------------------
 -- Boilerplate
 --------------------------------------------------------------------------------
@@ -636,21 +468,13 @@ type TextDocumentClientCapabilities = Value
 --------------------------------------------------------------------------------
 
 data ClientCapabilities = ClientCapabilities
-  { clientCapabilitiesWorkspace    :: Maybe WorkspaceClientCapabilities
-  , clientCapabilitiesTextDocument :: Maybe TextDocumentClientCapabilities
-  , clientCapabilitiesExperiment   :: Maybe Value
+  { _workspace    :: Maybe WorkspaceClientCapabilities
+  , _textDocument :: Maybe TextDocumentClientCapabilities
+  , _experiment   :: Maybe Value
   } deriving (Eq,Show,Read,Data,Generic)
 
-instance ToJSON ClientCapabilities where
-  toJSON (ClientCapabilities w t e) = object $
-    "workspace" ?~ w <> "textDocument" ?~ t <> "experimental" ?~ e
-
-instance FromJSON ClientCapabilities where
-  parseJSON = withObject "ClientCapabilities" $ \v -> ClientCapabilities
-    <$> v .:? "workspace"
-    <*> v .:? "textDocument"
-    <*> v .:? "experimental"
-
+deriveJSON omitOptions ''ClientCapabilities
+makeFieldsNoPrefix ''ClientCapabilities
 instance Hashable ClientCapabilities
 
 --------------------------------------------------------------------------------
@@ -658,30 +482,34 @@ instance Hashable ClientCapabilities
 --------------------------------------------------------------------------------
 
 data InitializeParams = InitializeParams
-  { initializeParamsProcessId             :: Maybe Int
-  , initializeParamsRootPath              :: Maybe (Maybe String) -- deprecated
-  , initializeParamsRootUri               :: Maybe DocumentUri
-  , initializeParamsInitializationOptions :: Maybe Value
-  , initializeParamsCapabilities          :: ClientCapabilities
-  , initializeParamsTrace                 :: Trace
+  { _processId             :: Maybe Int
+  , _rootPath              :: Maybe (Maybe String)
+  , _rootUri               :: Maybe DocumentUri
+  , _initializationOptions :: Maybe Value
+  , _capabilities          :: ClientCapabilities
+  , _trace                 :: Trace
   } deriving (Eq,Show,Read,Data,Generic)
 
 instance ToJSON InitializeParams where
-  toJSON (InitializeParams p rp ru o c t) = object
-     $ "processId" !~ p
-    <> "rootPath"  ?~ rp
-    <> "rootUri"   !~ ru
-    <> "initializationOptions" ?~ o
-    <> "capabilities" !~ c
-    <> "trace" !~ t
+  toJSON (InitializeParams p rp ru o c t) = object $
+     [ "processId"    .= p
+     , "rootUri"      .= ru
+     , "capabilities" .= c
+     , "trace"        .= t
+     ] ++ catMaybes 
+     [ ("rootPath" .=) <$> rp
+     , ("initializationOptions" .=) <$> o
+     ]
 
 instance FromJSON InitializeParams where
   parseJSON = withObject "InitializeParams" $ \v -> InitializeParams
     <$> v .: "processId"
     <*> v .:? "rootPath"
-    <*> v .:? "rootUri"
+    <*> v .: "rootUri"
     <*> v .:? "initializationOptions"
     <*> v .: "capabilities"
-    <*> v .:? "trace" .!= TraceOff
+    <*> v .: "trace" .!= TraceOff
+
+makeFieldsNoPrefix ''InitializeParams
 
 instance Hashable InitializeParams

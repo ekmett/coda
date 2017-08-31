@@ -17,7 +17,7 @@
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md Language Server Protocol>
 --------------------------------------------------------------------------------
 
-module Coda.Message.Severity
+module Language.Server.Severity
   ( Severity(..)
   , pattern Error
   , pattern Warning

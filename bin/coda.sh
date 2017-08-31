@@ -9,10 +9,4 @@ if [ "X" = "X$CODA_SERVER_PATH" ]; then
   exit 1
 fi
 
-echo "Starting" 1>&2
-
-tee ~/input.log | coda $@ | tee ~/output.log
-
-echo "Shutting Down" 1>&2
-
-#exec coda $@
+exec coda $@
