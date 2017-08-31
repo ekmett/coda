@@ -96,18 +96,13 @@ telemetryEvent v = liftIO $ putMessage $ TelemetryEvent v
 
 server :: ServerOptions -> IO ()
 server opts = do
-  liftIO $ hSetBuffering stdin NoBuffering
-  liftIO $ hSetEncoding stdin char8
+  hSetBuffering stdin NoBuffering
+  hSetEncoding stdin char8
+  hSetBuffering stdout NoBuffering
+  hSetEncoding stdout char8
+  hFlush stdout
   runReaderT ?? opts $ evalStateT ?? ServerState False $ do
-    liftIO $ hPutStrLn stderr "Starting!"
-
-    liftIO $ hSetBuffering stdout NoBuffering
-    liftIO $ hSetEncoding stdout char8
-    liftIO $ hFlush stdout
-
-    liftIO $ hPutStrLn stderr "Initializing!"
     initializeServer
-    liftIO $ hPutStrLn stderr "Initialized..."
     loop
 
 ok :: (MonadIO m, ToJSON a) => Id -> a -> m ()

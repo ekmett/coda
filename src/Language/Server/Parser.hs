@@ -83,7 +83,7 @@ ascii = Parser hGetChar
 char :: Char -> Parser ()
 char p = do
   q <- ascii
-  unless (p == q) $ fail $ "expected " ++ show q
+  unless (p == q) $ fail $ "expected " ++ show p
 
 -- | Parse exactly the string specified
 string :: Lazy.ByteString -> Parser ()
@@ -115,7 +115,8 @@ intField = do
 -- TODO: validate Content-Type
 contentHeader :: Parser Int
 contentHeader = do
-  string "Content-"
+  char 'C' -- give an error back one character in
+  string "ontent-"
   ascii >>= \case
     'L' -> string "ength: " *> intField <* rest
     'T' -> string "ype: " *> anyField *> contentHeader
