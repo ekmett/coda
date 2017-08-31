@@ -108,7 +108,7 @@ intField = do
   go acc = ascii >>= \case
     '\r'                     -> acc <$ char '\n'
     d | d >= '0' && d <= '9' -> go (acc * 10 + fromIntegral (fromEnum d - 48))
-      | otherwise            -> fail "expected digit or '\r'"
+      | otherwise            -> fail "expected digit or '\\r'"
 
 -- | Parse a JSON-RPC 2.0 content header
 --
@@ -125,7 +125,7 @@ contentHeader = do
    rest = ascii >>= \case
      '\r' -> char '\n'
      'C'  -> string "ontent-Type: " *> anyField *> rest
-     _ -> fail "expected '\r' or 'C'"
+     _ -> fail "expected '\\r' or 'C'"
 
 -- | Consume @n@ bytes
 bytes :: Int -> Parser Lazy.ByteString

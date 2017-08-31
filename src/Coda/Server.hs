@@ -70,7 +70,10 @@ listen :: (MonadIO m, MonadState s m, HasServerState s) => m (Either [Request] R
 listen = liftIO (parse parseMessage stdin) >>= \case
   Left e -> do
     putError Nothing InvalidRequest (Text.pack e)
-    liftIO $ exitWith $ ExitFailure 1
+    liftIO $ do
+      hFlush stdout
+      hFlush stderr
+      exitWith $ ExitFailure 1
   Right value -> case eitherDecodeRequest value of
     Left s -> do
       putError Nothing ParseError (Text.pack s)
@@ -124,7 +127,10 @@ initializeServer = listen >>= \case
     assign shutdownRequested True
     initializeServer
   Right Exit -> 
-    use shutdownRequested >>= \b -> liftIO $ exitWith $ if b then ExitSuccess else ExitFailure 1
+    use shutdownRequested >>= \b -> liftIO $ do
+      hFlush stdout
+      hFlush stderr
+      exitWith $ if b then ExitSuccess else ExitFailure 1
   Right (Request _ m _) 
     | Text.isPrefixOf "$/" m -> initializeServer -- ignore extensions
   Right (Request Nothing _ _) -> initializeServer               -- ignore notifications
@@ -140,7 +146,10 @@ loop = listen >>= \case
   Right Initialized -> loop
   Right Shutdown -> assign shutdownRequested True >> loop
   Right Exit -> 
-    use shutdownRequested >>= \b -> liftIO $ exitWith $ if b then ExitSuccess else ExitFailure 1
+    use shutdownRequested >>= \b -> liftIO $ do
+      hFlush stdout
+      hFlush stderr
+      exitWith $ if b then ExitSuccess else ExitFailure 1
   Right (Request _ m _) | Text.isPrefixOf "$/" m -> loop -- ignore extensions for now
   Right (Request (Just i) _ _) -> do
     putError (Just i) InvalidRequest "unsupported request"
