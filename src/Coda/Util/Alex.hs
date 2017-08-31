@@ -75,9 +75,9 @@ alexGetByte (AlexInput !s !c !d !t) = case s of
   S1 | i <- fromEnum c -> ok (fromIntegral $ 0x80 + i .&. 0x3f)                 (AlexInput S0 c (d+1) t)
   S0 | d < Text.lengthWord16 t -> case Text.iter t d of
       Text.Iter c' d'
-        | i' <= 0x7f   -> ok (fromIntegral i')                                   (AlexInput S0 c' (d+d') t)
-        | i' <= 0x7ff  -> ok (fromIntegral $ 0xc0 + unsafeShiftR i' 6)           (AlexInput S1 c' (d+d') t)
-        | i' <= 0xffff -> ok (fromIntegral $ toEnum $ 0xe0 + unsafeShiftR i' 12) (AlexInput S2 c' (d+d') t)
-        | otherwise    -> ok (fromIntegral $ toEnum $ 0xf0 + unsafeShiftR i' 18) (AlexInput S3 c' (d+d') t)
+        | i' <= 0x7f   -> ok (fromIntegral i')                          (AlexInput S0 c' (d+d') t)
+        | i' <= 0x7ff  -> ok (fromIntegral $ 0xc0 + unsafeShiftR i' 6)  (AlexInput S1 c' (d+d') t)
+        | i' <= 0xffff -> ok (fromIntegral $ 0xe0 + unsafeShiftR i' 12) (AlexInput S2 c' (d+d') t)
+        | otherwise    -> ok (fromIntegral $ 0xf0 + unsafeShiftR i' 18) (AlexInput S3 c' (d+d') t)
         where i' = fromEnum c'
     | otherwise -> Nothing
