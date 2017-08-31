@@ -47,52 +47,79 @@ module Language.Server.Protocol
   , DocumentFilter(..)
   , DocumentSelector
   , TextDocumentPositionParams(..), TDPP
-  , WorkspaceClientCapabilities
   -- * Protocol
-  , TextDocumentClientCapabilities
-  , ClientCapabilities(..)
+  -- ** 'initialize'
+  , pattern Initialize
   , InitializeParams(..)
-  -- * Overloading
-  , HasPosition(..)
-  , HasRange(..)
-  , HasUri(..)
-  , HasVersion(..)
-  , HasLine(..)
-  , HasCharacter(..)
-  , HasEnd(..)
-  , HasStart(..) 
-  , HasMessage(..)
-  , HasCode(..)
-  , HasSeverity(..)
-  , HasSource(..)
-  , HasCommand(..)
+  , ClientCapabilities(..)
+  , WorkspaceClientCapabilities
+  , TextDocumentClientCapabilities
+  -- ** 'initialized'
+  , pattern Initialized
+  -- ** 'exit'
+  , pattern Exit
+  -- ** 'shutdown'
+  , pattern Shutdown
+  -- ** 'window/logMessage'
+  , pattern LogMessage
+  , LogMessageParams(..)
+  -- ** 'window/showMessage'
+  , pattern ShowMessage
+  , ShowMessageParams(..)
+  -- ** 'telemetry/event'
+  , pattern TelemetryEvent
+  -- ** 'client/registerCapability'
+  , pattern RegisterCapability
+  , Registration(..)
+  , TextDocumentRegistrationOptions(..)
+  , pattern RegisterCapabilityResponse
+  -- ** 'client/unregisterCapability'
+  , pattern UnregisterCapability
+  , Unregistration(..)
+  -- * Ad-hoc Overloading
   , HasArguments(..)
-  , HasTitle(..)
-  , HasNewText(..)
-  , HasTextDocument(..)
-  , HasEdits(..)
+  , HasCapabilities(..)
   , HasChanges(..)
+  , HasCharacter(..)
+  , HasCode(..)
+  , HasCommand(..)
   , HasDocumentChanges(..)
-  , HasText(..)
-  , HasLanguageId(..)
-  , HasPattern(..)
-  , HasLanguage(..)
-  , HasScheme(..)
+  , HasDocumentSelector(..)
+  , HasEdits(..)
+  , HasEnd(..)
   , HasExperiment(..)
-  , HasWorkspace(..)
-  , HasTrace(..) 
+  , HasId(..)
+  , HasInitializationOptions(..)
+  , HasLanguage(..)
+  , HasLanguageId(..)
+  , HasLine(..)
+  , HasMethod(..)
+  , HasMessage(..)
+  , HasNewText(..)
+  , HasPattern(..)
+  , HasPosition(..)
   , HasProcessId(..)
+  , HasRange(..)
+  , HasRegisterOptions(..)
   , HasRootPath(..)
   , HasRootUri(..)
-  , HasInitializationOptions(..)
-  , HasCapabilities(..)
+  , HasScheme(..)
+  , HasSeverity(..)
+  , HasSource(..)
+  , HasStart(..) 
+  , HasText(..)
+  , HasTextDocument(..)
+  , HasTitle(..)
+  , HasTrace(..) 
+  , HasType(..)
+  , HasUri(..)
+  , HasVersion(..)
+  , HasWorkspace(..)
   ) where
 
 import Coda.Util.Aeson
-import Control.Lens.Combinators
 import Control.Monad
 import Data.Aeson hiding (Error)
-import Data.Aeson.TH
 import Data.Data
 import Data.Hashable
 import Data.HashMap.Strict as HashMap
@@ -102,6 +129,7 @@ import Data.Text as Text
 import GHC.Generics
 import Language.Server.Base
 import Language.Server.Severity as Severity
+import Language.Server.TH
 
 --------------------------------------------------------------------------------
 -- Cancellation Notification
@@ -150,8 +178,8 @@ data Position = Position
   , _character :: !Int -- ^ 0-based count of utf-16 words (not code-points!)
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON keepOptions ''Position
-makeFieldsNoPrefix ''Position
+jsonKeep ''Position
+lenses ''Position
 instance Hashable Position
 
 --------------------------------------------------------------------------------
@@ -172,8 +200,8 @@ data Range = Range
   , _end   :: !Position
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON keepOptions ''Range
-makeFieldsNoPrefix ''Range
+jsonKeep ''Range
+lenses ''Range
 instance Hashable Range
 
 --------------------------------------------------------------------------------
@@ -194,8 +222,8 @@ data Location = Location
   , _range :: Range
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON keepOptions ''Location
-makeFieldsNoPrefix ''Location
+jsonKeep ''Location
+lenses ''Location
 instance Hashable Location
 
 --------------------------------------------------------------------------------
@@ -222,8 +250,8 @@ data Diagnostic = Diagnostic
   , _message  :: !Text
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON omitOptions ''Diagnostic
-makeFieldsNoPrefix ''Diagnostic
+jsonOmit ''Diagnostic
+lenses ''Diagnostic
 instance Hashable Diagnostic
 
 --------------------------------------------------------------------------------
@@ -247,8 +275,8 @@ data Command = Command
   , _arguments :: Maybe [Value]
   } deriving (Eq, Show, Read, Data, Generic)
 
-deriveJSON omitOptions ''Command
-makeFieldsNoPrefix ''Command
+jsonOmit ''Command
+lenses ''Command
 instance Hashable Command
 
 --------------------------------------------------------------------------------
@@ -268,8 +296,8 @@ data TextEdit = TextEdit
   , _newText :: !Text
   } deriving (Eq,Ord,Show,Read,Data,Generic)
 
-deriveJSON keepOptions ''TextEdit
-makeFieldsNoPrefix ''TextEdit
+jsonKeep ''TextEdit
+lenses ''TextEdit
 instance Hashable TextEdit
 
 --------------------------------------------------------------------------------
@@ -287,8 +315,8 @@ newtype TextDocumentIdentifier = TextDocumentIdentifier
   { _uri :: DocumentUri
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON keepOptions ''TextDocumentIdentifier
-makeFieldsNoPrefix ''TextDocumentIdentifier
+jsonKeep ''TextDocumentIdentifier
+lenses ''TextDocumentIdentifier
 instance Hashable TextDocumentIdentifier
 
 --------------------------------------------------------------------------------
@@ -307,8 +335,8 @@ data VersionedTextDocumentIdentifier = VersionedTextDocumentIdentifier
   , _version :: !Int
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON keepOptions ''VersionedTextDocumentIdentifier
-makeFieldsNoPrefix ''VersionedTextDocumentIdentifier
+jsonKeep ''VersionedTextDocumentIdentifier
+lenses ''VersionedTextDocumentIdentifier
 instance Hashable VersionedTextDocumentIdentifier
 
 --------------------------------------------------------------------------------
@@ -329,8 +357,8 @@ data TextDocumentEdit = TextDocumentEdit
   , _edits        :: [TextEdit]
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON keepOptions ''TextDocumentEdit
-makeFieldsNoPrefix ''TextDocumentEdit
+jsonKeep ''TextDocumentEdit
+lenses ''TextDocumentEdit
 instance Hashable TextDocumentEdit
 
 --------------------------------------------------------------------------------
@@ -352,8 +380,8 @@ data WorkspaceEdit = WorkspaceEdit
   , _documentChanges :: !(Maybe [TextDocumentEdit])
   } deriving (Eq, Show, Read, Data, Generic)
 
-deriveJSON omitOptions ''WorkspaceEdit
-makeFieldsNoPrefix ''WorkspaceEdit
+jsonOmit ''WorkspaceEdit
+lenses ''WorkspaceEdit
 instance Hashable WorkspaceEdit
 
 --------------------------------------------------------------------------------
@@ -379,8 +407,8 @@ data TextDocumentItem = TextDocumentItem
   , _text       :: !Text
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON keepOptions ''TextDocumentItem
-makeFieldsNoPrefix ''TextDocumentItem
+jsonKeep ''TextDocumentItem
+lenses ''TextDocumentItem
 instance Hashable TextDocumentItem
 
 --------------------------------------------------------------------------------
@@ -404,8 +432,8 @@ data DocumentFilter = DocumentFilter
   , _pattern  :: Maybe String
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
-deriveJSON omitOptions ''DocumentFilter
-makeFieldsNoPrefix ''DocumentFilter
+jsonOmit ''DocumentFilter
+lenses ''DocumentFilter
 instance Hashable DocumentFilter
 
 --------------------------------------------------------------------------------
@@ -428,8 +456,8 @@ data TextDocumentPositionParams = TextDocumentPositionParams
 
 type TDPP = TextDocumentPositionParams
 
-makeFieldsNoPrefix ''TextDocumentPositionParams
-deriveJSON keepOptions ''TextDocumentPositionParams
+lenses ''TextDocumentPositionParams
+jsonKeep ''TextDocumentPositionParams
 instance Hashable TextDocumentPositionParams
 
 --------------------------------------------------------------------------------
@@ -457,15 +485,11 @@ instance FromJSON Trace where
 instance Hashable Trace
 
 --------------------------------------------------------------------------------
--- Boilerplate
+-- Client -> Server: 'initialize'
 --------------------------------------------------------------------------------
 
 type WorkspaceClientCapabilities = Value
 type TextDocumentClientCapabilities = Value
-
---------------------------------------------------------------------------------
--- ClientCapabilities
---------------------------------------------------------------------------------
 
 data ClientCapabilities = ClientCapabilities
   { _workspace    :: Maybe WorkspaceClientCapabilities
@@ -473,13 +497,10 @@ data ClientCapabilities = ClientCapabilities
   , _experiment   :: Maybe Value
   } deriving (Eq,Show,Read,Data,Generic)
 
-deriveJSON omitOptions ''ClientCapabilities
-makeFieldsNoPrefix ''ClientCapabilities
+jsonOmit ''ClientCapabilities
+lenses ''ClientCapabilities
 instance Hashable ClientCapabilities
 
---------------------------------------------------------------------------------
--- InitializeParams
---------------------------------------------------------------------------------
 
 data InitializeParams = InitializeParams
   { _processId             :: Maybe Int
@@ -510,6 +531,121 @@ instance FromJSON InitializeParams where
     <*> v .: "capabilities"
     <*> v .: "trace" .!= TraceOff
 
-makeFieldsNoPrefix ''InitializeParams
-
+lenses ''InitializeParams
 instance Hashable InitializeParams
+
+-- | @initialize@
+pattern Initialize :: Id -> InitializeParams -> Request
+pattern Initialize i p = Request (Just i) "initialize" (Just (JSON p))
+
+--------------------------------------------------------------------------------
+-- Client -> Server: 'initialized'
+--------------------------------------------------------------------------------
+
+-- | @initialized@
+pattern Initialized :: Request
+pattern Initialized = Request Nothing "initialized" Nothing
+
+--------------------------------------------------------------------------------
+-- Client -> Server: 'shutdown'
+--------------------------------------------------------------------------------
+
+-- | @shutdown@
+pattern Shutdown :: Request
+pattern Shutdown = Request Nothing "shutdown" Nothing
+
+--------------------------------------------------------------------------------
+-- Client -> Server: 'exit'
+--------------------------------------------------------------------------------
+
+-- | @exit@
+pattern Exit :: Request
+pattern Exit = Request Nothing "exit" Nothing
+
+--------------------------------------------------------------------------------
+-- Server -> Client: 'window/logMessage'
+--------------------------------------------------------------------------------
+
+data LogMessageParams = LogMessageParams
+  { _type    :: !Severity
+  , _message :: !Text
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonOmit ''LogMessageParams
+lenses ''LogMessageParams
+instance Hashable LogMessageParams
+
+-- | @window/logMessage@
+pattern LogMessage :: Severity -> Text -> Request
+pattern LogMessage s m = Request Nothing "window/logMessage" (Just (JSON (LogMessageParams s m)))
+
+--------------------------------------------------------------------------------
+-- Server -> Client: 'window/showMessage'
+--------------------------------------------------------------------------------
+
+data ShowMessageParams = ShowMessageParams
+  { _type    :: !Severity
+  , _message :: !Text
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonOmit ''ShowMessageParams
+lenses ''ShowMessageParams
+instance Hashable ShowMessageParams
+
+-- | @window/showMessage@
+pattern ShowMessage :: Severity -> Text -> Request
+pattern ShowMessage s m = Request Nothing "window/showMessage" (Just (JSON (ShowMessageParams s m)))
+
+--------------------------------------------------------------------------------
+-- Server -> Client: 'telemetry/event'
+--------------------------------------------------------------------------------
+
+-- | @telemetry/event@
+pattern TelemetryEvent :: Value -> Request
+pattern TelemetryEvent v = Request Nothing "telemetry/event" (Just v)
+
+--------------------------------------------------------------------------------
+-- Server -> Client: 'client/registerCapability'
+--------------------------------------------------------------------------------
+
+data Registration = Registration
+  { _id :: !Text
+  , _method :: !Text
+  , _registerOptions :: !(Maybe Value)
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonOmit ''Registration
+lenses ''Registration
+instance Hashable Registration
+
+data TextDocumentRegistrationOptions = TextDocumentRegistrationOptions
+  { _documentSelector :: Maybe DocumentSelector
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''TextDocumentRegistrationOptions
+lenses ''TextDocumentRegistrationOptions
+instance Hashable TextDocumentRegistrationOptions
+
+-- | @client/registerCapability@
+pattern RegisterCapability :: Id -> [Registration] -> Request
+pattern RegisterCapability i rs = Request (Just i) "client/registerCapability" (Just (JSON rs))
+
+pattern RegisterCapabilityResponse :: Id -> Maybe ResponseError -> Response
+pattern RegisterCapabilityResponse i e = Response (Just i) Nothing e
+
+--------------------------------------------------------------------------------
+-- Server -> Client: 'client/unregisterCapability'
+--------------------------------------------------------------------------------
+
+data Unregistration = Unregistration
+  { _id :: !Text
+  , _method :: !Text
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''Unregistration
+lenses ''Unregistration
+instance Hashable Unregistration
+
+-- | @client/unregisterCapability@
+pattern UnregisterCapability :: Id -> [Unregistration] -> Request
+pattern UnregisterCapability i urs = Request (Just i) "client/unregisterCapability" (Just (JSON urs))

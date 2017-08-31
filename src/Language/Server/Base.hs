@@ -49,9 +49,14 @@ module Language.Server.Base
   , pattern ServerNotInitialized
   , pattern UnknownErrorCode
 
-  -- * Aeson Options
-  , omitOptions
-  , keepOptions
+  , HasMethod(..)
+  , HasParams(..)
+  , HasId(..)
+  , HasMessage(..)
+  , HasCode(..)
+  , HasData(..)
+  , HasError(..)
+  , HasResult(..)
   ) where
 
 import Control.Applicative
@@ -59,7 +64,6 @@ import Control.Monad
 import Data.Aeson
 import Data.Aeson.Encoding
 import Data.Aeson.Internal
-import Data.Aeson.TH
 import Data.Data
 import Data.Hashable
 import Data.Ix
@@ -67,6 +71,7 @@ import Data.Maybe (catMaybes)
 import Data.String
 import Data.Text
 import GHC.Generics
+import Language.Server.TH
 
 --------------------------------------------------------------------------------
 -- JSON-RPC 2.0
@@ -122,7 +127,6 @@ data Request = Request
   , _params :: !(Maybe Value)
   } deriving (Eq, Show, Read, Data, Generic)
 
-
 instance FromJSON Request where
   parseJSON = withObject "Request" $ \v -> do
     ver <- v .: "jsonrpc" -- check for jsonprc validity
@@ -141,6 +145,8 @@ instance ToJSON Request where
     ]
 
 instance Hashable Request
+
+lenses ''Request
 
 --------------------------------------------------------------------------------
 -- ErrorCode
@@ -208,7 +214,8 @@ data ResponseError = ResponseError
   , _data    :: !(Maybe Value)
   } deriving (Eq, Show, Read, Data, Generic)
 
-deriveJSON defaultOptions { fieldLabelModifier = Prelude.drop 1, omitNothingFields = True } ''ResponseError
+jsonOmit ''ResponseError
+lenses ''ResponseError
 
 instance Hashable ResponseError
 
@@ -252,6 +259,4 @@ instance FromJSON Response where
 
 instance Hashable Response
 
-omitOptions, keepOptions :: Options
-omitOptions = defaultOptions { fieldLabelModifier = Prelude.drop 1, omitNothingFields = True }
-keepOptions = defaultOptions { fieldLabelModifier = Prelude.drop 1, omitNothingFields = False }
+lenses ''Response

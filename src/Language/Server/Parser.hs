@@ -2,6 +2,7 @@
 {-# language BangPatterns #-}
 {-# language DeriveTraversable #-}
 {-# language OverloadedStrings #-}
+{-# language DeriveDataTypeable #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -18,6 +19,7 @@
 module Language.Server.Parser 
   ( Parser(..)
   , ParseResult(..)
+  , parse
   , parseMessage
   , decodeMessage
   , decodeMessage'
@@ -25,13 +27,12 @@ module Language.Server.Parser
   , eitherDecodeMessage'
   ) where
 
-import Control.Applicative
 import Control.Monad
-import Control.Monad.Fail
 import Data.Aeson
-import Data.Int (Int64)
-import Data.Word (Word8)
+import Data.Data
 import qualified Data.ByteString.Lazy as Lazy
+import System.IO
+import Control.Exception
 
 -- $setup
 -- >>> :set -XOverloadedStrings
@@ -46,113 +47,92 @@ data ParseResult a
   | OK !a !Lazy.ByteString
   deriving (Show, Functor, Foldable, Traversable)
 
--- | This parser consumes lazy bytestrings
-newtype Parser a = Parser { runParser :: Lazy.ByteString -> ParseResult a }
+-- | LL(1) Parser for streaming directly from file handles.
+--
+-- Assumes the input handle has been set to
+--
+-- @
+-- 'hSetBuffering' handle 'NoBuffering'
+-- 'hSetEncoding' handle 'char8'
+-- @
+newtype Parser a = Parser { runParser :: Handle -> IO a }
   deriving Functor
 
 instance Applicative Parser where
-  pure a = Parser $ \s -> OK a s
-
-  Parser m <*> Parser n = Parser $ \s -> case m s of
-    Err -> Err
-    OK f s' -> case n s' of 
-      Err -> Err
-      OK a s'' -> OK (f a) s''
-
-  Parser m *> Parser n = Parser $ \s -> case m s of
-    Err -> Err
-    OK _ s' -> n s'
-
-  Parser m <* Parser n = Parser $ \s -> case m s of
-    Err -> Err
-    OK a s' -> case n s' of
-      Err -> Err
-      OK _ s'' -> OK a s''
+  pure a = Parser $ \_ -> pure a
+  (<*>) = ap
+  (*>) = (>>)
 
 instance Monad Parser where
-  Parser m >>= k = Parser $ \s -> case m s of
-    Err -> Err
-    OK a s' -> runParser (k a) s'
+  Parser m >>= f = Parser $ \h -> m h >>= \a -> runParser (f a) h
+  fail s = Parser $ \_ -> throw $ ParseError s
 
-  (>>) = (*>)
+parse :: Parser a -> Handle -> IO (Either String a)
+parse p h = (Right <$> runParser p h) `catch` \(ParseError e) -> pure $ Left e
 
-  fail _ = empty
+-- | parse errors for json-rpc frames are basically unrecoverable as there is no real framing
+newtype ParseError = ParseError String
+  deriving (Show, Data)
 
-instance Alternative Parser where
-  empty = Parser $ const Err
-  Parser m <|> Parser n = Parser $ \s -> case m s of 
-    Err -> n s
-    ok -> ok
+instance Exception ParseError
 
-instance MonadPlus Parser where
-  mzero = empty
-  mplus = (<|>)
-
-instance MonadFail Parser where
-  fail _ = empty
-
-c2w :: Char -> Word8
-c2w = fromIntegral . fromEnum
-
-w2c :: Word8 -> Char
-w2c = toEnum . fromIntegral
-
--- | Parse one byte as an ASCII character
+-- | Parse one byte as an ISO-8859-1 character
 ascii :: Parser Char
-ascii = Parser $ \s -> case Lazy.uncons s of
-  Just (w8, s') -> OK (w2c w8) s'
-  Nothing -> Err
+ascii = Parser hGetChar
+
+char :: Char -> Parser ()
+char p = do
+  q <- ascii
+  unless (p == q) $ fail $ "expected " ++ show q
 
 -- | Parse exactly the string specified
 string :: Lazy.ByteString -> Parser ()
-string p = Parser $ \s -> case Lazy.stripPrefix p s of -- 0.10.8
-  Nothing -> Err
-  Just s' -> OK () s'
+string p = Parser $ \h -> do 
+  q <- Lazy.hGet h (fromIntegral $ Lazy.length p)
+  unless (p == q) $ fail $ "expected " ++ show p
 
--- | Parse to the next carriage return
-line :: Parser Lazy.ByteString
-line = Parser $ \s -> case Lazy.break (== c2w '\r') s of
-    (p, s') -> OK p s'
+-- | Parse to the next carriage return and linefeed inclusively
+anyField :: Parser ()
+anyField = ascii >>= \case
+  'r' -> char '\n'
+  _ -> anyField
   
--- | Parse an integer
---
--- >>> runParser int64 "123what"
--- OK 123 "what"
-int64 :: Parser Int64
-int64 = Parser $ \s -> case Lazy.uncons s of
-    Just (w8, s') 
-      | w8 >= 48 && w8 <= 57 -> case acc (fromIntegral w8 - 48) s' of -- require at least one digit
-        (i, s'') -> OK i s''
-    _ -> Err
-  where
-  acc !i s = case Lazy.uncons s of
-    Just (w8, s') 
-      | w8 >= 48 && w8 <= 57 -> acc (i * 10 + fromIntegral (w8 - 48)) s'
-    _ -> (i, s)
-
--- | Match a carriage return and line feed pair
-crlf :: Parser ()
-crlf = string "\r\n"
+-- | Parse an integer followed by a carriage return linefeed
+intField :: Parser Int
+intField = do
+  b <- ascii
+  unless (b >= '0' && b <= '9') $ fail "expected integer"
+  go (fromIntegral (fromEnum b) - 48)
+ where
+  go :: Int -> Parser Int
+  go acc = ascii >>= \case
+    '\r'                     -> acc <$ char '\n'
+    d | d >= '0' && d <= '9' -> go (acc * 10 + fromIntegral (fromEnum d - 48))
+      | otherwise            -> fail "expected digit or '\r'"
 
 -- | Parse a JSON-RPC 2.0 content header
 --
 -- TODO: validate Content-Type
-contentHeader :: Parser Int64
+contentHeader :: Parser Int
 contentHeader = do
   string "Content-"
   ascii >>= \case
-    'L' -> string "ength: " *> int64 <* (crlf *> rest)
-    'T' -> string "ype: " *> line *> crlf *> contentHeader
-    _ -> empty
+    'L' -> string "ength: " *> intField <* rest
+    'T' -> string "ype: " *> anyField *> contentHeader
+    _ -> fail "expected 'L' or 'T'"
  where
-   rest = crlf -- end of header
-      <|> string "Content-Type: " *> line *> crlf *> rest
+   rest = ascii >>= \case
+     '\r' -> char '\n'
+     'C'  -> string "ontent-Type: " *> anyField *> rest
+     _ -> fail "expected '\r' or 'C'"
 
 -- | Consume @n@ bytes
-bytes :: Int64 -> Parser Lazy.ByteString
-bytes n = Parser $ \s -> case Lazy.splitAt n s of
-  (p, s') | Lazy.length p == n -> OK p s'
-          | otherwise -> Err
+bytes :: Int -> Parser Lazy.ByteString
+bytes n = Parser $ \h -> do
+  bs <- Lazy.hGet h n
+  let m = fromIntegral (Lazy.length bs)
+  unless (m == n) $ fail $ "expected " ++ show n ++ " bytes, but only received " ++ show m
+  pure bs
 
 --------------------------------------------------------------------------------
 -- * RPC Parsing

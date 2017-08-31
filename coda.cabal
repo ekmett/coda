@@ -90,6 +90,7 @@ library
     Language.Server.Protocol
     Language.Server.Parser
     Language.Server.Severity
+    Language.Server.TH
 
   other-modules:
     Paths_coda
