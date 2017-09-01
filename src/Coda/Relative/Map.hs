@@ -11,7 +11,7 @@
 {-# options_ghc -Wno-incomplete-patterns #-}
 
 module Coda.Relative.Map
-  ( Map'
+  ( Map
   , singleton
   , insert
   , lookup
