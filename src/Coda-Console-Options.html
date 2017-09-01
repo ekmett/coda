@@ -26,21 +26,25 @@
 <a name="line-17"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-18"></a>
 <a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
-<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Monoid</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Options</span><span class='hs-varop'>.</span><span class='hs-conid'>Applicative</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Options</span>
-<a name="line-22"></a>
-<a name="line-23"></a><a name="ConsoleOptions"></a><span class='hs-comment'>-- | Options for @coda repl@</span>
-<a name="line-24"></a><a name="ConsoleOptions"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ConsoleOptions</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>ConsoleOptions</span>
-<a name="line-25"></a>  <span class='hs-layout'>{</span> <span class='hs-sel'>_consoleOptionsNoHeading</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Bool</span>
-<a name="line-26"></a>  <span class='hs-layout'>,</span> <span class='hs-sel'>_consoleOptionsNoUnicode</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Bool</span>
-<a name="line-27"></a>  <span class='hs-layout'>}</span> <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Eq</span><span class='hs-layout'>,</span><span class='hs-conid'>Ord</span><span class='hs-layout'>,</span><span class='hs-conid'>Show</span><span class='hs-layout'>,</span><span class='hs-conid'>Read</span><span class='hs-layout'>)</span>
-<a name="line-28"></a>
-<a name="line-29"></a><a name="parseConsoleOptions"></a><span class='hs-comment'>-- | Parse @coda repl@ options</span>
-<a name="line-30"></a><span class='hs-definition'>parseConsoleOptions</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Options</span><span class='hs-varop'>.</span><span class='hs-conid'>Parser</span> <span class='hs-conid'>ConsoleOptions</span>
-<a name="line-31"></a><span class='hs-definition'>parseConsoleOptions</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>ConsoleOptions</span>
-<a name="line-32"></a>  <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>switch</span> <span class='hs-layout'>(</span><span class='hs-varid'>long</span> <span class='hs-str'>"no-heading"</span> <span class='hs-varop'>&lt;&gt;</span> <span class='hs-varid'>help</span> <span class='hs-str'>"Don't show a heading at the top of the REPL"</span><span class='hs-layout'>)</span>
-<a name="line-33"></a>  <span class='hs-varop'>&lt;*&gt;</span> <span class='hs-varid'>switch</span> <span class='hs-layout'>(</span><span class='hs-varid'>long</span> <span class='hs-str'>"no-unicode"</span> <span class='hs-varop'>&lt;&gt;</span> <span class='hs-varid'>help</span> <span class='hs-str'>"Disable code-page switching on windows"</span><span class='hs-layout'>)</span>
-<a name="line-34"></a>
-<a name="line-35"></a><a name="makeClassy"></a><span class='hs-definition'>makeClassy</span> <span class='hs-chr'>'</span><span class='hs-chr'>'</span><span class='hs-conid'>ConsoleOptions</span>
+<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Default</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Monoid</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Options</span><span class='hs-varop'>.</span><span class='hs-conid'>Applicative</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Options</span>
+<a name="line-23"></a>
+<a name="line-24"></a><a name="ConsoleOptions"></a><span class='hs-comment'>-- | Options for @coda repl@</span>
+<a name="line-25"></a><a name="ConsoleOptions"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ConsoleOptions</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>ConsoleOptions</span>
+<a name="line-26"></a>  <span class='hs-layout'>{</span> <span class='hs-sel'>_consoleOptionsNoHeading</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Bool</span>
+<a name="line-27"></a>  <span class='hs-layout'>,</span> <span class='hs-sel'>_consoleOptionsNoUnicode</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Bool</span>
+<a name="line-28"></a>  <span class='hs-layout'>}</span> <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Eq</span><span class='hs-layout'>,</span><span class='hs-conid'>Ord</span><span class='hs-layout'>,</span><span class='hs-conid'>Show</span><span class='hs-layout'>,</span><span class='hs-conid'>Read</span><span class='hs-layout'>)</span>
+<a name="line-29"></a>
+<a name="line-30"></a><a name="instance%20Default%20ConsoleOptions"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Default</span> <span class='hs-conid'>ConsoleOptions</span> <span class='hs-keyword'>where</span>
+<a name="line-31"></a>  <span class='hs-varid'>def</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>ConsoleOptions</span> <span class='hs-conid'>False</span> <span class='hs-conid'>False</span>
+<a name="line-32"></a>
+<a name="line-33"></a><a name="parseConsoleOptions"></a><span class='hs-comment'>-- | Parse @coda repl@ options</span>
+<a name="line-34"></a><span class='hs-definition'>parseConsoleOptions</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Options</span><span class='hs-varop'>.</span><span class='hs-conid'>Parser</span> <span class='hs-conid'>ConsoleOptions</span>
+<a name="line-35"></a><span class='hs-definition'>parseConsoleOptions</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>ConsoleOptions</span>
+<a name="line-36"></a>  <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>switch</span> <span class='hs-layout'>(</span><span class='hs-varid'>long</span> <span class='hs-str'>"no-heading"</span> <span class='hs-varop'>&lt;&gt;</span> <span class='hs-varid'>help</span> <span class='hs-str'>"Don't show a heading at the top of the REPL"</span><span class='hs-layout'>)</span>
+<a name="line-37"></a>  <span class='hs-varop'>&lt;*&gt;</span> <span class='hs-varid'>switch</span> <span class='hs-layout'>(</span><span class='hs-varid'>long</span> <span class='hs-str'>"no-unicode"</span> <span class='hs-varop'>&lt;&gt;</span> <span class='hs-varid'>help</span> <span class='hs-str'>"Disable code-page switching on windows"</span><span class='hs-layout'>)</span>
+<a name="line-38"></a>
+<a name="line-39"></a><a name="makeClassy"></a><span class='hs-definition'>makeClassy</span> <span class='hs-chr'>'</span><span class='hs-chr'>'</span><span class='hs-conid'>ConsoleOptions</span>
 </pre></body>
 </html>
