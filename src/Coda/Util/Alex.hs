@@ -5,13 +5,14 @@
 {-# language DeriveDataTypeable #-}
 
 ---------------------------------------------------------------------------------
---- |
---- Copyright :  (c) Edward Kmett 2017
---- License   :  BSD2
---- Maintainer:  Edward Kmett <ekmett@gmail.com>
---- Stability :  experimental
---- Portability: non-portable
----
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+-- A simple input adapter that allows @alex@ to work with 'Text'
 ---------------------------------------------------------------------------------
 
 module Coda.Util.Alex

@@ -20,6 +20,7 @@ module Coda.Util.STM
 import Control.Concurrent.STM
 import Control.Monad.Base
 
+-- | A convenient class alias
 class MonadBase STM m => MonadSTM m
 instance MonadBase STM m => MonadSTM m
 

@@ -6,6 +6,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- A contravariant functor for working with measured positions
+--
 ---------------------------------------------------------------------------------
 
 module Coda.Relative.Measurement
@@ -19,6 +21,7 @@ import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Divisible
 import Data.Void
 
+-- | Position measurements can be combined
 newtype Measurement a = Measurement { runMeasurement :: a -> Delta }
 
 instance Contravariant Measurement where
@@ -36,5 +39,6 @@ instance Decidable Measurement where
 instance Default (Measurement a) where
   def = conquer
 
+-- | We can measure anything with a 'delta'
 measurement :: HasDelta a => Measurement a
 measurement = Measurement delta

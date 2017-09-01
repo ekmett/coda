@@ -4,13 +4,14 @@
 {-# language MultiParamTypeClasses #-}
 
 ---------------------------------------------------------------------------------
---- |
---- Copyright :  (c) Edward Kmett 2017
---- License   :  BSD2
---- Maintainer:  Edward Kmett <ekmett@gmail.com>
---- Stability :  experimental
---- Portability: non-portable
----
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+-- Stuff we an measure in UTF-16 code units
 ---------------------------------------------------------------------------------
 
 module Coda.Relative.Delta

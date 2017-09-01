@@ -55,7 +55,6 @@ module Coda.Relative.Class
   , HasRelativeDelta
   ) where
 
-
 import Coda.Relative.Delta
 import Data.Bifunctor
 import Data.Coerce

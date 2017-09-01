@@ -8,13 +8,14 @@
 {-# language MultiParamTypeClasses #-}
 
 ---------------------------------------------------------------------------------
---- |
---- Copyright :  (c) Edward Kmett 2017
---- License   :  BSD2
---- Maintainer:  Edward Kmett <ekmett@gmail.com>
---- Stability :  experimental
---- Portability: non-portable
----
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+-- File lines
 ---------------------------------------------------------------------------------
 
 module Coda.Syntax.Line
