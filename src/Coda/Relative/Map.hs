@@ -44,6 +44,9 @@ import Prelude hiding (lookup)
 
 type Size = Int
 
+-- | A Map with /O(1)/ rel, /O(log n)/ insert/lookup/delete
+--
+-- Uses @lens@ and 'Foldable' for the bulk of the API
 data Map k a where
   Map :: (StrictRelativeOrder k, Relative a) => Map' k a -> Map k a
 
@@ -113,6 +116,7 @@ singleton k a = Map (singleton' k a)
 instance (StrictRelativeOrder k, Relative a) => Default (Map k a) where
   def = Map Tip
 
+-- | /O(m*log(n\/m + 1)), m <= n/
 instance (StrictRelativeOrder k, Relative a) => Monoid (Map k a) where
   mempty = Map Tip
   mappend (Map l) (Map r) = Map (union l r)
