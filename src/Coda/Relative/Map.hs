@@ -55,11 +55,10 @@ instance FoldableWithIndex k (Map k) where
 toAscList :: Map k a -> [(k,a)]
 toAscList = ifoldr (\k x xs -> (k,x):xs) []
 
-instance (Eq k, Eq a) => Eq (Map k a) where
-  (==) = on (==) toAscList
-
-instance (Ord k, Ord a) => Ord (Map k a) where
-  compare = on compare toAscList
+instance Eq a => Eq (Map k a) where l@Map{} == r = on (==) toAscList l r
+instance Ord a => Ord (Map k a) where compare l@Map{} r = on compare toAscList l r
+instance RelativeOrder a => RelativeOrder (Map k a)
+instance StrictRelativeOrder a => StrictRelativeOrder (Map k a)
 
 instance (Show k, Show a) => Show (Map k a) where
   showsPrec d = showsPrec d . toAscList
