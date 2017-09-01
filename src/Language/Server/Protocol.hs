@@ -475,8 +475,7 @@ data Position = Position
 jsonKeep ''Position
 lenses ''Position
 instance Hashable Position
-instance Default Position where
-  def = Position def def
+instance Default Position
 
 --------------------------------------------------------------------------------
 -- Range
@@ -499,8 +498,7 @@ data Range = Range
 jsonKeep ''Range
 lenses ''Range
 instance Hashable Range
-instance Default Range where
-  def = Range def def
+instance Default Range
 
 --------------------------------------------------------------------------------
 -- Location
@@ -524,8 +522,7 @@ data Location = Location
 jsonKeep ''Location
 lenses ''Location
 instance Hashable Location
-instance Default Location where
-  def = Location def def
+instance Default Location
 
 --------------------------------------------------------------------------------
 -- Diagnostic
@@ -540,11 +537,11 @@ newtype Severity = Severity Int
 
 makeWrapped ''Severity
 
-instance Default Severity where def = Information
-
 instance ToJSON Severity
 instance FromJSON Severity
 instance Hashable Severity
+instance Default Severity where
+  def = Information
 
 -- | Reports an error.
 pattern Error :: Severity
@@ -679,8 +676,7 @@ makeWrapped ''TextDocumentIdentifier
 jsonKeep ''TextDocumentIdentifier
 lenses ''TextDocumentIdentifier
 instance Hashable TextDocumentIdentifier
-instance Default TextDocumentIdentifier where
-  def = TextDocumentIdentifier def
+instance Default TextDocumentIdentifier
 
 --------------------------------------------------------------------------------
 -- VersionTextDocumentIdentifier
@@ -701,8 +697,7 @@ data VersionedTextDocumentIdentifier = VersionedTextDocumentIdentifier
 jsonKeep ''VersionedTextDocumentIdentifier
 lenses ''VersionedTextDocumentIdentifier
 instance Hashable VersionedTextDocumentIdentifier
-instance Default VersionedTextDocumentIdentifier where
-  def = VersionedTextDocumentIdentifier def def
+instance Default VersionedTextDocumentIdentifier
 
 --------------------------------------------------------------------------------
 -- TextDocumentEdit
@@ -725,8 +720,7 @@ data TextDocumentEdit = TextDocumentEdit
 jsonKeep ''TextDocumentEdit
 lenses ''TextDocumentEdit
 instance Hashable TextDocumentEdit
-instance Default TextDocumentEdit where
-  def = TextDocumentEdit def []
+instance Default TextDocumentEdit
 
 --------------------------------------------------------------------------------
 -- WorkspaceEdit
@@ -750,8 +744,7 @@ data WorkspaceEdit = WorkspaceEdit
 jsonOmit ''WorkspaceEdit
 lenses ''WorkspaceEdit
 instance Hashable WorkspaceEdit
-instance Default WorkspaceEdit where
-  def = WorkspaceEdit def def
+instance Default WorkspaceEdit
 
 --------------------------------------------------------------------------------
 -- TextDocumentItem
@@ -806,8 +799,7 @@ data DocumentFilter = DocumentFilter
 jsonOmit ''DocumentFilter
 lenses ''DocumentFilter
 instance Hashable DocumentFilter
-instance Default DocumentFilter where
-  def = DocumentFilter def def def
+instance Default DocumentFilter
 
 --------------------------------------------------------------------------------
 -- DocumentSelector
@@ -832,8 +824,7 @@ type TDPP = TextDocumentPositionParams
 lenses ''TextDocumentPositionParams
 jsonKeep ''TextDocumentPositionParams
 instance Hashable TextDocumentPositionParams
-instance Default TextDocumentPositionParams where
-  def = TextDocumentPositionParams def def
+instance Default TextDocumentPositionParams
 
 --------------------------------------------------------------------------------
 -- Trace
@@ -878,9 +869,7 @@ data ClientCapabilities = ClientCapabilities
 jsonOmit ''ClientCapabilities
 lenses ''ClientCapabilities
 instance Hashable ClientCapabilities
-
-instance Default ClientCapabilities where
-  def = ClientCapabilities def def def
+instance Default ClientCapabilities
 
 data InitializeParams = InitializeParams
   { _processId             :: Maybe Int
@@ -891,8 +880,7 @@ data InitializeParams = InitializeParams
   , _trace                 :: Trace
   } deriving (Eq,Show,Read,Data,Generic)
 
-instance Default InitializeParams where
-  def = InitializeParams def def def def def def
+instance Default InitializeParams
 
 instance ToJSON InitializeParams where
   toJSON (InitializeParams p rp ru o c t) = object $
@@ -1014,8 +1002,7 @@ data TextDocumentRegistrationOptions = TextDocumentRegistrationOptions
   { _documentSelector :: Maybe DocumentSelector
   } deriving (Eq,Show,Read,Data,Generic)
 
-instance Default TextDocumentRegistrationOptions where
-  def = TextDocumentRegistrationOptions def
+instance Default TextDocumentRegistrationOptions
 
 jsonKeep ''TextDocumentRegistrationOptions
 lenses ''TextDocumentRegistrationOptions
@@ -1080,9 +1067,7 @@ jsonKeep ''DidOpenTextDocumentParams
 lenses ''DidOpenTextDocumentParams
 makeWrapped ''DidOpenTextDocumentParams
 instance Hashable DidOpenTextDocumentParams
-
-instance Default DidOpenTextDocumentParams where
-  def = DidOpenTextDocumentParams def
+instance Default DidOpenTextDocumentParams
 
 -- | @textDocument/didOpen@
 pattern DidOpen :: TextDocumentItem -> Request
@@ -1114,8 +1099,7 @@ jsonKeep ''DidChangeTextDocumentParams
 lenses ''DidChangeTextDocumentParams
 instance Hashable DidChangeTextDocumentParams
 
-instance Default DidChangeTextDocumentParams where
-  def = DidChangeTextDocumentParams def def
+instance Default DidChangeTextDocumentParams
 
 -- | @textDocument/didChange@
 pattern DidChange :: DidChangeTextDocumentParams -> Request
@@ -1153,9 +1137,7 @@ data FileEvent = FileEvent
 jsonKeep ''FileEvent
 lenses ''FileEvent
 instance Hashable FileEvent
-
-instance Default FileEvent where
-  def = FileEvent def def
+instance Default FileEvent
 
 data DidChangeWatchedFilesParams = DidChangeWatchedFilesParams
   { _changes :: [FileEvent]
@@ -1164,9 +1146,7 @@ data DidChangeWatchedFilesParams = DidChangeWatchedFilesParams
 jsonKeep ''DidChangeWatchedFilesParams
 lenses ''DidChangeWatchedFilesParams
 instance Hashable DidChangeWatchedFilesParams
-
-instance Default DidChangeWatchedFilesParams where
-  def = DidChangeWatchedFilesParams def
+instance Default DidChangeWatchedFilesParams
 
 -- | @workspace/didChangeWatchedFiles@
 pattern DidChangeWatchedFiles :: [FileEvent] -> Request
@@ -1184,9 +1164,7 @@ data PublishDiagnosticsParams = PublishDiagnosticsParams
 jsonKeep ''PublishDiagnosticsParams
 lenses ''PublishDiagnosticsParams
 instance Hashable PublishDiagnosticsParams
-
-instance Default PublishDiagnosticsParams where
-  def = PublishDiagnosticsParams def def
+instance Default PublishDiagnosticsParams
 
 -- | @textDocument/publishDiagnostics@
 pattern PublishDiagnostics :: PublishDiagnosticsParams -> Request
