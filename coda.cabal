@@ -80,7 +80,6 @@ library
     Coda.Util.Aeson
     Coda.Util.Alex
     Coda.Util.Async
-    Coda.Util.Default
     Coda.Util.Instances
     Coda.Util.Pretty
     Coda.Util.STM
