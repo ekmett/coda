@@ -10,6 +10,19 @@
 {-# language MultiParamTypeClasses #-}
 {-# options_ghc -Wno-incomplete-patterns #-}
 
+{-# options_ghc -O0 #-}
+
+--------------------------------------------------------------------------------
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+--------------------------------------------------------------------------------
+
+
 module Coda.Relative.Map
   ( Map
   , singleton
@@ -42,6 +55,10 @@ instance Foldable (Map k) where
     go !_ _ Tip = mempty
     go d f (Bin _ d' _ a l r) | !d'' <- d <> d' = go d'' f l <> f (rel d'' a) <> go d'' f r
 
+  foldr f0 z0 (Map m) = go 0 f0 z0 m where
+    go !_ _ z Tip = z
+    go d f z (Bin _ d' _ a l r) | !d'' <- d <> d' = go d'' f (f (rel d'' a) (go d'' f z r)) l
+
   null (Map Tip) = True
   null _ = False
 
@@ -51,6 +68,10 @@ instance FoldableWithIndex k (Map k) where
   ifoldMap f0 (Map m) = go 0 f0 m where
     go !_ _ Tip = mempty
     go !d f (Bin _ d' k a l r) | !d'' <- d <> d' = go d'' f l <> f (rel d'' k) (rel d'' a) <> go d'' f r
+
+  ifoldr f0 z0 (Map m) = go 0 f0 z0 m where
+    go !_ _ z Tip = z
+    go d f z (Bin _ d' k a l r) | !d'' <- d <> d' = go d'' f (f (rel d'' k) (rel d'' a) (go d'' f z r)) l
 
 toAscList :: Map k a -> [(k,a)]
 toAscList = ifoldr (\k x xs -> (k,x):xs) []
