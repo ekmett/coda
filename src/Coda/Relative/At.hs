@@ -56,7 +56,7 @@ instance Comonad At where
   extend f w@(At d _) = At d (f w)
 
 instance HasDelta (At a) where
-  delta (At (Delta d) _) = d
+  delta (At d _) = d
 
 instance Monoid a => Monoid (At a) where
   mempty = pure mempty

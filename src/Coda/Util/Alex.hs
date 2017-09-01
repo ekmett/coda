@@ -24,6 +24,7 @@ import Coda.Relative.Delta
 import Data.Bits
 import Data.Data
 import Data.Hashable
+import Data.Profunctor.Unsafe
 import Data.String
 import Data.Text
 import Data.Text.Unsafe as Text
@@ -57,7 +58,7 @@ data AlexInput = AlexInput
 instance Hashable AlexInput
 
 instance HasDelta AlexInput where
-  delta = alexInputDelta
+  delta = Delta #. alexInputDelta
 
 instance IsString AlexInput where
   fromString = AlexInput S0 '\n' 0 . fromString

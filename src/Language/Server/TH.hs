@@ -1,3 +1,16 @@
+--------------------------------------------------------------------------------
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+-- Bibs and bobs that make it easier to derive lenses and aeson instances
+--
+--------------------------------------------------------------------------------
+
+
 module Language.Server.TH 
   ( jsonOmit
   , jsonKeep

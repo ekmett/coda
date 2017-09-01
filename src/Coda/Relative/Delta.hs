@@ -16,6 +16,7 @@
 module Coda.Relative.Delta
   ( Delta(..)
   , HasDelta(..)
+  , units
   , HasMonoidalDelta
   , HasOrderedDelta
   ) where
@@ -24,6 +25,7 @@ import Data.Data
 import Data.Default
 import Data.FingerTree
 import Data.Hashable
+import Data.Profunctor.Unsafe
 import Data.Semigroup
 import GHC.Generics
 
@@ -33,7 +35,7 @@ import GHC.Generics
 -- the merely monoidal pairs of line and column.
 --
 -- It is also very compact fitting in a single 'Int'.
-newtype Delta = Delta Int
+newtype Delta = Delta { deltaUnits :: Int }
   deriving (Eq, Ord, Show, Read, Data, Generic, Num)
 
 instance Hashable Delta
@@ -57,10 +59,14 @@ instance Monoid Delta where
 
 -- | Something we can measure.
 class HasDelta t where
-  delta :: t -> Int
+  delta :: t -> Delta
+
+-- | extract the number of utf-16 code units from a delta
+units :: HasDelta t => t -> Int
+units = deltaUnits #. delta
 
 instance HasDelta Delta where
-  delta (Delta a) = a
+  delta = id
 
 instance (Measured v a, HasDelta v) => HasDelta (FingerTree v a) where
   delta = delta . measure

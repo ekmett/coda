@@ -36,6 +36,7 @@ import Data.Data
 import Data.Default
 import Data.FingerTree
 import Data.Hashable
+import Data.Profunctor.Unsafe
 import Data.Semigroup
 import Data.String
 import Data.Text (Text)
@@ -45,14 +46,14 @@ import GHC.Generics
 -- | Invariants
 --
 -- * The only occurrences of '\n', '\r' or "\r\n" are at the end of the Text
-newtype Line = Line Text
+newtype Line = Line { runLine :: Text }
   deriving (Eq,Ord,Show,Read,Hashable,Generic)
 
 instance IsString Line where
   fromString = Line . fromString
 
 instance HasDelta Line where
-  delta (Line l) = Text.lengthWord16 l
+  delta = Delta #. Text.lengthWord16 .# runLine
 
 instance Default Line where
   def = Line ""
@@ -82,7 +83,7 @@ instance HasLine Line where
 -- back and forth between 'Delta' and 'Position' in /O(log l)/ time, while still
 -- letting us use the compact single-integer Abelian group 'Delta' representation
 -- internally for almost all positioning.
-data LineMeasure = LineMeasure !Int !Int
+data LineMeasure = LineMeasure !Int !Delta
   deriving (Eq,Ord,Show,Read,Data,Generic)
 
 instance HasDelta LineMeasure where
@@ -91,7 +92,7 @@ instance HasDelta LineMeasure where
 instance Hashable LineMeasure
 
 instance Semigroup LineMeasure where
-  LineMeasure l d <> LineMeasure l' d' = LineMeasure (l + l') (d + d')
+  LineMeasure l d <> LineMeasure l' d' = LineMeasure (l + l') (d <> d')
 
 instance Monoid LineMeasure where
   mempty = LineMeasure 0 0
@@ -121,12 +122,12 @@ instance HasLineMeasure LineMeasure where
 --
 -- Takes /O(log l)/ where l is the number of lines
 deltaToPosition :: (Measured v a, HasLineMeasure v) => FingerTree v a -> Delta -> Position
-deltaToPosition t (Delta d) = case split (\x -> delta x >= d) t of
-  (l, _) | ml <- measure l -> Position (lineCount ml) (d - delta ml)
+deltaToPosition t (Delta d) = case split (\x -> units x >= d) t of
+  (l, _) | ml <- measure l -> Position (lineCount ml) (d - units ml)
 
 -- | Convert from a Language Server Protocol 'Position' to a 'Delta' given the associated text.
 --
 -- /O(log l)/ where l is the number of lines
 positionToDelta :: (Measured v a, HasLineMeasure v) => FingerTree v a -> Position -> Delta
 positionToDelta t (Position nl c16) = case split (\x -> lineCount x >= nl) t of
-  (l, _) -> Delta $ delta (measure l) + c16
+  (l, _) -> Delta $ units (measure l) + c16
