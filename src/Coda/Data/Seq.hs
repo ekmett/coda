@@ -24,6 +24,7 @@ module Coda.Data.Seq
 
 import Coda.Data.Queue as Queue
 import Coda.Data.View
+import Data.Default
 import Data.Foldable as Foldable
 import Data.Function (on)
 import Control.Applicative
@@ -43,6 +44,9 @@ data Seq a
   = Nil
   | Cons !a !(Queue (Seq a))
   deriving (Show, Functor, Traversable)
+
+instance Default (Seq a) where
+  def = Nil
 
 instance Eq a => Eq (Seq a) where
   (==) = (==) `on` Foldable.toList

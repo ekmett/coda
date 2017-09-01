@@ -17,6 +17,7 @@ module Coda.Console.Options
   ) where
 
 import Control.Lens
+import Data.Default
 import Data.Monoid ((<>))
 import Options.Applicative as Options
 
@@ -25,6 +26,9 @@ data ConsoleOptions = ConsoleOptions
   { _consoleOptionsNoHeading :: Bool
   , _consoleOptionsNoUnicode :: Bool
   } deriving (Eq,Ord,Show,Read)
+
+instance Default ConsoleOptions where
+  def = ConsoleOptions False False
 
 -- | Parse @coda repl@ options
 parseConsoleOptions :: Options.Parser ConsoleOptions

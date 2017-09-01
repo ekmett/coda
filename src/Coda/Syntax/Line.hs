@@ -4,6 +4,7 @@
 {-# language DeriveGeneric #-}
 {-# language DeriveAnyClass #-}
 {-# language DeriveDataTypeable #-}
+{-# language OverloadedStrings #-}
 {-# language MultiParamTypeClasses #-}
 
 ---------------------------------------------------------------------------------
@@ -32,6 +33,7 @@ module Coda.Syntax.Line
 import Language.Server.Protocol (Position(..))
 import Coda.Relative.Delta
 import Data.Data
+import Data.Default
 import Data.FingerTree
 import Data.Hashable
 import Data.Semigroup
@@ -51,6 +53,9 @@ instance IsString Line where
 
 instance HasDelta Line where
   delta (Line l) = Text.lengthWord16 l
+
+instance Default Line where
+  def = Line ""
 
 --------------------------------------------------------------------------------
 -- HasLine
@@ -94,6 +99,9 @@ instance Monoid LineMeasure where
 
 instance Measured LineMeasure LineMeasure where
   measure = id
+
+instance Default LineMeasure where
+  def = mempty
 
 --------------------------------------------------------------------------------
 -- HasLineMeasure

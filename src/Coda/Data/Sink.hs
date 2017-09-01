@@ -12,6 +12,7 @@ module Coda.Data.Sink
   ( Sink(..)
   ) where
 
+import Data.Default
 import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Divisible
 import Data.Void
@@ -30,3 +31,6 @@ instance Divisible Sink where
 instance Decidable Sink where
   lose f = Sink (absurd . f)   
   choose f (Sink g) (Sink h) = Sink (either g h . f)
+
+instance Default (Sink a) where
+  def = conquer

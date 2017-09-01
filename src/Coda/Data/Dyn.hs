@@ -15,6 +15,7 @@ module Coda.Data.Dyn
   , dcons
   ) where
 
+import Data.Default
 import Data.Monoid
 
 -- | A functional version of Overmars and Van Leeuwen's 1983
@@ -29,6 +30,9 @@ data Dyn a
   | D2 !a !a a !(Dyn a)
   | D3 !a !a !a a !(Dyn a)
   deriving Foldable
+
+instance Default (Dyn a) where
+  def = D0
 
 dcons :: Monoid a => a -> Dyn a -> Dyn a
 dcons a D0 = D1 a

@@ -23,6 +23,7 @@ module Coda.Data.Queue
   ) where
 
 import Coda.Data.View
+import Data.Default
 import Data.Foldable as Foldable
 import Data.Function (on)
 import Control.Monad
@@ -45,6 +46,9 @@ data Queue a
   | Q1 a
   | QN !(B a) !(Queue (P a)) !(B a)
   deriving (Show, Functor, Traversable)
+
+instance Default (Queue a) where
+  def = Q0
 
 instance Foldable Queue where
   null Q0 = True

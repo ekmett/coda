@@ -18,6 +18,7 @@ module Coda.Data.View
   ) where
 
 import Data.Data
+import Data.Default
 import GHC.Generics
 
 data ViewL f a
@@ -25,10 +26,16 @@ data ViewL f a
   | !a :< !(f a)
   deriving (Eq, Ord, Show, Read, Functor, Foldable, Traversable, Data, Generic, Generic1)
 
+instance Default (ViewL f a) where
+  def = EmptyL
+
 data ViewR f a
   = EmptyR
   | !(f a) :> !a
   deriving (Eq, Ord, Show, Read, Functor, Foldable, Traversable, Data, Generic, Generic1)
+
+instance Default (ViewR f a) where
+  def = EmptyR
     
 class ViewableL f where
   viewL :: f a -> ViewL f a

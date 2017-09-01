@@ -19,6 +19,7 @@ module Coda.Server.Options
 
 import Control.Lens
 import Data.Data
+import Data.Default
 import Data.Monoid
 import Options.Applicative as Options
 
@@ -27,6 +28,9 @@ data ServerOptions = ServerOptions
   { _serverOptionsDebug :: !Bool
   , _serverOptionsLog   :: !(Maybe FilePath)
   } deriving (Eq,Ord,Show,Read,Data)
+
+instance Default ServerOptions where
+  def = ServerOptions False Nothing
 
 -- | Parse @coda server@ options
 parseServerOptions :: Options.Parser ServerOptions

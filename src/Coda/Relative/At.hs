@@ -26,6 +26,7 @@ import Control.Comonad
 import Control.Monad (ap)
 import Control.Monad.Writer.Class
 import Data.Data
+import Data.Default
 import Data.Hashable
 import Data.Hashable.Lifted
 import Data.Semigroup
@@ -75,3 +76,6 @@ instance HasRelativeDelta (At a)
 instance Ord a => RelativeOrder (At a)
 instance Ord a => StrictRelativeOrder (At a)
 instance OrderedMonoid a => OrderedMonoid (At a)
+
+instance Default a => Default (At a) where
+  def = At def def
