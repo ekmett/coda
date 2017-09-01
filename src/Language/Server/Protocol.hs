@@ -15,6 +15,7 @@
 {-# language MultiParamTypeClasses #-}
 {-# language FunctionalDependencies #-}
 {-# language GeneralizedNewtypeDeriving #-}
+{-# options_ghc -O0 #-}
 
 --------------------------------------------------------------------------------
 -- |

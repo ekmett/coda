@@ -26,7 +26,6 @@ import Data.Data
 import Data.Default
 import Data.FingerTree
 import Data.Hashable
-import Data.Profunctor.Unsafe
 import Data.Semigroup
 import GHC.Generics
 
@@ -36,7 +35,7 @@ import GHC.Generics
 -- the merely monoidal pairs of line and column.
 --
 -- It is also very compact fitting in a single 'Int'.
-newtype Delta = Delta { deltaUnits :: Int }
+newtype Delta = Delta Int
   deriving (Eq, Ord, Show, Read, Data, Generic, Num)
 
 instance Hashable Delta
@@ -64,7 +63,8 @@ class HasDelta t where
 
 -- | extract the number of utf-16 code units from a delta
 units :: HasDelta t => t -> Int
-units = deltaUnits #. delta
+units y = case delta y of
+  Delta x -> x
 
 instance HasDelta Delta where
   delta = id
