@@ -87,11 +87,9 @@ library
 
     Coda.Version
 
-    Language.Server.Base
     Language.Server.Builder
     Language.Server.Protocol
     Language.Server.Parser
-    Language.Server.Severity
     Language.Server.TH
 
   other-modules:

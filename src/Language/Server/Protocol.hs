@@ -1,15 +1,18 @@
+{-# language GADTs #-}
 {-# language LambdaCase #-}
 {-# language ViewPatterns #-}
+{-# language TypeFamilies #-}
 {-# language DeriveGeneric #-}
 {-# language PatternSynonyms #-}
 {-# language TemplateHaskell #-}
-{-# language OverloadedStrings #-}
-{-# language FlexibleInstances #-}
+{-# language FlexibleContexts #-}
 {-# language DeriveTraversable #-}
+{-# language FlexibleInstances #-}
+{-# language OverloadedStrings #-}
 {-# language DeriveDataTypeable #-}
+{-# language TypeSynonymInstances #-}
 {-# language DuplicateRecordFields #-}
 {-# language MultiParamTypeClasses #-}
-{-# language TypeSynonymInstances #-}
 {-# language FunctionalDependencies #-}
 {-# language GeneralizedNewtypeDeriving #-}
 
@@ -21,78 +24,117 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- <http://www.jsonrpc.org/specification JSON-RPC 2.0> and the
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md Language Server Protocol>
 --------------------------------------------------------------------------------
 
 module Language.Server.Protocol
   (
-  -- * Cancellation Support
-    pattern CancelRequest
+    -- * JSON-RPC 2.0
+    Id(..)
+
+    -- ** Requests
+  , Request(..)
+
+    -- ** Reponses
+  , Response(..)
+  , ResponseError(..)
+
+    -- *** Error Codes
+  , ErrorCode (..)
+  , pattern ParseError
+  , pattern InvalidRequest
+  , pattern MethodNotFound
+  , pattern InvalidParams
+  , pattern InternalError
+  , pattern ServerErrorStart
+  , pattern ServerErrorEnd
+  , pattern ServerNotInitialized
+  , pattern UnknownErrorCode
+
+  -- * Language Server Protocol
+  -- ** Cancellation Support
+  , pattern CancelRequest
   , pattern RequestCancelled
   , cancelledResponse
-  -- * Language Server Protocol
-  , Severity(..)
-  , DocumentUri
+  -- ** Data Types
+  , DocumentUri(..)
+
   , Position(..)
   , Range(..)
   , Location(..)
+
+  , Severity(..)
+  , pattern Information
+  , pattern Hint
+  , pattern Warning
+  , pattern Error
+
   , Diagnostic(..)
+
   , Command(..)
+
   , TextEdit(..)
+
   , TextDocumentIdentifier(..)
   , VersionedTextDocumentIdentifier(..)
+
   , TextDocumentItem(..)
   , TextDocumentEdit(..)
   , WorkspaceEdit(..)
   , DocumentFilter(..)
   , DocumentSelector
   , TextDocumentPositionParams(..), TDPP
-  -- * Protocol
-  -- ** 'initialize'
+  -- ** Protocol
+  -- *** 'initialize'
   , pattern Initialize
   , InitializeParams(..)
   , ClientCapabilities(..)
   , WorkspaceClientCapabilities
   , TextDocumentClientCapabilities
-  -- ** 'initialized'
+  -- *** 'initialized'
   , pattern Initialized
-  -- ** 'exit'
+  -- *** 'exit'
   , pattern Exit
-  -- ** 'shutdown'
+  -- *** 'shutdown'
   , pattern Shutdown
-  -- ** 'window/logMessage'
+  -- *** 'window/logMessage'
   , pattern LogMessage
   , LogMessageParams(..)
-  -- ** 'window/showMessage'
+  -- *** 'window/showMessage'
   , pattern ShowMessage
   , ShowMessageParams(..)
-  -- ** 'telemetry/event'
+  -- *** 'telemetry/event'
   , pattern TelemetryEvent
-  -- ** 'client/registerCapability'
+  -- *** 'client/registerCapability'
   , pattern RegisterCapability
   , Registration(..)
   , TextDocumentRegistrationOptions(..)
   , pattern RegisterCapabilityResponse
-  -- ** 'client/unregisterCapability'
+  -- *** 'client/unregisterCapability'
   , pattern UnregisterCapability
   , Unregistration(..)
-  -- ** 'workspace/didChangeConfiguration'
+  -- *** 'workspace/didChangeConfiguration'
   , pattern DidChangeConfiguration
   , DidChangeConfigurationParams(..)
-  -- ** 'textDocument/didOpen'
+  -- *** 'textDocument/didOpen'
   , pattern DidOpen
   , DidOpenTextDocumentParams(..)
-  -- ** 'textDocument/didChange'
+  -- *** 'textDocument/didChange'
   , pattern DidChange
   , DidChangeTextDocumentParams(..)
   , TextDocumentContentChangeEvent(..)
-  -- ** 'workspace/didChangeWatchedFiles
+  -- *** 'workspace/didChangeWatchedFiles
   , pattern DidChangeWatchedFiles
   , DidChangeWatchedFilesParams(..)
   , FileEvent(..)
-  -- ** 'textDocument/publishDiagnostics'
+  -- *** 'textDocument/publishDiagnostics'
   , pattern PublishDiagnostics
   , PublishDiagnosticsParams(..)
+  -- *** 'textDocument/hover'
+  , pattern Hover
+  , HoverResult(..)
+  , MarkedString(..)
   -- * Ad-hoc Overloading
   , HasArguments(..)
   , HasCapabilities(..)
@@ -101,56 +143,269 @@ module Language.Server.Protocol
   , HasCode(..)
   , HasCommand(..)
   , HasContentChanges(..)
+  , HasContents(..)
+  , HasData(..)
   , HasDiagnostics(..)
   , HasDocumentChanges(..)
   , HasDocumentSelector(..)
   , HasEdits(..)
   , HasEnd(..)
+  , HasError(..)
   , HasExperiment(..)
   , HasId(..)
   , HasInitializationOptions(..)
   , HasLanguage(..)
   , HasLanguageId(..)
   , HasLine(..)
-  , HasMethod(..)
   , HasMessage(..)
+  , HasMethod(..)
   , HasNewText(..)
+  , HasParams(..)
   , HasPattern(..)
   , HasPosition(..)
   , HasProcessId(..)
   , HasRange(..)
   , HasRangeLength(..)
   , HasRegisterOptions(..)
+  , HasResult(..)
   , HasRootPath(..)
   , HasRootUri(..)
   , HasScheme(..)
   , HasSettings(..)
   , HasSeverity(..)
   , HasSource(..)
-  , HasStart(..) 
+  , HasStart(..)
   , HasText(..)
   , HasTextDocument(..)
   , HasTitle(..)
-  , HasTrace(..) 
+  , HasTrace(..)
   , HasType(..)
   , HasUri(..)
+  , HasValue(..)
   , HasVersion(..)
   , HasWorkspace(..)
   ) where
 
 import Coda.Util.Aeson
+import Control.Applicative
+import Control.Lens.TH
 import Control.Monad
 import Data.Aeson hiding (Error)
+import Data.Aeson.Encoding
+import Data.Aeson.Internal
 import Data.Data
+import Data.Default
+import Data.Foldable
 import Data.Hashable
-import Data.HashMap.Strict as HashMap
+import Data.HashMap.Strict (HashMap)
 import Data.Ix (Ix)
 import Data.Maybe (catMaybes)
+import Data.Monoid ((<>))
+import Data.String
 import Data.Text as Text
 import GHC.Generics
-import Language.Server.Base
-import Language.Server.Severity as Severity
 import Language.Server.TH
+import Text.Read as Read hiding (Number, String)
+
+--------------------------------------------------------------------------------
+-- JSON-RPC 2.0
+--------------------------------------------------------------------------------
+
+jsonRpcVersion :: Text
+jsonRpcVersion = fromString "2.0"
+
+--------------------------------------------------------------------------------
+-- Id
+--------------------------------------------------------------------------------
+
+-- | A JSON-RPC message identifier
+data Id = IntId !Int | TextId !Text
+  deriving (Eq, Ord, Show, Read, Data, Generic)
+
+instance ToJSON Id where
+  toJSON (IntId i) = Number $ fromIntegral i
+  toJSON (TextId s) = String s
+  toEncoding (IntId i) = int i
+  toEncoding (TextId s) = text s
+
+instance FromJSON Id where
+  parseJSON a = IntId  <$> parseJSON a
+            <|> TextId <$> parseJSON a
+
+instance IsString Id where
+  fromString = TextId . fromString
+
+instance Hashable Id where
+  hashWithSalt i (IntId j) = hashWithSalt i j
+  hashWithSalt i (TextId j) = hashWithSalt i j
+  hash (IntId j) = hash j
+  hash (TextId j) = hash j
+
+--------------------------------------------------------------------------------
+-- Request
+--------------------------------------------------------------------------------
+
+-- |
+-- <http://www.jsonrpc.org/specification#request_object>
+--
+-- @
+-- interface RequestMessage extends Message {
+--   id: number | string; -- missing id is a notification, both are unified here
+--   method: string;
+--   params?: any
+-- }
+-- @
+data Request = Request
+  { _id     :: !(Maybe Id)
+  , _method :: !Text
+  , _params :: !(Maybe Value)
+  } deriving (Eq, Show, Read, Data, Generic)
+
+instance FromJSON Request where
+  parseJSON = withObject "Request" $ \v -> do
+    ver <- v .: "jsonrpc" -- check for jsonprc validity
+    when (ver /= jsonRpcVersion) $ fail "invalid JSON-RPC version"
+    Request <$> v .:? "id"
+            <*> v .: "method"
+            <*> v .:? "params"
+
+instance ToJSON Request where
+  toJSON (Request mi m mp) = object $
+    [ "jsonrpc" .= jsonRpcVersion
+    , "method" .= m
+    ] ++ catMaybes
+    [ ("id" .=) <$> mi
+    , ("params" .=) <$> mp
+    ]
+  toEncoding (Request mi m mp) = pairs
+    $ "jsonrpc" .= jsonRpcVersion
+   <> foldMap ("id" .=) mi
+   <> "method" .= m
+   <> foldMap ("params" .=) mp
+
+instance Hashable Request
+
+lenses ''Request
+
+--------------------------------------------------------------------------------
+-- ErrorCode
+--------------------------------------------------------------------------------
+
+-- | <http://www.jsonrpc.org/specification#error_object>
+newtype ErrorCode = ErrorCode Int
+  deriving (Show, Eq, Ord, Read, Bounded, Ix, Data, Generic)
+
+makeWrapped ''ErrorCode
+
+instance FromJSON ErrorCode where
+  parseJSON v = ErrorCode <$> parseJSON v
+
+instance ToJSON ErrorCode where
+  toJSON (ErrorCode e) = toJSON e
+  toEncoding (ErrorCode e) = toEncoding e
+
+instance Hashable ErrorCode where
+  hashWithSalt i (ErrorCode e) = hashWithSalt i e
+
+pattern ParseError :: ErrorCode
+pattern ParseError = ErrorCode (-32700)
+
+pattern InvalidRequest :: ErrorCode
+pattern InvalidRequest = ErrorCode (-32600)
+
+pattern MethodNotFound :: ErrorCode
+pattern MethodNotFound = ErrorCode (-32601)
+
+pattern InvalidParams :: ErrorCode
+pattern InvalidParams = ErrorCode (-32602)
+
+pattern InternalError :: ErrorCode
+pattern InternalError = ErrorCode (-32603)
+
+pattern ServerErrorStart :: ErrorCode
+pattern ServerErrorStart = ErrorCode (-32099)
+
+pattern ServerErrorEnd :: ErrorCode
+pattern ServerErrorEnd = ErrorCode (-32000)
+
+pattern ServerNotInitialized :: ErrorCode
+pattern ServerNotInitialized = ErrorCode (-32002)
+
+pattern UnknownErrorCode :: ErrorCode
+pattern UnknownErrorCode = ErrorCode (-32001)
+
+--------------------------------------------------------------------------------
+-- ResponseError
+--------------------------------------------------------------------------------
+
+-- |
+-- <http://www.jsonrpc.org/specification#error_object>
+--
+-- @
+-- interface ResponseError<D> {
+--   code: number;
+--   message: string;
+--   data?: D;
+-- }
+-- @
+
+data ResponseError = ResponseError
+  { _code    :: !ErrorCode
+  , _message :: !Text
+  , _data    :: !(Maybe Value)
+  } deriving (Eq, Show, Read, Data, Generic)
+
+jsonOmit ''ResponseError
+lenses ''ResponseError
+
+instance Hashable ResponseError
+
+--------------------------------------------------------------------------------
+-- Response
+--------------------------------------------------------------------------------
+
+-- |
+-- <http://www.jsonrpc.org/specification#response_object>
+--
+-- @
+-- interface ResponseMessage extends Message {
+--   id: number | string | null;
+--   result?: any;
+--   error?: ResponseError<any>;
+-- }
+-- @
+data Response = Response
+  { _id     :: !(Maybe Id)
+  , _result :: !(Maybe Value)
+  , _error  :: !(Maybe ResponseError)
+  } deriving (Eq, Show, Read, Data, Generic)
+
+instance ToJSON Response where
+  toJSON (Response mi m mp) = object $
+    [ "jsonrpc" .= jsonRpcVersion
+    , "id" .= mi
+    ] ++ catMaybes
+    [ ("result" .=) <$> m
+    , ("error" .=) <$> mp
+    ]
+  toEncoding (Response mi m mp) = pairs
+    $ "jsonrpc" .= jsonRpcVersion
+   <> "id" .= mi
+   <> foldMap ("result" .=) m
+   <> foldMap ("error" .=) mp
+
+instance FromJSON Response where
+  parseJSON = withObject "Response" $ \v -> do
+    ver <- v .: "jsonrpc"
+    when (ver /= jsonRpcVersion) $ fail "invalid JSON-RPC version" <?> Key "jsonrpc"
+    Response
+      <$> v .: "id"
+      <*> v .:? "result"
+      <*> v .:? "error"
+
+instance Hashable Response
+
+lenses ''Response
 
 --------------------------------------------------------------------------------
 -- Cancellation Notification
@@ -161,7 +416,7 @@ import Language.Server.TH
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#-cancellation-support>
 
 pattern CancelRequest :: Id -> Request
-pattern CancelRequest identifier = Request Nothing "$/cancelRequest" (Just (Value_ identifier))
+pattern CancelRequest i = Request Nothing "$/cancelRequest" (Just (JSON i))
 
 pattern RequestCancelled :: ErrorCode
 pattern RequestCancelled = ErrorCode (-32800)
@@ -178,7 +433,25 @@ cancelledResponse i = Response (Just i) Nothing (Just (ResponseError RequestCanc
 -- |
 -- | <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#uri>
 
-type DocumentUri = Text
+newtype DocumentUri = DocumentUri Text
+  deriving (Eq,Ord,Show,Read,Data,Generic)
+
+makeWrapped ''DocumentUri
+
+instance ToJSON DocumentUri where
+  toJSON (DocumentUri t) = toJSON t
+  toEncoding (DocumentUri t) = toEncoding t
+
+instance FromJSON DocumentUri where
+  parseJSON v = DocumentUri <$> parseJSON v
+
+instance Hashable DocumentUri
+
+instance IsString DocumentUri where
+  fromString = DocumentUri . fromString
+
+instance Default DocumentUri where
+  def = "file:///"
 
 --------------------------------------------------------------------------------
 -- Position
@@ -202,6 +475,8 @@ data Position = Position
 jsonKeep ''Position
 lenses ''Position
 instance Hashable Position
+instance Default Position where
+  def = Position def def
 
 --------------------------------------------------------------------------------
 -- Range
@@ -224,10 +499,13 @@ data Range = Range
 jsonKeep ''Range
 lenses ''Range
 instance Hashable Range
+instance Default Range where
+  def = Range def def
 
 --------------------------------------------------------------------------------
 -- Location
 --------------------------------------------------------------------------------
+
 
 -- |
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#location>
@@ -246,10 +524,65 @@ data Location = Location
 jsonKeep ''Location
 lenses ''Location
 instance Hashable Location
+instance Default Location where
+  def = Location def def
 
 --------------------------------------------------------------------------------
 -- Diagnostic
 --------------------------------------------------------------------------------
+
+-- |
+-- See @DiagnosticSeverity@ in
+--
+-- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#diagnostic>
+newtype Severity = Severity Int
+  deriving (Eq,Ord,Enum,Bounded,Ix,Data,Generic)
+
+makeWrapped ''Severity
+
+instance Default Severity where def = Information
+
+instance ToJSON Severity
+instance FromJSON Severity
+instance Hashable Severity
+
+-- | Reports an error.
+pattern Error :: Severity
+pattern Error = Severity 1
+
+-- | Reports a warning.
+pattern Warning :: Severity
+pattern Warning = Severity 2
+
+-- | Reports information
+pattern Information :: Severity
+pattern Information = Severity 3
+
+-- | Reports a hint
+pattern Hint :: Severity
+pattern Hint = Severity 4
+
+instance Show Severity where
+  showsPrec d = \case
+    Error       -> showString "Error"
+    Warning     -> showString "Warning"
+    Information -> showString "Information"
+    Hint        -> showString "Hint"
+    Severity n  -> showParen (d > 10) $ showString "Severity " . showsPrec 10 n
+
+instance Read Severity where
+  readPrec = Read.parens
+      $ do Read.Ident "Error" <- Read.lexP
+           return Error
+    <|> do Read.Ident "Warning" <- Read.lexP
+           return Warning
+    <|> do Read.Ident "Information" <- Read.lexP
+           return Information
+    <|> do Read.Ident "Hint" <- Read.lexP
+           return Hint
+    <|> do Read.prec 10 $ do
+             Read.Ident "Severity" <- lexP
+             Severity <$> step readPrec
 
 -- |
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#diagnostic>
@@ -274,6 +607,8 @@ data Diagnostic = Diagnostic
 jsonOmit ''Diagnostic
 lenses ''Diagnostic
 instance Hashable Diagnostic
+instance Default Diagnostic where
+  def = Diagnostic def def def def ""
 
 --------------------------------------------------------------------------------
 -- Command
@@ -299,6 +634,8 @@ data Command = Command
 jsonOmit ''Command
 lenses ''Command
 instance Hashable Command
+instance Default Command where
+  def = Command "" "" def
 
 --------------------------------------------------------------------------------
 -- TextEdit
@@ -320,6 +657,8 @@ data TextEdit = TextEdit
 jsonKeep ''TextEdit
 lenses ''TextEdit
 instance Hashable TextEdit
+instance Default TextEdit where
+  def = TextEdit def ""
 
 --------------------------------------------------------------------------------
 -- TextDocumentIdentifier
@@ -336,9 +675,12 @@ newtype TextDocumentIdentifier = TextDocumentIdentifier
   { _uri :: DocumentUri
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
+makeWrapped ''TextDocumentIdentifier
 jsonKeep ''TextDocumentIdentifier
 lenses ''TextDocumentIdentifier
 instance Hashable TextDocumentIdentifier
+instance Default TextDocumentIdentifier where
+  def = TextDocumentIdentifier def
 
 --------------------------------------------------------------------------------
 -- VersionTextDocumentIdentifier
@@ -359,6 +701,8 @@ data VersionedTextDocumentIdentifier = VersionedTextDocumentIdentifier
 jsonKeep ''VersionedTextDocumentIdentifier
 lenses ''VersionedTextDocumentIdentifier
 instance Hashable VersionedTextDocumentIdentifier
+instance Default VersionedTextDocumentIdentifier where
+  def = VersionedTextDocumentIdentifier def def
 
 --------------------------------------------------------------------------------
 -- TextDocumentEdit
@@ -381,6 +725,8 @@ data TextDocumentEdit = TextDocumentEdit
 jsonKeep ''TextDocumentEdit
 lenses ''TextDocumentEdit
 instance Hashable TextDocumentEdit
+instance Default TextDocumentEdit where
+  def = TextDocumentEdit def []
 
 --------------------------------------------------------------------------------
 -- WorkspaceEdit
@@ -404,6 +750,8 @@ data WorkspaceEdit = WorkspaceEdit
 jsonOmit ''WorkspaceEdit
 lenses ''WorkspaceEdit
 instance Hashable WorkspaceEdit
+instance Default WorkspaceEdit where
+  def = WorkspaceEdit def def
 
 --------------------------------------------------------------------------------
 -- TextDocumentItem
@@ -431,6 +779,8 @@ data TextDocumentItem = TextDocumentItem
 jsonKeep ''TextDocumentItem
 lenses ''TextDocumentItem
 instance Hashable TextDocumentItem
+instance Default TextDocumentItem where
+  def = TextDocumentItem def "" def ""
 
 --------------------------------------------------------------------------------
 -- DocumentFilter
@@ -456,6 +806,8 @@ data DocumentFilter = DocumentFilter
 jsonOmit ''DocumentFilter
 lenses ''DocumentFilter
 instance Hashable DocumentFilter
+instance Default DocumentFilter where
+  def = DocumentFilter def def def
 
 --------------------------------------------------------------------------------
 -- DocumentSelector
@@ -480,6 +832,8 @@ type TDPP = TextDocumentPositionParams
 lenses ''TextDocumentPositionParams
 jsonKeep ''TextDocumentPositionParams
 instance Hashable TextDocumentPositionParams
+instance Default TextDocumentPositionParams where
+  def = TextDocumentPositionParams def def
 
 --------------------------------------------------------------------------------
 -- Trace
@@ -505,6 +859,9 @@ instance FromJSON Trace where
 
 instance Hashable Trace
 
+instance Default Trace where
+  def = TraceOff
+
 --------------------------------------------------------------------------------
 -- Client -> Server: 'initialize'
 --------------------------------------------------------------------------------
@@ -522,6 +879,8 @@ jsonOmit ''ClientCapabilities
 lenses ''ClientCapabilities
 instance Hashable ClientCapabilities
 
+instance Default ClientCapabilities where
+  def = ClientCapabilities def def def
 
 data InitializeParams = InitializeParams
   { _processId             :: Maybe Int
@@ -532,13 +891,16 @@ data InitializeParams = InitializeParams
   , _trace                 :: Trace
   } deriving (Eq,Show,Read,Data,Generic)
 
+instance Default InitializeParams where
+  def = InitializeParams def def def def def def
+
 instance ToJSON InitializeParams where
   toJSON (InitializeParams p rp ru o c t) = object $
      [ "processId"    .= p
      , "rootUri"      .= ru
      , "capabilities" .= c
      , "trace"        .= t
-     ] ++ catMaybes 
+     ] ++ catMaybes
      [ ("rootPath" .=) <$> rp
      , ("initializationOptions" .=) <$> o
      ]
@@ -592,6 +954,9 @@ data LogMessageParams = LogMessageParams
   , _message :: !Text
   } deriving (Eq,Show,Read,Data,Generic)
 
+instance Default LogMessageParams where
+  def = LogMessageParams def ""
+
 jsonOmit ''LogMessageParams
 lenses ''LogMessageParams
 instance Hashable LogMessageParams
@@ -608,6 +973,9 @@ data ShowMessageParams = ShowMessageParams
   { _type    :: !Severity
   , _message :: !Text
   } deriving (Eq,Show,Read,Data,Generic)
+
+instance Default ShowMessageParams where
+  def = ShowMessageParams def ""
 
 jsonOmit ''ShowMessageParams
 lenses ''ShowMessageParams
@@ -639,9 +1007,15 @@ jsonOmit ''Registration
 lenses ''Registration
 instance Hashable Registration
 
+instance Default Registration where
+  def = Registration "" "" def
+
 data TextDocumentRegistrationOptions = TextDocumentRegistrationOptions
   { _documentSelector :: Maybe DocumentSelector
   } deriving (Eq,Show,Read,Data,Generic)
+
+instance Default TextDocumentRegistrationOptions where
+  def = TextDocumentRegistrationOptions def
 
 jsonKeep ''TextDocumentRegistrationOptions
 lenses ''TextDocumentRegistrationOptions
@@ -663,6 +1037,9 @@ data Unregistration = Unregistration
   , _method :: !Text
   } deriving (Eq,Show,Read,Data,Generic)
 
+instance Default Unregistration where
+  def = Unregistration "" ""
+
 jsonKeep ''Unregistration
 lenses ''Unregistration
 instance Hashable Unregistration
@@ -681,7 +1058,11 @@ newtype DidChangeConfigurationParams = DidChangeConfigurationParams
 
 jsonKeep ''DidChangeConfigurationParams
 lenses ''DidChangeConfigurationParams
+makeWrapped ''DidChangeConfigurationParams
 instance Hashable DidChangeConfigurationParams
+
+instance Default DidChangeConfigurationParams where
+  def = DidChangeConfigurationParams Null
 
 -- | @workspace/didChangeConfiguration@
 pattern DidChangeConfiguration :: Value -> Request
@@ -697,7 +1078,11 @@ newtype DidOpenTextDocumentParams = DidOpenTextDocumentParams
 
 jsonKeep ''DidOpenTextDocumentParams
 lenses ''DidOpenTextDocumentParams
+makeWrapped ''DidOpenTextDocumentParams
 instance Hashable DidOpenTextDocumentParams
+
+instance Default DidOpenTextDocumentParams where
+  def = DidOpenTextDocumentParams def
 
 -- | @textDocument/didOpen@
 pattern DidOpen :: TextDocumentItem -> Request
@@ -717,6 +1102,9 @@ jsonKeep ''TextDocumentContentChangeEvent
 lenses ''TextDocumentContentChangeEvent
 instance Hashable TextDocumentContentChangeEvent
 
+instance Default TextDocumentContentChangeEvent where
+  def = TextDocumentContentChangeEvent def def ""
+
 data DidChangeTextDocumentParams = DidChangeTextDocumentParams
   { _textDocument :: !VersionedTextDocumentIdentifier
   , _contentChanges :: [TextDocumentContentChangeEvent]
@@ -725,6 +1113,9 @@ data DidChangeTextDocumentParams = DidChangeTextDocumentParams
 jsonKeep ''DidChangeTextDocumentParams
 lenses ''DidChangeTextDocumentParams
 instance Hashable DidChangeTextDocumentParams
+
+instance Default DidChangeTextDocumentParams where
+  def = DidChangeTextDocumentParams def def
 
 -- | @textDocument/didChange@
 pattern DidChange :: DidChangeTextDocumentParams -> Request
@@ -751,6 +1142,9 @@ instance FromJSON FileChangeType where
 
 instance Hashable FileChangeType
 
+instance Default FileChangeType where
+  def = Created
+
 data FileEvent = FileEvent
   { _uri :: !DocumentUri
   , _type :: !FileChangeType
@@ -760,6 +1154,9 @@ jsonKeep ''FileEvent
 lenses ''FileEvent
 instance Hashable FileEvent
 
+instance Default FileEvent where
+  def = FileEvent def def
+
 data DidChangeWatchedFilesParams = DidChangeWatchedFilesParams
   { _changes :: [FileEvent]
   } deriving (Eq,Show,Read,Data,Generic)
@@ -767,6 +1164,9 @@ data DidChangeWatchedFilesParams = DidChangeWatchedFilesParams
 jsonKeep ''DidChangeWatchedFilesParams
 lenses ''DidChangeWatchedFilesParams
 instance Hashable DidChangeWatchedFilesParams
+
+instance Default DidChangeWatchedFilesParams where
+  def = DidChangeWatchedFilesParams def
 
 -- | @workspace/didChangeWatchedFiles@
 pattern DidChangeWatchedFiles :: [FileEvent] -> Request
@@ -785,6 +1185,59 @@ jsonKeep ''PublishDiagnosticsParams
 lenses ''PublishDiagnosticsParams
 instance Hashable PublishDiagnosticsParams
 
+instance Default PublishDiagnosticsParams where
+  def = PublishDiagnosticsParams def def
+
 -- | @textDocument/publishDiagnostics@
 pattern PublishDiagnostics :: PublishDiagnosticsParams -> Request
 pattern PublishDiagnostics p = Request Nothing "textDocument/publishDiagnostics" (Just (JSON p))
+
+--------------------------------------------------------------------------------
+-- Server -> Client: 'textDocument/hover'
+--------------------------------------------------------------------------------
+
+pattern Hover :: Id -> TextDocumentPositionParams -> Request
+pattern Hover i p = Request (Just i) "textDocument/hover" (Just (JSON p))
+
+data MarkedString = MarkedString { _language :: !(Maybe Text), _value :: !Text }
+  deriving (Eq,Show,Read,Data,Generic)
+
+lenses ''MarkedString
+
+instance ToJSON MarkedString where
+  toJSON (MarkedString Nothing v)  = toJSON v
+  toJSON (MarkedString (Just l) v) = object [ "language" .= l, "value" .= v ]
+
+instance FromJSON MarkedString where
+  parseJSON v = withText "MarkedString" (pure . MarkedString Nothing) v
+            <|> withObject "MarkedString" (\m -> MarkedString <$> m .: "language" <*> m .: "value") v
+instance Hashable MarkedString
+
+instance IsString MarkedString where
+  fromString = MarkedString Nothing . fromString
+
+-- @
+-- interface Hover {
+--   contents : MarkedString | MarkedString[]
+--   range?: Range;
+-- @
+data HoverResult = HoverResult
+  { _contents :: [MarkedString]
+  , _range    :: Maybe Range
+  } deriving (Eq,Show,Read,Data,Generic)
+
+lenses ''HoverResult
+
+instance ToJSON HoverResult where
+  toJSON (HoverResult xs r) = object
+    $ case xs of
+        [x] -> "contents" .= x
+        _   -> "contents" .= xs
+    : toList (("range" .=) <$> r)
+
+instance FromJSON HoverResult where
+  parseJSON = withObject "Hover" $ \v -> HoverResult
+    <$> (pure <$> v .: "contents" <|> v .: "contents")
+    <*> v .:? "range"
+
+instance Hashable HoverResult

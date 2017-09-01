@@ -29,11 +29,9 @@ import Control.Lens hiding ((.=))
 import Data.Aeson
 import Data.ByteString.Lazy as Lazy
 import Data.Text as Text
-import Language.Server.Base
 import Language.Server.Builder
 import Language.Server.Protocol
 import Language.Server.Parser
-import Language.Server.Severity
 import System.Exit
 import System.IO
 
@@ -73,7 +71,7 @@ listen = liftIO (parse parseMessage stdin) >>= \case
       hFlush stdout
       hFlush stderr
       exitWith $ ExitFailure 1
-  Right value -> case eitherDecodeRequest value of
+  Right v -> case eitherDecodeRequest v of
     Left s -> do
       putError Nothing ParseError (Text.pack s)
       listen
@@ -90,7 +88,7 @@ showMessage :: MonadIO m => Severity -> Text -> m ()
 showMessage s t = putMessage $ ShowMessage s t
 
 telemetryEvent :: MonadIO m => Value -> m ()
-telemetryEvent v = liftIO $ putMessage $ TelemetryEvent v
+telemetryEvent v = putMessage $ TelemetryEvent v
 
 --------------------------------------------------------------------------------
 -- Server
