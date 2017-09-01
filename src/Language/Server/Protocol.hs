@@ -76,6 +76,23 @@ module Language.Server.Protocol
   -- ** 'client/unregisterCapability'
   , pattern UnregisterCapability
   , Unregistration(..)
+  -- ** 'workspace/didChangeConfiguration'
+  , pattern DidChangeConfiguration
+  , DidChangeConfigurationParams(..)
+  -- ** 'textDocument/didOpen'
+  , pattern DidOpen
+  , DidOpenTextDocumentParams(..)
+  -- ** 'textDocument/didChange'
+  , pattern DidChange
+  , DidChangeTextDocumentParams(..)
+  , TextDocumentContentChangeEvent(..)
+  -- ** 'workspace/didChangeWatchedFiles
+  , pattern DidChangeWatchedFiles
+  , DidChangeWatchedFilesParams(..)
+  , FileEvent(..)
+  -- ** 'textDocument/publishDiagnostics'
+  , pattern PublishDiagnostics
+  , PublishDiagnosticsParams(..)
   -- * Ad-hoc Overloading
   , HasArguments(..)
   , HasCapabilities(..)
@@ -83,6 +100,8 @@ module Language.Server.Protocol
   , HasCharacter(..)
   , HasCode(..)
   , HasCommand(..)
+  , HasContentChanges(..)
+  , HasDiagnostics(..)
   , HasDocumentChanges(..)
   , HasDocumentSelector(..)
   , HasEdits(..)
@@ -100,10 +119,12 @@ module Language.Server.Protocol
   , HasPosition(..)
   , HasProcessId(..)
   , HasRange(..)
+  , HasRangeLength(..)
   , HasRegisterOptions(..)
   , HasRootPath(..)
   , HasRootUri(..)
   , HasScheme(..)
+  , HasSettings(..)
   , HasSeverity(..)
   , HasSource(..)
   , HasStart(..) 
@@ -649,3 +670,121 @@ instance Hashable Unregistration
 -- | @client/unregisterCapability@
 pattern UnregisterCapability :: Id -> [Unregistration] -> Request
 pattern UnregisterCapability i urs = Request (Just i) "client/unregisterCapability" (Just (JSON urs))
+
+--------------------------------------------------------------------------------
+-- Client -> Server: 'workspace/didChangeConfiguration'
+--------------------------------------------------------------------------------
+
+newtype DidChangeConfigurationParams = DidChangeConfigurationParams
+  { _settings :: Value
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''DidChangeConfigurationParams
+lenses ''DidChangeConfigurationParams
+instance Hashable DidChangeConfigurationParams
+
+-- | @workspace/didChangeConfiguration@
+pattern DidChangeConfiguration :: Value -> Request
+pattern DidChangeConfiguration v = Request Nothing "workspace/didChangeConfiguration" (Just (JSON (DidChangeConfigurationParams v)))
+
+--------------------------------------------------------------------------------
+-- Client -> Server: 'textDocument/didOpen'
+--------------------------------------------------------------------------------
+
+newtype DidOpenTextDocumentParams = DidOpenTextDocumentParams
+  { _textDocument :: TextDocumentItem
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''DidOpenTextDocumentParams
+lenses ''DidOpenTextDocumentParams
+instance Hashable DidOpenTextDocumentParams
+
+-- | @textDocument/didOpen@
+pattern DidOpen :: TextDocumentItem -> Request
+pattern DidOpen tdi = Request Nothing "textDocument/didOpen" (Just (JSON (DidOpenTextDocumentParams tdi)))
+
+--------------------------------------------------------------------------------
+-- Client -> Server: 'textDocument/didChange'
+--------------------------------------------------------------------------------
+
+data TextDocumentContentChangeEvent = TextDocumentContentChangeEvent
+  { _range :: !(Maybe Range)
+  , _rangeLength :: !(Maybe Int)
+  , _text :: !Text
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''TextDocumentContentChangeEvent
+lenses ''TextDocumentContentChangeEvent
+instance Hashable TextDocumentContentChangeEvent
+
+data DidChangeTextDocumentParams = DidChangeTextDocumentParams
+  { _textDocument :: !VersionedTextDocumentIdentifier
+  , _contentChanges :: [TextDocumentContentChangeEvent]
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''DidChangeTextDocumentParams
+lenses ''DidChangeTextDocumentParams
+instance Hashable DidChangeTextDocumentParams
+
+-- | @textDocument/didChange@
+pattern DidChange :: DidChangeTextDocumentParams -> Request
+pattern DidChange p = Request Nothing "textDocument/didChange" (Just (JSON p))
+
+--------------------------------------------------------------------------------
+-- Client -> Server: 'workspace/didChangeWatchedFiles'
+--------------------------------------------------------------------------------
+
+data FileChangeType
+  = Created | Changed | Deleted
+  deriving (Eq,Ord,Show,Read,Data,Typeable,Enum,Ix,Bounded,Generic)
+
+instance ToJSON FileChangeType where
+  toJSON Created = Number 1
+  toJSON Changed = Number 2
+  toJSON Deleted = Number 3
+
+instance FromJSON FileChangeType where
+  parseJSON (Number 1) = pure Created
+  parseJSON (Number 2) = pure Changed
+  parseJSON (Number 3) = pure Deleted
+  parseJSON _ = fail "expected FileChangeType"
+
+instance Hashable FileChangeType
+
+data FileEvent = FileEvent
+  { _uri :: !DocumentUri
+  , _type :: !FileChangeType
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''FileEvent
+lenses ''FileEvent
+instance Hashable FileEvent
+
+data DidChangeWatchedFilesParams = DidChangeWatchedFilesParams
+  { _changes :: [FileEvent]
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''DidChangeWatchedFilesParams
+lenses ''DidChangeWatchedFilesParams
+instance Hashable DidChangeWatchedFilesParams
+
+-- | @workspace/didChangeWatchedFiles@
+pattern DidChangeWatchedFiles :: [FileEvent] -> Request
+pattern DidChangeWatchedFiles c = Request Nothing "workspace/didChangeWatchedFiles" (Just (JSON (DidChangeWatchedFilesParams c)))
+
+--------------------------------------------------------------------------------
+-- Server -> Client: 'textDocument/publishDiagnostics'
+--------------------------------------------------------------------------------
+
+data PublishDiagnosticsParams = PublishDiagnosticsParams
+  { _uri :: !DocumentUri
+  , _diagnostics :: [Diagnostic]
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''PublishDiagnosticsParams
+lenses ''PublishDiagnosticsParams
+instance Hashable PublishDiagnosticsParams
+
+-- | @textDocument/publishDiagnostics@
+pattern PublishDiagnostics :: PublishDiagnosticsParams -> Request
+pattern PublishDiagnostics p = Request Nothing "textDocument/publishDiagnostics" (Just (JSON p))
