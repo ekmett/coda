@@ -58,19 +58,23 @@ module Language.Server.Protocol
   , pattern RequestCancelled
   , cancelledResponse
   -- ** Data Types
-  , DocumentUri(..)
 
+  -- *** DocumentUris
+  , DocumentUri(..)
+  , pattern File
+
+  -- *** Positions
   , Position(..)
   , Range(..)
   , Location(..)
 
+  -- *** Diagnostics
+  , Diagnostic(..)
   , Severity(..)
   , pattern Information
   , pattern Hint
   , pattern Warning
   , pattern Error
-
-  , Diagnostic(..)
 
   , Command(..)
 
@@ -79,11 +83,12 @@ module Language.Server.Protocol
   , TextDocumentIdentifier(..)
   , VersionedTextDocumentIdentifier(..)
 
+  -- *** Contents
   , TextDocumentItem(..)
   , TextDocumentEdit(..)
+
   , WorkspaceEdit(..)
   , DocumentFilter(..)
-  , DocumentSelector
   , TextDocumentPositionParams(..), TDPP
   -- ** Protocol
   -- *** 'initialize'
@@ -205,6 +210,7 @@ import Data.String
 import Data.Text as Text
 import GHC.Generics
 import Language.Server.TH
+import Network.URI.Encode as URI
 import Text.Read as Read hiding (Number, String)
 
 --------------------------------------------------------------------------------
@@ -452,6 +458,18 @@ instance IsString DocumentUri where
 
 instance Default DocumentUri where
   def = "file:///"
+
+-- | Encode/decode FilePaths <-> "file://" urls
+pattern File :: FilePath -> DocumentUri
+pattern File path <- (documentUriToFilePath -> Just path) where
+  File path = DocumentUri $ Text.pack $ "file://" ++ URI.encode path
+
+documentUriToFilePath :: DocumentUri -> Maybe FilePath
+documentUriToFilePath (DocumentUri u)
+  = adjust . URI.decode . Text.unpack <$> Text.stripPrefix "file://" u
+  where
+    adjust ('/':xs@(_:':':_)) = xs
+    adjust xs = xs
 
 --------------------------------------------------------------------------------
 -- Position
@@ -801,11 +819,7 @@ lenses ''DocumentFilter
 instance Hashable DocumentFilter
 instance Default DocumentFilter
 
---------------------------------------------------------------------------------
--- DocumentSelector
---------------------------------------------------------------------------------
-
-type DocumentSelector = [DocumentFilter]
+-- type DocumentSelector = [DocumentFilter]
 
 --------------------------------------------------------------------------------
 -- TextDocumentPositionParams
@@ -999,7 +1013,7 @@ instance Default Registration where
   def = Registration "" "" def
 
 data TextDocumentRegistrationOptions = TextDocumentRegistrationOptions
-  { _documentSelector :: Maybe DocumentSelector
+  { _documentSelector :: Maybe [DocumentFilter]
   } deriving (Eq,Show,Read,Data,Generic)
 
 instance Default TextDocumentRegistrationOptions
