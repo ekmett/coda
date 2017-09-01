@@ -20,7 +20,6 @@ module Coda.Server
   , showMessage
   ) where
 
-
 import Coda.Server.Options
 import Control.Applicative
 import Control.Monad.IO.Class

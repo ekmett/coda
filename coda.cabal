@@ -80,6 +80,7 @@ library
     Coda.Util.Aeson
     Coda.Util.Alex
     Coda.Util.Async
+    Coda.Util.Default
     Coda.Util.Instances
     Coda.Util.Pretty
     Coda.Util.STM
@@ -108,6 +109,7 @@ library
     comonad              >= 5       && < 6,
     containers           >= 0.5     && < 0.6,
     contravariant        >= 1.4     && < 2,
+    data-default         >= 0.7.1.1 && < 0.8,
     exceptions           >= 0.8.2.1 && < 0.9,
     final-pretty-printer >= 0.1     && < 0.2,
     fingertree           >= 0.1.1   && < 0.2,

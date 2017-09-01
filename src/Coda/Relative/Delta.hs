@@ -21,6 +21,7 @@ module Coda.Relative.Delta
   ) where
 
 import Data.Data
+import Data.Default
 import Data.FingerTree
 import Data.Hashable
 import Data.Semigroup
@@ -36,6 +37,9 @@ newtype Delta = Delta Int
   deriving (Eq, Ord, Show, Read, Data, Generic, Num)
 
 instance Hashable Delta
+
+instance Default Delta where
+  def = Delta def
 
 instance Measured Delta Delta where
   measure = id
