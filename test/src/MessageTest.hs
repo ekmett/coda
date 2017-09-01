@@ -22,7 +22,7 @@ import Data.ByteString.Builder
 import Data.Tagged
 import Language.Server.Parser
 import Language.Server.Builder
-import Language.Server.Base
+import Language.Server.Protocol
 import System.FilePath
 import System.IO
 import Test.Tasty
