@@ -3,7 +3,7 @@
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
 
-module Coda.Relative.List 
+module Coda.Relative.List
   ( List(..)
   ) where
 
@@ -16,10 +16,22 @@ import Data.Semigroup
 import GHC.Exts as Exts
 import Text.Read
 
--- | A list with an /O(1)/ 'rel', 'cons' and 'uncons', but /O(n)/ ('<>') 
+-- | A list with an /O(1)/ 'rel', 'cons' and 'uncons', but /O(n)/ ('<>')
 data List a
   = Nil
   | Cons !Delta !a (List a)
+
+instance (Show a, Relative a) => Show (List a) where
+  showsPrec d = showsPrec d . Exts.toList
+
+instance (Read a, Relative a) => Read (List a) where
+  readPrec = Exts.fromList <$> readPrec
+
+instance (Eq a, Relative a) => Eq (List a) where
+  (==) = (==) `on` Exts.toList
+
+instance (Ord a, Relative a) => Ord (List a) where
+  compare = compare `on` Exts.toList
 
 instance Semigroup (List a) where
   Nil <> as = as
@@ -28,24 +40,12 @@ instance Semigroup (List a) where
 -- /O(n)/
 instance Monoid (List a) where
   mempty = Nil
-  mappend = (<>) 
-
-instance (Show a, Relative a) => Show (List a) where
-  showsPrec d = showsPrec d . Exts.toList
-
-instance (Read a, Relative a) => Read (List a) where
-  readPrec = Exts.fromList <$> readPrec
+  mappend = (<>)
 
 instance Relative a => IsList (List a) where
   type Item (List a) = a
   fromList = foldr (Cons mempty) Nil
   toList   = unfoldr uncons
-
-instance (Eq a, Relative a) => Eq (List a) where
-  (==) = (==) `on` Exts.toList
-  
-instance (Ord a, Relative a) => Ord (List a) where
-  compare = compare `on` Exts.toList
 
 instance Relative (List a) where
   rel _ Nil            = Nil
