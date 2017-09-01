@@ -3,24 +3,11 @@
 
 -----------------------------------------------------------------------------
 -- |
--- Copyright   :  (c) Clark Gaebel 2012
---                (c) Johan Tibel 2012
+-- Copyright   :  (c) Edward Kmett 2017 (c) Clark Gaebel 2012, (c) Johan Tibel 2012
 -- License     :  BSD-style
--- Maintainer  :  libraries@haskell.org
--- Portability :  portable
+-- Maintainer  :  ekmett@gmail.com
+-- Portability :  non-portable
 -----------------------------------------------------------------------------
---
--- = WARNING
---
--- This module is considered __internal__.
---
--- The Package Versioning Policy __does not apply__.
---
--- This contents of this module may change __in any way whatsoever__
--- and __without any warning__ between minor versions of this package.
---
--- Authors importing this module are expected to track development
--- closely.
 
 module Coda.Util.Bits
   ( highestBitMask
@@ -40,13 +27,13 @@ import GHC.Prim (uncheckedShiftL#, uncheckedShiftRL#)
 
 -- | Return a word where only the highest bit is set.
 highestBitMask :: Word -> Word
-highestBitMask x1 = let x2 = x1 .|. x1 `shiftRL` 1
-                        x3 = x2 .|. x2 `shiftRL` 2
-                        x4 = x3 .|. x3 `shiftRL` 4
-                        x5 = x4 .|. x4 `shiftRL` 8
-                        x6 = x5 .|. x5 `shiftRL` 16
-                        x7 = x6 .|. x6 `shiftRL` 32
-                     in x7 `xor` (x7 `shiftRL` 1)
+highestBitMask x1 = x7 `xor` (x7 `shiftRL` 1) where
+  x2 = x1 .|. shiftRL x1 1
+  x3 = x2 .|. shiftRL x2 2
+  x4 = x3 .|. shiftRL x3 4
+  x5 = x4 .|. shiftRL x4 8
+  x6 = x5 .|. shiftRL x5 16
+  x7 = x6 .|. shiftRL x6 32
 {-# inline highestBitMask #-}
 
 -- Right and left logical shifts.
