@@ -2,6 +2,7 @@
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
+{-# language RoleAnnotations #-}
 
 ---------------------------------------------------------------------------------
 --- |
@@ -31,6 +32,8 @@ import Text.Read
 data List a
   = Nil
   | Cons !Delta !a (List a)
+
+type role List nominal
 
 instance (Show a, Relative a) => Show (List a) where
   showsPrec d = showsPrec d . Exts.toList
