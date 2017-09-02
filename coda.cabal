@@ -66,6 +66,7 @@ library
     Coda.Data.Sink
     Coda.Data.View
 
+    Coda.Relative.Absolute
     Coda.Relative.At
     Coda.Relative.Class
     Coda.Relative.Delta
