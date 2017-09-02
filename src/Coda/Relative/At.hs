@@ -78,4 +78,4 @@ instance Ord a => StrictRelativeOrder (At a)
 instance OrderedMonoid a => OrderedMonoid (At a)
 
 instance Default a => Default (At a) where
-  def = At def def
+  def = At mempty def

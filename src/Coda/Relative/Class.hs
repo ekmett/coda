@@ -58,8 +58,11 @@ module Coda.Relative.Class
 import Coda.Relative.Delta
 import Data.Bifunctor
 import Data.Coerce
+import Data.Functor.Identity
+import Data.List.NonEmpty
 import Data.Monoid
 import Data.Profunctor.Unsafe
+import Data.Proxy
 import Data.Void
 import GHC.Generics
 
@@ -78,6 +81,11 @@ import GHC.Generics
 --
 -- Preferably 'rel' relocates in /O(1)/ or logarithmic time at worst or
 -- the container probably isn't well suited for relative use.
+--
+-- Note: rel d = id is a perfectly legitimate definition by these laws.
+--
+-- Note: if you use some stashed delta to slow the descent into your data
+-- structure, then you probably need to have nominal roles for your arguments.
 class Relative a where
   rel :: Delta -> a -> a
   default rel :: (Generic a, GRelative (Rep a)) => Delta -> a -> a
@@ -93,8 +101,14 @@ instance Relative a => Relative (Maybe a) where
 
 instance Relative ()
 instance Relative Void
+instance Relative (Proxy a)
+instance Relative a => Relative (Identity a)
 instance (Relative a, Relative b) => Relative (a, b) where rel = birel
 instance (Relative a, Relative b) => Relative (Either a b) where rel = birel
+-- | /O(n)/
+instance Relative a => Relative [a]
+-- | /O(n)/
+instance Relative a => Relative (NonEmpty a)
 
 -- instance Relative a => Relative [a] where rel = frel
 -- instance Relative a => Relative (NonEmpty a) where rel = frel
@@ -154,12 +168,14 @@ birel d = bimap (rel d) (rel d)
 --
 -- @
 -- instance RelativeSemigroup Void
+-- instance Relative a => RelativeSemigroup (NonEmpty a)
 -- @
 class (Relative t, Monoid t) => RelativeMonoid t
 
 instance RelativeMonoid Delta
 instance RelativeMonoid ()
 instance (RelativeMonoid a, RelativeMonoid b) => RelativeMonoid (a,b)
+instance Relative a => RelativeMonoid [a]
 
 --------------------------------------------------------------------------------
 -- Relative orderings
@@ -180,6 +196,8 @@ instance RelativeOrder Delta
 instance RelativeOrder ()
 instance (RelativeOrder a, RelativeOrder b) => RelativeOrder (a, b)
 instance (RelativeOrder a, RelativeOrder b) => RelativeOrder (Either a b)
+instance RelativeOrder a => RelativeOrder [a]
+instance RelativeOrder a => RelativeOrder (NonEmpty a)
 
 
 -- | A _strict_ relative order
@@ -197,6 +215,8 @@ instance StrictRelativeOrder Delta
 instance StrictRelativeOrder ()
 instance (StrictRelativeOrder a, StrictRelativeOrder b) => StrictRelativeOrder (a, b)
 instance (StrictRelativeOrder a, StrictRelativeOrder b) => StrictRelativeOrder (Either a b)
+instance StrictRelativeOrder a => StrictRelativeOrder [a]
+instance StrictRelativeOrder a => StrictRelativeOrder (NonEmpty a)
 
 --------------------------------------------------------------------------------
 -- Ordered monoids
@@ -219,11 +239,9 @@ instance OrderedMonoid a => OrderedMonoid (Maybe a)
 instance OrderedMonoid ()
 instance (OrderedMonoid a, OrderedMonoid b) => OrderedMonoid (a, b)
 
--- TODO: ghc 8.2
+-- TODO:
 -- instance (Ord a, Bounded a) => OrderedMonoid (Min a)
 -- instance (Ord a, Bounded a) => OrderedMonoid (Max a)
-
--- TODO: ghc 8.4
 -- instance Ord a => OrderedSemigroup (NonEmpty a)
 
 --------------------------------------------------------------------------------

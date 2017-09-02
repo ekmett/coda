@@ -70,6 +70,7 @@ library
     Coda.Relative.At
     Coda.Relative.Class
     Coda.Relative.Delta
+    Coda.Relative.Foldable
     Coda.Relative.List
     Coda.Relative.Map
     Coda.Relative.Measurement

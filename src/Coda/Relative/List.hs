@@ -1,8 +1,11 @@
 {-# language LambdaCase #-}
+{-# language BangPatterns #-}
 {-# language TypeFamilies #-}
+{-# language ViewPatterns #-}
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
 {-# language RoleAnnotations #-}
+{-# language PatternSynonyms #-}
 
 ---------------------------------------------------------------------------------
 --- |
@@ -16,22 +19,54 @@
 
 module Coda.Relative.List
   ( List(..)
+  , pattern Cons'
+  , reverse
   ) where
 
 import Coda.Relative.Class
 import Coda.Relative.Delta
-import Control.Lens (AsEmpty(..),Cons(..), prism, uncons)
+import Coda.Relative.Foldable
+import Control.Lens (AsEmpty(..),prism, uncons, Cons(..))
 import Data.Default
 import Data.Function (on)
 import Data.List (unfoldr)
 import Data.Semigroup
 import GHC.Exts as Exts
+import Prelude hiding (reverse)
 import Text.Read
 
 -- | A list with an /O(1)/ 'rel', 'cons' and 'uncons', but /O(n)/ ('<>')
 data List a
   = Nil
   | Cons !Delta !a (List a)
+
+pattern Cons' :: Relative a => () => a -> List a -> List a
+pattern Cons' a as <- Cons d (rel d -> a) (rel d -> as) where
+  Cons' a as = Cons mempty a as
+
+reverse :: Relative a => List a -> List a
+reverse = go mempty Nil where
+  go !d !acc (Cons d' a as) | d'' <- mappend d d' = go d'' (Cons mempty (rel d'' a) acc) as
+  go _   acc Nil = acc
+
+instance RelativeFoldable List where
+  rfoldMap !d f (Cons d' a as) | !d'' <- mappend d d' = f (rel d'' a) `mappend` rfoldMap d'' f as
+  rfoldMap _ _ Nil = mempty
+
+  rfoldr !d f z (Cons d' a as) | !d'' <- d <> d' = f (rel d'' a) (rfoldr d'' f z as)
+  rfoldr _ _ z Nil = z
+
+  rnull Nil = True
+  rnull _ = False
+
+  rlength = go 0 where
+    go !n Nil = n
+    go n (Cons _ _ as) = go (n+1) as
+
+instance RelativeFoldableWithIndex Int List where
+  irfoldMap = go 0 where
+    go !_ !_ !_ Nil = mempty
+    go i d f (Cons d' a as) | !d'' <- mappend d d' = f i (rel d'' a) `mappend` go (i+1) d'' f as
 
 type role List nominal
 
@@ -47,18 +82,24 @@ instance (Eq a, Relative a) => Eq (List a) where
 instance (Ord a, Relative a) => Ord (List a) where
   compare = compare `on` Exts.toList
 
+instance RelativeOrder a => RelativeOrder (List a)
+instance StrictRelativeOrder a => StrictRelativeOrder (List a)
+instance Relative a => RelativeMonoid (List a)
+
+-- /O(n)/
 instance Semigroup (List a) where
   Nil <> as = as
-  (Cons d a as) <> bs = Cons d a (mappend as bs)
+  Cons d a as <> bs = Cons d a (mappend as bs)
 
 -- /O(n)/
 instance Monoid (List a) where
   mempty = Nil
-  mappend = (<>)
+  mappend Nil xs = xs
+  mappend (Cons d a as) bs = Cons d a (mappend as bs)
 
 instance Relative a => IsList (List a) where
   type Item (List a) = a
-  fromList = foldr (Cons mempty) Nil
+  fromList = foldr Cons' Nil
   toList   = unfoldr uncons
 
 instance Relative (List a) where
@@ -73,7 +114,7 @@ instance AsEmpty (List a) where
 instance Relative a => Cons (List a) (List b) a b where
   _Cons = prism (uncurry (Cons mempty)) $ \case
     Nil -> Left Nil
-    Cons d a as -> Right (rel d a, rel d as)
+    Cons' a as -> Right (a, as)
 
 instance Default (List a) where
   def = Nil
