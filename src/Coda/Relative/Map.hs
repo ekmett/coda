@@ -28,11 +28,13 @@ module Coda.Relative.Map
   , toAscList
   , union
   , split
+  , toRList
   ) where
 
 import Coda.Relative.Class
 import Coda.Relative.Delta hiding (delta)
 import Coda.Relative.Foldable
+import Coda.Relative.List
 import Coda.Util.BitQueue
 import Control.Lens hiding (lazy)
 import Data.Default
@@ -63,11 +65,11 @@ instance Relative (Map k a) where
 --
 -- Uses @lens@ and 'Foldable' for the bulk of the API
 instance RelativeFoldable (Map k) where
-  rfoldMap !d !f (Bin _ d' _ a l r) | !d'' <- d <> d' = rfoldMap d'' f l <> f (rel d'' a) <> rfoldMap d'' f r
+  rfoldMap f !d (Bin _ d' _ a l r) | !d'' <- d <> d' = rfoldMap f d'' l <> f d'' a <> rfoldMap f d'' r
   rfoldMap _ _ Tip = mempty
 
-  rfoldr !_ _ z Tip = z
-  rfoldr d f z (Bin _ d' _ a l r) | !d'' <- d <> d' = rfoldr d'' f (f (rel d'' a) (rfoldr d'' f z r)) l
+  rfoldr f z !d (Bin _ d' _ a l r) | !d'' <- d <> d' = rfoldr f (f d'' a (rfoldr f z d'' r)) d'' l
+  rfoldr _ z _ Tip = z
 
   rnull Tip = True
   rnull _ = False
@@ -78,17 +80,18 @@ instance RelativeFoldable (Map k) where
 size :: Map k a -> Int
 size = rlength
 
-instance StrictRelativeOrder k => RelativeFoldableWithIndex k (Map k) where
-  irfoldMap = go where
-    go !_ _ Tip = mempty
-    go !d f (Bin _ d' k a l r) | !d'' <- d <> d' = go d'' f l <> f (rel d'' k) (rel d'' a) <> go d'' f r
+instance RelativeFoldableWithIndex k (Map k) where
+  irfoldMap _ !_ Tip = mempty
+  irfoldMap f d (Bin _ d' k a l r) | !d'' <- d <> d' = irfoldMap f d'' l <> f d'' k a <> irfoldMap f d'' r
 
-  irfoldr = go where
-    go !_ _ z Tip = z
-    go d f z (Bin _ d' k a l r) | !d'' <- d <> d' = go d'' f (f (rel d'' k) (rel d'' a) (go d'' f z r)) l
+  irfoldr _ z !_ Tip = z
+  irfoldr f z d (Bin _ d' k a l r) | !d'' <- d <> d' = irfoldr f (f d'' k a (irfoldr f z d'' r)) d'' l
 
 toAscList :: (StrictRelativeOrder k, Relative a) => Map k a -> [(k,a)]
-toAscList = irfoldr 0 (\k x xs -> (k,x):xs) []
+toAscList = irfoldr (\d k x xs -> (rel d k,rel d x):xs) [] 0
+
+toRList :: Map k a -> List (k,a)
+toRList = irfoldr (\d k x xs -> Cons d (k,x) xs) Nil 0
 
 instance (StrictRelativeOrder k, Relative a, Eq a) => Eq (Map k a) where (==) = on (==) toAscList
 instance (StrictRelativeOrder k, Relative a, Ord a) => Ord (Map k a) where compare = on compare toAscList

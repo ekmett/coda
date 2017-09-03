@@ -21,6 +21,7 @@ module Coda.Relative.List
   ( List(..)
   , pattern Cons'
   , reverse
+  , rtoRList
   ) where
 
 import Coda.Relative.Class
@@ -40,6 +41,11 @@ data List a
   = Nil
   | Cons !Delta !a (List a)
 
+type role List nominal
+
+rtoRList :: RelativeFoldable f => f a -> List a
+rtoRList = rfoldr Cons Nil 0
+
 pattern Cons' :: Relative a => () => a -> List a -> List a
 pattern Cons' a as <- Cons d (rel d -> a) (rel d -> as) where
   Cons' a as = Cons mempty a as
@@ -50,11 +56,11 @@ reverse = go mempty Nil where
   go _   acc Nil = acc
 
 instance RelativeFoldable List where
-  rfoldMap !d f (Cons d' a as) | !d'' <- mappend d d' = f (rel d'' a) `mappend` rfoldMap d'' f as
+  rfoldMap f !d (Cons d' a as) | !d'' <- mappend d d' = f d'' a `mappend` rfoldMap f d'' as
   rfoldMap _ _ Nil = mempty
 
-  rfoldr !d f z (Cons d' a as) | !d'' <- d <> d' = f (rel d'' a) (rfoldr d'' f z as)
-  rfoldr _ _ z Nil = z
+  rfoldr f z !d (Cons d' a as) | !d'' <- d <> d' = f d'' a (rfoldr f z d'' as)
+  rfoldr _ z _ Nil = z
 
   rnull Nil = True
   rnull _ = False
@@ -66,9 +72,7 @@ instance RelativeFoldable List where
 instance RelativeFoldableWithIndex Int List where
   irfoldMap = go 0 where
     go !_ !_ !_ Nil = mempty
-    go i d f (Cons d' a as) | !d'' <- mappend d d' = f i (rel d'' a) `mappend` go (i+1) d'' f as
-
-type role List nominal
+    go i f d (Cons d' a as) | !d'' <- mappend d d' = f d'' i a `mappend` go (i+1) f d'' as
 
 instance (Show a, Relative a) => Show (List a) where
   showsPrec d = showsPrec d . Exts.toList
@@ -84,7 +88,7 @@ instance (Ord a, Relative a) => Ord (List a) where
 
 instance RelativeOrder a => RelativeOrder (List a)
 instance StrictRelativeOrder a => StrictRelativeOrder (List a)
-instance Relative a => RelativeMonoid (List a)
+instance RelativeMonoid (List a)
 
 -- /O(n)/
 instance Semigroup (List a) where
@@ -114,7 +118,7 @@ instance AsEmpty (List a) where
 instance Relative a => Cons (List a) (List b) a b where
   _Cons = prism (uncurry (Cons mempty)) $ \case
     Nil -> Left Nil
-    Cons' a as -> Right (a, as)
+    Cons d a as -> Right (rel d a, rel d as)
 
 instance Default (List a) where
   def = Nil
