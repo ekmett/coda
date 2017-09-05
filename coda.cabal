@@ -72,7 +72,6 @@ library
     Coda.Relative.Delta
     Coda.Relative.Foldable
     Coda.Relative.List
-    Coda.Relative.Map
     Coda.Relative.Measurement
 
     Coda.Server
@@ -96,6 +95,7 @@ library
     Language.Server.Protocol
     Language.Server.Parser
 
+--    Coda.Relative.Map
   other-modules:
     Paths_coda
     Language.Server.TH
@@ -206,8 +206,11 @@ test-suite tasty
       bytestring,
       filepath,
       lens,
+      QuickCheck,
       tagged,
-      tasty        >= 0.11 && < 0.12,
-      tasty-golden >= 2.3  && < 2.4,
-      tasty-hunit  >= 0.9  && < 0.10,
+      tasty          >= 0.11 && < 0.12,
+      tasty-quickcheck, 
+      tasty-discover >= 3.0 && < 3.1,
+      tasty-golden   >= 2.3  && < 2.4,
+      tasty-hunit    >= 0.9  && < 0.10,
       text

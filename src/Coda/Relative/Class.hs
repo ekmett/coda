@@ -199,7 +199,6 @@ instance (RelativeOrder a, RelativeOrder b) => RelativeOrder (Either a b)
 instance RelativeOrder a => RelativeOrder [a]
 instance RelativeOrder a => RelativeOrder (NonEmpty a)
 
-
 -- | A _strict_ relative order
 --
 --

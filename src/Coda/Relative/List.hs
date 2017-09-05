@@ -43,6 +43,10 @@ data List a
 
 type role List nominal
 
+instance Relative (List a) where
+  rel _ Nil            = Nil
+  rel d (Cons d' a as) = Cons (d <> d') a as
+
 rtoRList :: RelativeFoldable f => f a -> List a
 rtoRList = rfoldr Cons Nil 0
 
@@ -92,23 +96,19 @@ instance RelativeMonoid (List a)
 
 -- /O(n)/
 instance Semigroup (List a) where
-  Nil <> as = as
-  Cons d a as <> bs = Cons d a (mappend as bs)
+  (<>) = go 0 where
+    go d Nil bs = rel d bs
+    go d (Cons d' a as) bs = Cons d' a (go (d-d') as bs)
 
 -- /O(n)/
 instance Monoid (List a) where
   mempty = Nil
-  mappend Nil xs = xs
-  mappend (Cons d a as) bs = Cons d a (mappend as bs)
+  mappend = (<>)
 
 instance Relative a => IsList (List a) where
   type Item (List a) = a
   fromList = foldr Cons' Nil
   toList   = unfoldr uncons
-
-instance Relative (List a) where
-  rel _ Nil            = Nil
-  rel d (Cons d' a as) = Cons (d <> d') a as
 
 instance AsEmpty (List a) where
   _Empty = prism (const Nil) $ \case

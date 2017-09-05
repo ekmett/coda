@@ -81,6 +81,7 @@ instance (Measured v a, HasDelta v) => HasDelta (FingerTree v a) where
 --
 -- @
 -- 'delta' (m '<>' n) = 'delta' m <> 'delta' n
+-- 'delta' mempty = 0
 -- @
 class (Monoid t, HasDelta t) => HasMonoidalDelta t where
 instance HasMonoidalDelta Delta
