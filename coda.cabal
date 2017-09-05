@@ -209,7 +209,7 @@ test-suite tasty
       QuickCheck,
       tagged,
       tasty          >= 0.11 && < 0.12,
-      tasty-quickcheck, 
+      tasty-quickcheck,
       tasty-discover >= 3.0 && < 3.1,
       tasty-golden   >= 2.3  && < 2.4,
       tasty-hunit    >= 0.9  && < 0.10,
