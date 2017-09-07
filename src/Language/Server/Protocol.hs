@@ -491,6 +491,11 @@ data Position = Position
   , _character :: !Int -- ^ 0-based count of utf-16 words (not code-points!)
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
+instance Monoid Position where
+  mempty = Position 0 0
+  mappend (Position a b) (Position 0 d) = Position a (b + d)
+  mappend (Position a _) (Position c d) = Position (a + c) d
+
 jsonKeep ''Position
 lenses ''Position
 instance Hashable Position

@@ -35,11 +35,11 @@ flag test-hlint
   default: False
   manual: True
 
-flag test-spec
+flag test-tasty
   default: True
   manual: True
 
-flag test-tasty
+flag test-once
   default: True
   manual: True
 
@@ -95,7 +95,7 @@ library
     Language.Server.Protocol
     Language.Server.Parser
 
---    Coda.Relative.Map
+    Coda.Relative.Map
   other-modules:
     Paths_coda
     Language.Server.TH
@@ -175,26 +175,16 @@ test-suite hlint
       base,
       hlint >= 2.0.1
 
-test-suite spec
-  type: exitcode-stdio-1.0
-  default-language: Haskell2010
-  main-is: spec.hs
-  hs-source-dirs: test/src
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  if !flag(test-spec)
-    buildable: False
-  else
-    build-depends:
-      base,
-      hspec >= 2 && < 3
-
 test-suite tasty
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: tasty.hs
   hs-source-dirs: test/src
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  other-modules: MessageTest
+  other-modules:
+    MessageTest
+    ListTest
+    MapTest
   if !flag(test-tasty)
     buildable: False
   else
@@ -202,6 +192,34 @@ test-suite tasty
       aeson,
       base,
       coda,
+      containers,
+      bifunctors,
+      bytestring,
+      filepath,
+      lens,
+      QuickCheck,
+      tagged,
+      tasty          >= 0.11 && < 0.12,
+      tasty-quickcheck,
+      tasty-discover >= 3.0 && < 3.1,
+      tasty-golden   >= 2.3  && < 2.4,
+      tasty-hunit    >= 0.9  && < 0.10,
+      text
+
+test-suite once
+  type: exitcode-stdio-1.0
+  default-language: Haskell2010
+  main-is: once.hs
+  hs-source-dirs: test/src
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  if !flag(test-once)
+    buildable: False
+  else
+    build-depends:
+      aeson,
+      base,
+      coda,
+      containers,
       bifunctors,
       bytestring,
       filepath,

@@ -63,5 +63,5 @@ eval (Drop1 as) = case Lens.uncons (eval as) of
   Just (_, as') -> as'
   Nothing -> Nil
 
-prop_relative_list_model :: ListModel -> Bool
-prop_relative_list_model x = unfoldr Lens.uncons (eval x) == model x
+prop_list :: ListModel -> Property
+prop_list x = unfoldr Lens.uncons (eval x) === model x

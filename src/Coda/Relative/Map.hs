@@ -59,16 +59,16 @@ pattern Bin' s k a l r <- Bin s d (rel d -> k) (rel d -> a) (rel d -> l) (rel d 
 instance Relative (Map k a) where
   rel _ Tip = Tip
   rel 0 m   = m -- improve sharing
-  rel d (Bin s d' k a l r) = Bin s (d <> d') k a l r
+  rel d (Bin s d' k a l r) = Bin s (d+d') k a l r
 
 -- | A Map with /O(1)/ rel, /O(log n)/ insert/lookup/delete
 --
 -- Uses @lens@ and 'Foldable' for the bulk of the API
 instance RelativeFoldable (Map k) where
-  rfoldMap f !d (Bin _ d' _ a l r) | !d'' <- d <> d' = rfoldMap f d'' l <> f d'' a <> rfoldMap f d'' r
+  rfoldMap f !d (Bin _ d' _ a l r) | !d'' <- d+d' = rfoldMap f d'' l <> f d'' a <> rfoldMap f d'' r
   rfoldMap _ _ Tip = mempty
 
-  rfoldr f z !d (Bin _ d' _ a l r) | !d'' <- d <> d' = rfoldr f (f d'' a (rfoldr f z d'' r)) d'' l
+  rfoldr f z !d (Bin _ d' _ a l r) | !d'' <- d+d' = rfoldr f (f d'' a (rfoldr f z d'' r)) d'' l
   rfoldr _ z _ Tip = z
 
   rnull Tip = True
@@ -136,7 +136,7 @@ instance (StrictRelativeOrder k, Relative a) => RelativeMonoid (Map k a)
 lookup :: (StrictRelativeOrder k, Relative a) => k -> Map k a -> Maybe a
 lookup = go 0 where
   go !_ !_ Tip = Nothing
-  go d k (Bin _ d' kx x l r) | !d'' <- d <> d' = case compare k (rel d'' kx) of
+  go d k (Bin _ d' kx x l r) | !d'' <- d+d' = case compare k (rel d'' kx) of
     LT -> go d'' k l
     GT -> go d'' k r
     EQ -> Just (rel d'' x)
@@ -144,62 +144,64 @@ lookup = go 0 where
 
 union :: (StrictRelativeOrder k, Relative a) => Map k a -> Map k a -> Map k a
 union t1 Tip  = t1
-union t1 (Bin _ d k x Tip Tip) = insertR d k x t1
-union (Bin _ d k x Tip Tip) t2 = insert d k x t2
+union t1 (Bin _ d k x Tip Tip) = insertRD 0 (rel d k) (rel d x) t1
+union (Bin _ d k x Tip Tip) t2 = insertD 0 (rel d k) (rel d x) t2
 union Tip t2 = t2
 union t1@(Bin _ d1 k1 x1 l1 r1) t2 = case split d1 k1 t2 of
-  (l2, r2) | ptrEq l1l2 l1 && ptrEq r1r2 r1 -> t1
-           | otherwise -> link d1 k1 x1 l1l2 r1r2
-           where !l1l2 = union l1 l2
-                 !r1r2 = union r1 r2
+  (l2, r2)
+    | ptrEq l1l2 l1 && ptrEq r1r2 r1 -> t1
+    | otherwise -> link d1 k1 x1 l1l2 r1r2
+    where
+      !l1l2 = union l1 l2
+      !r1r2 = union r1 r2
 {-# inlinable union #-}
 
-insert :: (StrictRelativeOrder k, Relative a) => k -> a -> Map k a -> Map k a
-insert kx0 = go 0 kx0 kx0 where
-  go :: (Ord k, Relative k, Relative a) => Delta -> k -> a -> Map k a -> Map k a
-  go !_ !kx !x Tip = Bin 1 d kx x Tip Tip
-  go d kx x t@(Bin sz dy ky y l r) = case compare kx ky of
-    LT | ptrEq l' l -> t
-       | otherwise -> balanceL dy ky y l' r
-       where !l' = go (d-dy) kx x l
-    GT | ptrEq r' r -> t
-       | otherwise -> balanceR dy ky y l r'
-       where !r' = go (d-dy) kx x r
-    EQ | ptrEq x y -> t
-       | otherwise -> Bin sz dy (rel (d-dy) kx) (rel (d-dy) x) l r
+insert :: StrictRelativeOrder k => k -> a -> Map k a -> Map k a
+insert = insertD 0 
+
+insertD :: (Ord k, Relative k) => Delta -> k -> a -> Map k a -> Map k a
+insertD !d !kx !x Tip = Bin 1 (negate d) kx x Tip Tip
+insertD d kx x t@(Bin sz dy ky y l r) | !d'' <- d+dy = case compare kx (rel d'' ky) of
+  LT | ptrEq l' l -> t
+     | otherwise -> balanceL dy ky y l' r
+     where !l' = insertD d'' kx x l
+  GT | ptrEq r' r -> t
+     | otherwise -> balanceR dy ky y l r'
+     where !r' = insertD d'' kx x r
+  EQ | ptrEq x y -> t
+     | otherwise -> Bin sz (negate d) kx x (rel d'' l) (rel d'' r)
 {-# inlinable insert #-}
+
+insertRD :: (Ord k, Relative k) => Delta -> k -> a -> Map k a -> Map k a
+insertRD !d !kx !x Tip = Bin 1 (-d) kx x Tip Tip
+insertRD d kx x t@(Bin _ dy ky y l r) | !d'' <- d+dy = case compare kx (rel d'' ky) of
+  LT | ptrEq l' l -> t
+     | otherwise -> balanceL dy ky y l' r
+     where !l' = insertRD d'' kx x l
+  GT | ptrEq r' r -> t
+     | otherwise -> balanceR dy ky y l r'
+     where !r' = insertRD d'' kx x r
+  EQ -> t
 
 split :: StrictRelativeOrder k => Delta -> k -> Map k a -> (Map k a, Map k a)
 split !d0 !k0 t0 = toPair $ go d0 k0 t0 where
+  go :: (Relative k, Ord k) => Delta -> k -> Map k a -> StrictPair (Map k a) (Map k a)
   go d k t = case t of
     Tip -> Tip :*: Tip
-    Bin _ dx kx x l r -> case compare k (rel d kx) of
-      LT -> let lt :*: gt = go k l in lt :*: link kx x gt r
-      GT -> let lt :*: gt = go k r in link kx x l lt :*: gt
-      EQ -> l :*: r
+    Bin _ dx kx x l r -> case compare (rel (d-dx) k) kx of
+      LT -> let lt :*: gt = go (d-dx) k l in lt :*: link dx kx x gt r
+      GT -> let lt :*: gt = go (d-dx) k r in link dx kx x l lt :*: gt
+      EQ -> rel dx l :*: rel dx r
 {-# INLINABLE split #-}
 
 --------------------------------------------------------------------------------
 -- Implementation Details
 --------------------------------------------------------------------------------
 
-
 ptrEq :: a -> a -> Bool
 ptrEq x y = isTrue# (reallyUnsafePtrEquality# x y)
 {-# inline ptrEq #-}
 
-insertR :: (StrictRelativeOrder k, Relative a) => k -> a -> Map k a -> Map k a
-insertR kx0 = go kx0 kx0 where
-  go :: (Ord k, Relative k, Relative a) => k -> k -> a -> Map k a -> Map k a
-  go orig !_  x Tip = singleton (lazy orig) x
-  go orig !kx x t@(Bin' _ ky y l r) = case compare kx ky of
-    LT | ptrEq l' l -> t
-       | otherwise -> balanceL ky y l' r
-       where !l' = go orig kx x l
-    GT | ptrEq r' r -> t
-       | otherwise -> balanceR ky y l r'
-       where !r' = go orig kx x r
-    EQ -> t
 
 toPair :: StrictPair a b -> (a, b)
 toPair (a :*: b) = (a, b)
@@ -209,8 +211,8 @@ link :: Delta -> k -> a -> Map k a -> Map k a -> Map k a
 link d kx x Tip r  = insertMin d kx x r
 link d kx x l Tip  = insertMax d kx x l
 link d kx x l@(Bin sizeL dy ky y ly ry) r@(Bin sizeR dz kz z lz rz)
-  | delta*sizeL < sizeR  = balanceL (d+dz) kz z (link (-dz) kx x l (rel dz lz)) rz
-  | delta*sizeR < sizeL  = balanceR (d+dy) ky y ly (link (-dy) kx x (rel dy ry) r)
+  | delta*sizeL < sizeR  = balanceL (d+dz) kz z (link (negate dz) kx x l (rel dz lz)) rz
+  | delta*sizeR < sizeL  = balanceR (d+dy) ky y ly (link (negate dy) kx x (rel dy ry) r)
   | otherwise            = bin d kx x l r
 
 bin :: Delta -> k -> a -> Map k a -> Map k a -> Map k a
@@ -218,12 +220,12 @@ bin d kx x l r = Bin (size l + size r + 1) d kx x l r
 
 insertMax,insertMin :: Delta -> k -> a -> Map k a -> Map k a
 insertMax d kx x t = case t of
-  Tip -> Bin 1 d kx x Tip Tip
-  Bin _ dy ky y l r -> balanceR dy ky y l (insertMax (d-dy) kx x r)
+  Tip -> Bin 1 (negate d) kx x Tip Tip
+  Bin _ dy ky y l r -> balanceR dy ky y l (insertMax (d+dy) kx x r)
 
 insertMin d kx x t = case t of
-  Tip -> Bin 1 d kx x Tip Tip
-  Bin _ dy ky y l r -> balanceL dy ky y (insertMin (d-dy) kx x l) r
+  Tip -> Bin 1 (negate d) kx x Tip Tip
+  Bin _ dy ky y l r -> balanceL dy ky y (insertMin (d+dy) kx x l) r
 
 
 data StrictPair a b = !a :*: !b
@@ -249,7 +251,7 @@ insertAlong q kx x (Bin _ d' ky y l r) = case unconsQ q of
   Nothing -> error "Coda.Relative.Map.insertAlong: failure"
 
 deleteAlong :: any -> BitQueue -> Map k a -> Map k a
-deleteAlong old !q0 !d0 !m = go (bogus old) q0 d0 m where
+deleteAlong old !q0 !m = go (bogus old) q0 m where
   go :: Proxy# () -> BitQueue -> Map k a -> Map k a
   go !_ !_ Tip = Tip
   go foom q (Bin _ d' ky y l r) = case unconsQ q of
@@ -264,8 +266,8 @@ bogus _ = proxy#
 replaceAlong :: BitQueue -> a -> Map k a -> Map k a
 replaceAlong !_ _ Tip = error "Coda.Relative.Map.replaceAlong: failure"
 replaceAlong q x (Bin sz d' ky y l r) = case unconsQ q of
-  Just (False, tl) -> Bin sz d' ky y (replaceAlong tl d'' x l) r
-  Just (True,tl) -> Bin sz d' ky y l (replaceAlong tl d'' x r)
+  Just (False, tl) -> Bin sz d' ky y (replaceAlong tl x l) r
+  Just (True,tl) -> Bin sz d' ky y l (replaceAlong tl x r)
   Nothing -> Bin sz d' ky x l r
 
 balanceL :: Delta -> k -> a -> Map k a -> Map k a -> Map k a
@@ -281,11 +283,11 @@ balanceL d k x l r = case r of
         (Bin (1+lls+size lrl) (-lrd) lk lx ll (rel lrd lrl))
         (Bin (1+size lrr) (-lrd-ld) k x (rel (ld+lrd) lrr) Tip)
 
-  Bin rs rd _ _ _ _ -> case l of
+  Bin rs _ _ _ _ _ -> case l of
     Tip -> Bin (1+rs) d k x Tip r
     Bin ls ld lk lx ll lr
       | ls > delta*rs  -> case (ll, lr) of
-        (Bin lls lld _ _ _ _, Bin lrs lrd lrk lrx lrl lrr)
+        (Bin lls _ _ _ _ _, Bin lrs lrd lrk lrx lrl lrr)
           | lrs < ratio*lls -> Bin (1+ls+rs) (d+ld) lk lx ll (Bin (1+rs+lrs) (-ld) k x (rel ld lr) r)
           | otherwise -> Bin (1+ls+rs) (d+ld+lrd) lrk lrx 
             (Bin (1+lls+size lrl) (-lrd) lk lx ll (rel lrd lrl))
@@ -326,7 +328,7 @@ data MaxView k a = MaxView !Delta !k !a !(Map k a)
 glue :: Map k a -> Map k a -> Map k a
 glue Tip r = r
 glue l Tip = l
-glue l@(Bin sl dl kl xl ll lr) r@(Bin sr dr kr xr rl rr)
+glue (Bin sl dl kl xl ll lr) (Bin sr dr kr xr rl rr)
   | sl > sr   = let !(MaxView dm km m l') = maxViewSure dl kl xl ll lr in balanceR dm km m l' (Bin sr (dr-dm) kr xr rl rr)
   | otherwise = let !(MinView dm km m r') = minViewSure dr kr xr rl rr in balanceL dm km m (Bin sl (dl-dm) kl xl ll lr) r'
 

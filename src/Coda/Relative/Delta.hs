@@ -28,6 +28,7 @@ import Data.FingerTree
 import Data.Hashable
 import Data.Semigroup
 import GHC.Generics
+import Text.Read
 
 -- | A count of UTF-16 code-units.
 --
@@ -36,7 +37,13 @@ import GHC.Generics
 --
 -- It is also very compact fitting in a single 'Int'.
 newtype Delta = Delta Int
-  deriving (Eq, Ord, Show, Read, Data, Generic, Num)
+  deriving (Eq, Ord, Data, Generic, Num)
+
+instance Show Delta where
+  showsPrec d (Delta n) = showsPrec d n
+
+instance Read Delta where
+  readPrec = Delta <$> readPrec
 
 instance Hashable Delta
 
