@@ -48,8 +48,8 @@ putError i c t = -- do
 -- State
 --------------------------------------------------------------------------------
 
-data ServerState = ServerState
-  { _shutdownRequested :: !Bool
+newtype ServerState = ServerState
+  { _shutdownRequested :: Bool
   } deriving (Show)
 
 makeClassy ''ServerState
@@ -110,7 +110,7 @@ ok i p = liftIO $ putMessage $ Response (Just i) (Just (toJSON p)) Nothing
 
 initializeServer :: (MonadState s m, HasServerState s, MonadReader e m, HasServerOptions e, MonadIO m) => m ()
 initializeServer = listen >>= \case
-  Right (Initialize i _ip) -> do
+  Right (Initialize i _ip) ->
     ok i $ object
       [ "capabilities" .= object
         [ "textDocumentSync" .= object
@@ -152,7 +152,7 @@ loop = listen >>= \case
     putError (Just i) InvalidRequest "unsupported request"
     loop
   Right (Request _ m _) -> do
-    liftIO $ hPutStrLn stderr (show m)
+    liftIO $ hPrint stderr m
     logMessage Information m
     loop
   Left _ -> do

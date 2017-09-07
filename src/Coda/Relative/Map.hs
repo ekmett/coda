@@ -36,7 +36,7 @@ import Coda.Relative.Delta hiding (delta)
 import Coda.Relative.Foldable
 import Coda.Relative.List
 import Coda.Util.BitQueue
-import Control.Lens hiding (lazy)
+import Control.Lens
 import Data.Default
 import Data.Hashable
 import Data.Function (on)
@@ -52,9 +52,9 @@ data Map k a
 
 type role Map nominal nominal
 
-pattern Bin' :: (Relative k, Relative a) => Size -> k -> a -> Map k a -> Map k a -> Map k a
-pattern Bin' s k a l r <- Bin s d (rel d -> k) (rel d -> a) (rel d -> l) (rel d -> r) where
-  Bin' s k a l r = Bin s 0 k a l r
+-- pattern Bin' :: (Relative k, Relative a) => Size -> k -> a -> Map k a -> Map k a -> Map k a
+-- pattern Bin' s k a l r <- Bin s d (rel d -> k) (rel d -> a) (rel d -> l) (rel d -> r) where
+--  Bin' s k a l r = Bin s 0 k a l r
 
 instance Relative (Map k a) where
   rel _ Tip = Tip

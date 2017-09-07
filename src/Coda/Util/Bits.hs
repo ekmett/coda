@@ -16,8 +16,7 @@ module Coda.Util.Bits
   , wordSize
   ) where
 
-import Data.Bits ((.|.), xor)
-import Data.Bits (finiteBitSize)
+import Data.Bits ((.|.), xor, finiteBitSize)
 import GHC.Exts (Word(..), Int(..))
 import GHC.Prim (uncheckedShiftL#, uncheckedShiftRL#)
 

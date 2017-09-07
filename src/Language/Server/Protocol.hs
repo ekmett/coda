@@ -1018,7 +1018,7 @@ instance Hashable Registration
 instance Default Registration where
   def = Registration "" "" def
 
-data TextDocumentRegistrationOptions = TextDocumentRegistrationOptions
+newtype TextDocumentRegistrationOptions = TextDocumentRegistrationOptions
   { _documentSelector :: Maybe [DocumentFilter]
   } deriving (Eq,Show,Read,Data,Generic)
 
@@ -1159,7 +1159,7 @@ lenses ''FileEvent
 instance Hashable FileEvent
 instance Default FileEvent
 
-data DidChangeWatchedFilesParams = DidChangeWatchedFilesParams
+newtype DidChangeWatchedFilesParams = DidChangeWatchedFilesParams
   { _changes :: [FileEvent]
   } deriving (Eq,Show,Read,Data,Generic)
 

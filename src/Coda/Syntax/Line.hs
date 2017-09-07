@@ -1,5 +1,3 @@
-{-# language LambdaCase #-}
-{-# language BangPatterns #-}
 {-# language TypeFamilies #-}
 {-# language DeriveGeneric #-}
 {-# language DeriveAnyClass #-}

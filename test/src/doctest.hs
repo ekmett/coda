@@ -27,10 +27,9 @@ data Acc = Acc !Int !Int
 
 -- | Quickly filter for files that actually contain '>>>'
 possible :: [FilePath] -> IO [FilePath]
-possible xs = do
-    fmap catMaybes $ for xs $ \x -> do
-      !content <- B.readFile x
-      return $! if testy (B.foldl' ticks (Acc 0 0) content) then Just x else Nothing
+possible xs = fmap catMaybes $ for xs $ \x -> do
+  !content <- B.readFile x
+  return $! if testy (B.foldl' ticks (Acc 0 0) content) then Just x else Nothing
   where
     ticks (Acc a b) 62 = Acc (a+1) b -- 62 = fromEnum '>'
     ticks (Acc a b) _  = Acc 0 (max a b)

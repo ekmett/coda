@@ -1,4 +1,3 @@
-{-# language LambdaCase #-}
 {-# language BangPatterns #-}
 {-# language TypeFamilies #-}
 {-# language DeriveGeneric #-}
@@ -31,7 +30,6 @@ import Data.Text
 import Data.Text.Unsafe as Text
 import Data.Word (Word8)
 import GHC.Generics
-import Prelude hiding ((!!))
 
 -- $setup
 -- >>> :set -XOverloadedStrings -XOverloadedLists
@@ -65,7 +63,7 @@ instance IsString AlexInput where
   fromString = AlexInput S0 '\n' 0 . fromString
 
 ok :: a -> b -> Maybe (a,b)
-ok !a !b = Just (a,b) where
+ok !a !b = Just (a,b)
 
 -- |
 -- >>> Prelude.take 20 $ List.unfoldr alexGetByte "hello world"

@@ -1,5 +1,4 @@
 {-# language LambdaCase #-}
-{-# language BangPatterns #-}
 {-# language TypeFamilies #-}
 {-# language FlexibleContexts #-}
 {-# language DeriveTraversable #-}
@@ -26,11 +25,8 @@ import Coda.Data.View
 import Data.Default
 import Data.Foldable as Foldable
 import Data.Function (on)
-import Control.Monad
 import Control.Lens (prism, AsEmpty(..))
-import Data.Semigroup
 import GHC.Exts as Exts (IsList(..))
-import Prelude hiding (drop)
 
 data P a = P a a
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)

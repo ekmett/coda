@@ -1,1 +1,3 @@
 - ignore: {name: Use camelCase}
+- ignore: {name: Reduce duplication}
+- ignore: {name: Use infix}

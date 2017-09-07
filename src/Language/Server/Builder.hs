@@ -59,4 +59,4 @@ putMessage = putEncoding . toEncoding
 
 -- | Write a JSON-RPC 2.0 message to stdout from an Encoding
 putEncoding :: MonadIO m => Encoding -> m ()
-putEncoding a = hPutEncoding stdout a
+putEncoding = hPutEncoding stdout

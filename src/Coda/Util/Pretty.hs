@@ -30,7 +30,7 @@ import Data.Maybe (fromMaybe)
 import Numeric.Lens
 import System.IO
 import Text.Hyphenation
-import Text.PrettyPrint.ANSI.Leijen hiding ((<$>), (<>))
+import Text.PrettyPrint.ANSI.Leijen hiding ((<>))
 
 -- | This is an infinitely large free variable supply you can trim your used variables out of.
 names :: [String]

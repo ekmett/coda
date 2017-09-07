@@ -3,7 +3,6 @@
 {-# language DeriveDataTypeable #-}
 {-# language UndecidableInstances #-}
 {-# language MultiParamTypeClasses #-}
-{-# language GeneralizedNewtypeDeriving #-}
 
 ---------------------------------------------------------------------------------
 --- |

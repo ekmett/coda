@@ -1,5 +1,4 @@
 {-# language LambdaCase #-}
-{-# language BangPatterns #-}
 {-# language DeriveTraversable #-}
 {-# language OverloadedStrings #-}
 {-# language DeriveDataTypeable #-}
@@ -29,6 +28,7 @@ module Language.Server.Parser
 
 import Control.Monad
 import Data.Aeson
+import Data.Char
 import Data.Data
 import qualified Data.ByteString.Lazy as Lazy
 import System.IO
@@ -101,14 +101,14 @@ anyField = ascii >>= \case
 intField :: Parser Int
 intField = do
   b <- ascii
-  unless (b >= '0' && b <= '9') $ fail "expected integer"
-  go (fromIntegral (fromEnum b) - 48)
+  unless (isDigit b) $ fail "expected integer"
+  go (digitToInt b)
  where
   go :: Int -> Parser Int
   go acc = ascii >>= \case
-    '\r'                     -> acc <$ char '\n'
-    d | d >= '0' && d <= '9' -> go (acc * 10 + fromIntegral (fromEnum d - 48))
-      | otherwise            -> fail "expected digit or '\\r'"
+    '\r' -> acc <$ char '\n'
+    d | isDigit d -> go (acc * 10 + digitToInt d)
+      | otherwise -> fail "expected digit or '\\r'"
 
 -- | Parse a JSON-RPC 2.0 content header
 --

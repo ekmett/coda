@@ -21,8 +21,7 @@ module Coda.Util.BitQueue
     ) where
 
 import Coda.Util.Bits (shiftLL, shiftRL, wordSize)
-import Data.Bits ((.|.), (.&.), testBit)
-import Data.Bits (countTrailingZeros)
+import Data.Bits ((.|.), (.&.), testBit, countTrailingZeros)
 
 -- A bit queue builder. We represent a double word using two words
 -- because we don't currently have access to proper double words.
