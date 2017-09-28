@@ -1,6 +1,8 @@
 {-# language MultiParamTypeClasses #-}
 {-# language UndecidableInstances #-}
 {-# language FlexibleInstances #-}
+{-# options_ghc -Wno-redundant-constraints #-} -- this warning can die in a fire
+
 module Coda.Algebra where
 
 import Data.Semigroup
@@ -207,10 +209,10 @@ instance DistributiveAction a b => Semigroup (Semi a b) where
 -- @
 --
 -- ... left off because my plane flight ended.
-instance (DistributiveAction a b, StrictOrderedSemigroup a, OrderedSemigroup b, StrictMonotoneAction a b) => OrderedSemigroup (Semi a b) where
+instance (DistributiveAction a b, StrictlyOrderedSemigroup a, OrderedSemigroup b, StrictlyMonotoneAction a b) => OrderedSemigroup (Semi a b) where
 
--- | Trivial refinement of the proof for 'OrderedSemigroup'
-instance (DistributiveAction a b, StrictOrderedSemigroup a, StrictOrderedSemigroup b, StrictMonotoneAction a b) => StrictOrderedSemigroup (Semi a b) where
+-- | Refinement of the proof for 'OrderedSemigroup'
+instance (DistributiveAction a b, StrictlyOrderedSemigroup a, StrictlyOrderedSemigroup b, StrictlyMonotoneAction a b) => StrictlyOrderedSemigroup (Semi a b) where
   
 -- |
 -- @
