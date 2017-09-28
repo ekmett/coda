@@ -1,4 +1,5 @@
 {-# language TypeFamilies #-}
+{-# language BangPatterns #-}
 {-# language DeriveGeneric #-}
 {-# language DeriveAnyClass #-}
 {-# language DeriveDataTypeable #-}
@@ -21,6 +22,7 @@ module Coda.Syntax.Line
   -- * Lines
     Line(..)
   , HasLine(..)
+  , foldLines
   -- * Summarizing Lines
   , LineMeasure(..)
   , HasLineMeasure(..)
@@ -38,8 +40,9 @@ import Data.Hashable
 import Data.Profunctor.Unsafe
 import Data.Semigroup
 import Data.String
-import Data.Text (Text)
+import Data.Text.Internal (Text(..))
 import qualified Data.Text.Unsafe as Text
+import qualified Data.Text.Array as Text
 import GHC.Generics
 
 -- | Invariants
@@ -56,6 +59,31 @@ instance HasDelta Line where
 
 instance Default Line where
   def = Line ""
+
+cr, lf, crlf :: Text
+cr   = "\r"
+lf   = "\n"
+crlf = "\r\n"
+
+-- TODO: This should split up in parallel with a monoid
+-- TODO: Consider copying the Text to new arrays. That way when
+-- we do incremental updates on the Text we don't need to hold the
+-- entire original Text. OTOH, this would expand our memory footprint
+-- and the common case is that we do small edits to big initial
+-- sets of lines
+foldLines :: (a -> Text -> a) -> a -> Text -> a
+foldLines f z0 (Text a0 o0 l0) = go o0 o0 (o0+l0) a0 z0 where
+  -- go :: Int -> Int -> Int -> Array -> a -> a
+  go !s !i !e !a z
+    | i < e = case Text.unsafeIndex a i of
+      10             -> go (i+1) (i+1) e a $ f z $ if s < i then Text a s (i+1-s) else lf
+      13 | i+1 < e -> case Text.unsafeIndex a (i+1) of
+           10        -> go (i+2) (i+2) e a $ f z $ if s < i then Text a s (i+2-s) else crlf
+           _         -> go (i+1) (i+1) e a $ f z $ if s < i then Text a s (i+1-s) else cr
+         | otherwise -> go (i+1) (i+1) e a $ f z $ if s < i then Text a s (i+1-s) else cr
+      _ -> go s (i+1) e a z
+    | s < e = f z $ Text a s (e-s)
+    | otherwise = z
 
 --------------------------------------------------------------------------------
 -- HasLine
