@@ -66,7 +66,9 @@ module Language.Server.Protocol
 
   -- *** Positions
   , Position(..)
+  , subtractPosition
   , Range(..)
+  , rangeSize
   , Location(..)
 
   -- *** Diagnostics
@@ -130,6 +132,9 @@ module Language.Server.Protocol
   , pattern DidChange
   , DidChangeTextDocumentParams(..)
   , TextDocumentContentChangeEvent(..)
+  -- *** 'textDocument/didClose'
+  , pattern DidClose
+  , DidCloseTextDocumentParams(..)
   -- *** 'workspace/didChangeWatchedFiles
   , pattern DidChangeWatchedFiles
   , DidChangeWatchedFilesParams(..)
@@ -501,6 +506,23 @@ lenses ''Position
 instance Hashable Position
 instance Default Position
 
+-- |
+-- @'subtractPosition' a b@ subtracts @a@ from @b@. 
+-- 
+-- Be careful, as this is the opposite argument order from @(-)@, but matches
+-- the argument order of 'subtract'
+--
+-- This is a clamped subtraction, much as if we defined subtraction on natural
+-- numbers to be total by defining
+-- @n - m | m >= n = 0@
+--
+-- Because of the necessary clamping, Position does not form a group.
+subtractPosition :: Position -> Position -> Position
+subtractPosition (Position l1 c1) (Position l2 c2) = case compare l1 l2 of
+  LT -> Position (l2-l1) c2
+  EQ -> Position 0 $ max (c2-c1) 0
+  GT -> Position 0 0
+
 --------------------------------------------------------------------------------
 -- Range
 --------------------------------------------------------------------------------
@@ -524,10 +546,13 @@ lenses ''Range
 instance Hashable Range
 instance Default Range
 
+-- | Compute the relative position of the end of the range from the start of the range
+rangeSize :: Range -> Position
+rangeSize (Range lo hi) = subtractPosition lo hi
+
 --------------------------------------------------------------------------------
 -- Location
 --------------------------------------------------------------------------------
-
 
 -- |
 -- <https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#location>
@@ -1094,6 +1119,24 @@ pattern DidOpen :: TextDocumentItem -> Request
 pattern DidOpen tdi = Request Nothing "textDocument/didOpen" (Just (JSON (DidOpenTextDocumentParams tdi)))
 
 --------------------------------------------------------------------------------
+-- Client -> Server: 'textDocument/didClose'
+--------------------------------------------------------------------------------
+
+newtype DidCloseTextDocumentParams = DidCloseTextDocumentParams
+  { _textDocument :: TextDocumentItem
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''DidCloseTextDocumentParams
+lenses ''DidCloseTextDocumentParams
+makeWrapped ''DidCloseTextDocumentParams
+instance Hashable DidCloseTextDocumentParams
+instance Default DidCloseTextDocumentParams
+
+-- | @textDocument/didClose@
+pattern DidClose :: TextDocumentItem -> Request
+pattern DidClose tdi = Request Nothing "textDocument/didClose" (Just (JSON (DidCloseTextDocumentParams tdi)))
+
+--------------------------------------------------------------------------------
 -- Client -> Server: 'textDocument/didChange'
 --------------------------------------------------------------------------------
 
@@ -1124,6 +1167,8 @@ instance Default DidChangeTextDocumentParams
 -- | @textDocument/didChange@
 pattern DidChange :: DidChangeTextDocumentParams -> Request
 pattern DidChange p = Request Nothing "textDocument/didChange" (Just (JSON p))
+
+
 
 --------------------------------------------------------------------------------
 -- Client -> Server: 'workspace/didChangeWatchedFiles'
@@ -1171,6 +1216,7 @@ instance Default DidChangeWatchedFilesParams
 -- | @workspace/didChangeWatchedFiles@
 pattern DidChangeWatchedFiles :: [FileEvent] -> Request
 pattern DidChangeWatchedFiles c = Request Nothing "workspace/didChangeWatchedFiles" (Just (JSON (DidChangeWatchedFilesParams c)))
+
 
 --------------------------------------------------------------------------------
 -- Server -> Client: 'textDocument/publishDiagnostics'
