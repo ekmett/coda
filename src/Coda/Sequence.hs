@@ -23,7 +23,6 @@ import Data.Foldable as Foldable (toList)
 import Data.Function (on)
 import Data.Functor.Day.Curried
 import Data.Functor.Yoneda
-import qualified Data.List as List
 import Data.Semigroup
 import Data.Traversable (foldMapDefault, fmapDefault)
 import GHC.Exts (IsList(..))
