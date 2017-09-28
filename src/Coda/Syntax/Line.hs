@@ -128,6 +128,9 @@ instance Monoid LineMeasure where
 instance Measured LineMeasure LineMeasure where
   measure = id
 
+instance Measured LineMeasure Line where
+  measure (Line l) = LineMeasure 1 $ Delta $ Text.lengthWord16 l
+
 instance Default LineMeasure where
   def = mempty
 
