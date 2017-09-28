@@ -83,6 +83,7 @@ library
 
     Coda.Syntax.Keywords
     Coda.Syntax.Line
+    Coda.Syntax.Rope
 
     Coda.Util.Aeson
     Coda.Util.Alex
