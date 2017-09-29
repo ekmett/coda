@@ -30,7 +30,7 @@ import Data.Traversable (foldMapDefault, fmapDefault)
 import GHC.Exts (IsList(..))
 import Text.Read
 import qualified Data.FingerTree as F hiding (fromList)
-import Data.FingerTree (FingerTree(..), Measured(..),ViewL(..),ViewR(..),viewl, viewr )
+import Data.FingerTree (FingerTree(..), Measured(..))
 
 --------------------------------------------------------------------------------
 -- Weights and Measures
@@ -116,10 +116,10 @@ instance (Measured W a, Measured W b) => Cons (C a) (C b) a b where
   _Cons = prism kons unkons where
     kons (a, CS q)     = CS (a F.<| q)
     kons (a, CD l m r) = CD (a F.<| l) m r
-    unkons (CS q) = case viewl q of
+    unkons (CS q) = case F.viewl q of
       F.EmptyL  -> Left (CS mempty)
       a F.:< q' -> Right (a, CS q')
-    unkons (CD l m r) = case viewl l of
+    unkons (CD l m r) = case F.viewl l of
       a F.:< l' -> Right (a, deepL l' m r)
       F.EmptyL -> error "invariant violated"
       
@@ -127,10 +127,10 @@ instance (Measured W a, Measured W b) => Snoc (C a) (C b) a b where
   _Snoc = prism snok unsnok where
     snok (CS q, a)     = CS (q F.|> a)
     snok (CD l m r, a) = CD l m (r F.|> a)
-    unsnok (CS q) = case viewr q of
+    unsnok (CS q) = case F.viewr q of
       F.EmptyR  -> Left (CS mempty)
       q' F.:> a -> Right (CS q', a)
-    unsnok (CD l m r) = case viewr r of
+    unsnok (CD l m r) = case F.viewr r of
       F.EmptyR -> error "invariant violated"
       r' F.:> a -> Right (deepR l m r', a)
 
@@ -206,8 +206,6 @@ instance Measured W (One a) where
 -- The @OverloadedLists@ extension can be used as well.
 
 newtype Seq a = Seq (C (One a)) deriving (Eq,Ord,Semigroup,Monoid,Measured W)
-
--- type role Seq representational -- !@(#&(!&*@(# roles
 
 #if __GLASGOW_HASKELL__ >= 802
 {-# complete_patterns ((:<), Empty) | (:>),Empty) #-}
@@ -304,9 +302,9 @@ instance TraversableWithIndex Int Seq where
 
     atC :: (Applicative f, Measured W a, Measured W b) => (Int -> a -> f b) -> Int -> C a -> f (C b)
     atC f acc (CS q) = CS <$> atQ f acc q
-    atC f acc (CD l m r) = CD <$> atQ f acc l <*> (atC (atU (atQ f)) $! acc + wl) m <*> (atQ f $! acc + wlm) r where
-      wl = weight l
-      wlm = wl + weight m
+    atC f acc (CD l m r)
+      | wl <- weight l
+      = CD <$> atQ f acc l <*> (atC (atU (atQ f)) $! acc + wl) m <*> (atQ f $! acc + wl + weight m) r
   {-# inline itraverse #-}
 
 type instance IxValue (Seq a) = a
