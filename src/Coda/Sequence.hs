@@ -29,8 +29,8 @@ import Data.Semigroup
 import Data.Traversable (foldMapDefault, fmapDefault)
 import GHC.Exts (IsList(..))
 import Text.Read
-import qualified Data.FingerTree as F hiding (fromList)
-import Data.FingerTree (FingerTree(..), Measured(..))
+import qualified Data.FingerTree as F
+import Data.FingerTree (FingerTree, Measured(..))
 
 --------------------------------------------------------------------------------
 -- Weights and Measures
