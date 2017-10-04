@@ -85,7 +85,9 @@ listen = liftIO (parse parseMessage stdin) >>= \case
     Left s -> do
       putError Nothing ParseError (Text.pack s)
       listen
-    Right e -> return e
+    Right e -> do
+   --   System.IO.putStrLn stderr $ show e
+      return e
 
 --------------------------------------------------------------------------------
 -- Server -> Client Notifications
@@ -125,8 +127,8 @@ initializeServer = listen >>= \case
       [ "capabilities" .= object
         [ "textDocumentSync" .= object
           [ "openClose" .= toJSON True
-          , "change" .= toJSON True
-          , "save" .= toJSON True
+          , "change" .= toJSON (2 :: Int) -- incremental content sync
+          , "save" .= object [ "includeText" .= toJSON False ]
           ]
         ]
       ]
@@ -150,10 +152,11 @@ initializeServer = listen >>= \case
 
 loop :: (MonadState s m, HasServerState s, MonadReader e m, HasServerOptions e, MonadIO m) => m ()
 loop = listen >>= \case
-  Right (DidClose tdi) -> didClose tdi
-  Right (DidChange ps) -> didChange ps
-  Right (DidOpen tdi) -> didOpen tdi
-  Right (DidSave ps) -> didSave ps
+  Right (DidClose tdi) -> didClose tdi >> loop
+  Right (DidChange ps) -> didChange ps >> loop
+  Right (DidChangeConfiguration _) -> loop
+  Right (DidOpen tdi) -> didOpen tdi >> loop
+  Right (DidSave ps) -> didSave ps >> loop
   Right Exit ->
     use shutdownRequested >>= \b -> liftIO $ do
       hFlush stdout
@@ -170,7 +173,6 @@ loop = listen >>= \case
     liftIO $ hPrint stderr m
     logMessage Information m
     loop
-
   Left _ -> do
     putError Nothing InternalError "batch commands not yet implemented"
     loop
