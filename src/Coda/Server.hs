@@ -2,6 +2,11 @@
 {-# language TemplateHaskell #-}
 {-# language OverloadedStrings #-}
 {-# language ScopedTypeVariables #-}
+{-# language MultiParamTypeClasses #-}
+{-# language FunctionalDependencies #-}
+{-# language FlexibleContexts #-}
+{-# language FlexibleInstances #-}
+{-# language UndecidableInstances #-}
 
 --------------------------------------------------------------------
 -- |
@@ -21,6 +26,7 @@ module Coda.Server
   ) where
 
 import Coda.Server.Options
+import Coda.Syntax.Document
 import Control.Applicative
 import Control.Monad.IO.Class
 import Control.Monad.State
@@ -48,11 +54,15 @@ putError i c t = -- do
 -- State
 --------------------------------------------------------------------------------
 
-newtype ServerState = ServerState
+data ServerState = ServerState
   { _shutdownRequested :: Bool
-  } deriving (Show)
+  , _documents :: Documents
+  } deriving Show
 
-makeClassy ''ServerState
+makeFieldsNoPrefix ''ServerState
+
+class (HasShutdownRequested t Bool, HasDocuments t Documents) => HasServerState t
+instance (HasShutdownRequested t Bool, HasDocuments t Documents) => HasServerState t
 
 --------------------------------------------------------------------------------
 -- Listening
@@ -101,7 +111,7 @@ server opts = do
   hSetBuffering stdout NoBuffering
   hSetEncoding stdout char8
   hFlush stdout
-  runReaderT ?? opts $ evalStateT ?? ServerState False $ do
+  runReaderT ?? opts $ evalStateT ?? ServerState False mempty $ do
     initializeServer
     loop
 
@@ -123,30 +133,35 @@ initializeServer = listen >>= \case
   Right Shutdown -> do
     assign shutdownRequested True
     initializeServer
-  Right Exit -> 
+  Right Exit ->
     use shutdownRequested >>= \b -> liftIO $ do
       hFlush stdout
       hFlush stderr
       exitWith $ if b then ExitSuccess else ExitFailure 1
-  Right (Request _ m _) 
+  Right (Request _ m _)
     | Text.isPrefixOf "$/" m -> initializeServer -- ignore extensions
   Right (Request Nothing _ _) -> initializeServer               -- ignore notifications
   Right (Request (Just i) _ _) -> do
     putError (Just i) ServerNotInitialized "waiting for initialization"
-    initializeServer 
+    initializeServer
   Left _ -> do
     putError Nothing InternalError "batch commands not yet implemented"
     initializeServer
 
 loop :: (MonadState s m, HasServerState s, MonadReader e m, HasServerOptions e, MonadIO m) => m ()
 loop = listen >>= \case
-  Right Initialized -> loop
-  Right Shutdown -> assign shutdownRequested True >> loop
-  Right Exit -> 
+  Right (DidClose tdi) -> didClose tdi
+  Right (DidChange ps) -> didChange ps
+  Right (DidOpen tdi) -> didOpen tdi
+  Right (DidSave ps) -> didSave ps
+  Right Exit ->
     use shutdownRequested >>= \b -> liftIO $ do
       hFlush stdout
       hFlush stderr
       exitWith $ if b then ExitSuccess else ExitFailure 1
+  Right Initialized -> loop -- we can now tell the client to do stuff
+  Right Shutdown -> assign shutdownRequested True >> loop
+
   Right (Request _ m _) | Text.isPrefixOf "$/" m -> loop -- ignore extensions for now
   Right (Request (Just i) _ _) -> do
     putError (Just i) InvalidRequest "unsupported request"
@@ -155,6 +170,7 @@ loop = listen >>= \case
     liftIO $ hPrint stderr m
     logMessage Information m
     loop
+
   Left _ -> do
     putError Nothing InternalError "batch commands not yet implemented"
     loop

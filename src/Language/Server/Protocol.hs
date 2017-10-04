@@ -135,6 +135,9 @@ module Language.Server.Protocol
   -- *** 'textDocument/didClose'
   , pattern DidClose
   , DidCloseTextDocumentParams(..)
+  -- *** 'textDocument/didSave'
+  , pattern DidSave
+  , DidSaveTextDocumentParams(..)
   -- *** 'workspace/didChangeWatchedFiles
   , pattern DidChangeWatchedFiles
   , DidChangeWatchedFilesParams(..)
@@ -507,8 +510,8 @@ instance Hashable Position
 instance Default Position
 
 -- |
--- @'subtractPosition' a b@ subtracts @a@ from @b@. 
--- 
+-- @'subtractPosition' a b@ subtracts @a@ from @b@.
+--
 -- Be careful, as this is the opposite argument order from @(-)@, but matches
 -- the argument order of 'subtract'
 --
@@ -1123,7 +1126,7 @@ pattern DidOpen tdi = Request Nothing "textDocument/didOpen" (Just (JSON (DidOpe
 --------------------------------------------------------------------------------
 
 newtype DidCloseTextDocumentParams = DidCloseTextDocumentParams
-  { _textDocument :: TextDocumentItem
+  { _textDocument :: TextDocumentIdentifier
   } deriving (Eq,Show,Read,Data,Generic)
 
 jsonKeep ''DidCloseTextDocumentParams
@@ -1133,7 +1136,7 @@ instance Hashable DidCloseTextDocumentParams
 instance Default DidCloseTextDocumentParams
 
 -- | @textDocument/didClose@
-pattern DidClose :: TextDocumentItem -> Request
+pattern DidClose :: TextDocumentIdentifier -> Request
 pattern DidClose tdi = Request Nothing "textDocument/didClose" (Just (JSON (DidCloseTextDocumentParams tdi)))
 
 --------------------------------------------------------------------------------
@@ -1168,7 +1171,23 @@ instance Default DidChangeTextDocumentParams
 pattern DidChange :: DidChangeTextDocumentParams -> Request
 pattern DidChange p = Request Nothing "textDocument/didChange" (Just (JSON p))
 
+--------------------------------------------------------------------------------
+-- Client -> Server: 'textDocument/didSave'
+--------------------------------------------------------------------------------
 
+data DidSaveTextDocumentParams = DidSaveTextDocumentParams
+  { _textDocument :: !TextDocumentIdentifier
+  , _text         :: Maybe Text
+  } deriving (Eq,Show,Read,Data,Generic)
+
+jsonKeep ''DidSaveTextDocumentParams
+lenses ''DidSaveTextDocumentParams
+instance Hashable DidSaveTextDocumentParams
+instance Default DidSaveTextDocumentParams
+
+-- | @textDocument/didSave@
+pattern DidSave :: DidSaveTextDocumentParams -> Request
+pattern DidSave p = Request Nothing "textDocument/didSave" (Just (JSON p))
 
 --------------------------------------------------------------------------------
 -- Client -> Server: 'workspace/didChangeWatchedFiles'
@@ -1216,7 +1235,6 @@ instance Default DidChangeWatchedFilesParams
 -- | @workspace/didChangeWatchedFiles@
 pattern DidChangeWatchedFiles :: [FileEvent] -> Request
 pattern DidChangeWatchedFiles c = Request Nothing "workspace/didChangeWatchedFiles" (Just (JSON (DidChangeWatchedFilesParams c)))
-
 
 --------------------------------------------------------------------------------
 -- Server -> Client: 'textDocument/publishDiagnostics'
