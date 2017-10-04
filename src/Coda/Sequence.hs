@@ -15,7 +15,7 @@
 
 module Coda.Sequence 
   ( Seq(Empty,(:<),(:>))
-  , split
+  , drop, split, take
   ) where
 
 import Control.Applicative
@@ -31,6 +31,7 @@ import GHC.Exts (IsList(..))
 import Text.Read
 import qualified Data.FingerTree as F
 import Data.FingerTree (FingerTree, Measured(..))
+import Prelude hiding (drop, take)
 
 --------------------------------------------------------------------------------
 -- Weights and Measures
@@ -272,6 +273,12 @@ instance Foldable Seq where
 split :: Int -> Seq a -> (Seq a, Seq a)
 split i (Seq q) = case wsplit i q of
   (l, r) -> (Seq l, Seq r)
+
+take :: Int -> Seq a -> Seq a
+take i q = fst (split i q)
+
+drop :: Int -> Seq a -> Seq a
+drop i q = snd (split i q)
 
 instance Traversable Seq where
   traverse f0 xs = confusing (_Seq.traverseC._One) f0 xs where
