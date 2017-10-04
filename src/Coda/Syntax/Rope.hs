@@ -23,6 +23,7 @@ import Language.Server.Protocol
 -- this will need to evolve quite a bit
 
 newtype Rope = Rope (FingerTree LineMeasure Line)
+  deriving Show
 
 instance Semigroup Rope where
   Rope l <> Rope r = Rope $ case viewr l of

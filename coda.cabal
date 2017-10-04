@@ -82,6 +82,7 @@ library
     Coda.Server
     Coda.Server.Options
 
+    Coda.Syntax.Document
     Coda.Syntax.Keywords
     Coda.Syntax.Line
     Coda.Syntax.Rope
