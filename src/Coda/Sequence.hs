@@ -193,7 +193,7 @@ instance Measured W (One a) where
 -- Most of the API is provided by standard combinators:
 --
 -- @
--- 'null', 'length', 'empty', 'pure', '(<|>)' or '(<>)', etc.
+-- 'null', 'length', 'empty', 'pure', ('<|>') or ('<>'), etc.
 -- @
 --
 -- Many other combinators and traversals come from @lens@:
@@ -202,7 +202,7 @@ instance Measured W (One a) where
 -- 'cons', 'uncons', 'snoc', 'unsnoc', '_head', '_tail', 'ix', 'itraversed'
 -- @
 --
--- as well as the patterns for '(:<)', '(:>)' and 'Empty'
+-- as well as the patterns for (':<'), (':>') and 'Empty'
 --
 -- The @OverloadedLists@ extension can be used as well.
 
