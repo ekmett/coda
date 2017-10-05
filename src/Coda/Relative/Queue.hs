@@ -29,6 +29,10 @@ data Queue a = Q {-# unpack #-} !Delta [a] [a] [a]
 {-# complete_patterns ((:<),Empty) #-}
 #endif
 
+instance Relative (Queue a) where
+  rel 0 q = q
+  rel d (Q d' f r s) = Q (d <> d') f r s
+
 instance Default (Queue a) where
   def = Q 0 [] [] [] 
 
