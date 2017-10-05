@@ -17,8 +17,19 @@ import Data.Semigroup
 -- inv a = inv a <> a <> inv a
 -- inv (inv a) = a
 -- @
-class Semigroup a => InverseSemigroup a where
+class Semigroup a => RegularSemigroup a where
   inv :: a -> a
+
+-- | pushout
+class (RegularSemigroup a, Monoid a) => RegularMonoid a
+instance (RegularSemigroup a, Monoid a) => RegularMonoid a
+
+-- | a regular semigroup where all idempotents commute
+--
+-- @
+-- and [ x <> y == y <> x | x <- [ a <> inv a, inv a <> a ] | y <- [ b <> inv b, inv b <> b ] ]
+-- @
+class RegularSemigroup a => InverseSemigroup a
 
 -- | pushout
 class (InverseSemigroup a, Monoid a) => InverseMonoid a
@@ -34,7 +45,7 @@ class InverseMonoid a => Group a
 --------------------------------------------------------------------------------
 
 -- |
--- @x '<=' y@ implies @z '<>' x '<=' z '<>' y@ and @x '<>' z '<=' y' <>' z@  
+-- @x '<=' y@ implies @z '<>' x '<=' z '<>' y@ and @x '<>' z '<=' y' <>' z@
 class (Ord a, Semigroup a) => OrderedSemigroup a where
 
 -- | pushout
@@ -46,8 +57,8 @@ class    (OrderedMonoid a, Group a) => OrderedGroup a
 instance (OrderedMonoid a, Group a) => OrderedGroup a
 
 -- |
--- @x '<' y@ implies @z '<>' x '<' z '<>' y@ and @x '<>' z '<' y' <>' z@  
--- @x '=' y@ implies @z '<>' x '=' z '<>' y@ and @x '<>' z '=' y' <>' z@  
+-- @x '<' y@ implies @z '<>' x '<' z '<>' y@ and @x '<>' z '<' y' <>' z@
+-- @x '=' y@ implies @z '<>' x '=' z '<>' y@ and @x '<>' z '=' y' <>' z@
 class OrderedSemigroup a => StrictlyOrderedSemigroup a where
 
 -- | pushout
@@ -126,7 +137,7 @@ class (SemigroupAction a b, Semigroup b) => DistributiveAction a b
 -- Proof:
 --
 -- @
--- act a (inv b) <> act a b 
+-- act a (inv b) <> act a b
 -- = act a (inv b <> b) -- distributive action
 -- = act a mempty -- left identity
 -- = mempty -- unitary action
@@ -158,7 +169,7 @@ class (DistributiveAction a b, DistributiveAction a c, DistributiveAction b c) =
 -- | strict semidirect product
 data Semi a b = Semi !a !b deriving (Eq, Ord, Show, Read)
 
--- | 
+-- |
 -- @
 -- Semi a b <> (Semi c d <> Semi e f)
 -- = Semi a b <> Semi (c <> e) (d <> act c f) -- definition
@@ -171,11 +182,11 @@ data Semi a b = Semi !a !b deriving (Eq, Ord, Show, Read)
 -- = (Semi a b <> Semi c d) <> Semi e f -- definition (backards)
 -- @
 instance DistributiveAction a b => Semigroup (Semi a b) where
-  Semi a x <> Semi b y = Semi (a <> b) (x <> act a y) 
+  Semi a x <> Semi b y = Semi (a <> b) (x <> act a y)
 
 -- Requires: @x '<=' y@ implies @z '<>' x '<=' z '<>' y@ and @x '<>' z '<=' y' <>' z@
 --
--- Assume @Semi xa xb <= Semi ya yb@. 
+-- Assume @Semi xa xb <= Semi ya yb@.
 --
 -- Lexicographical ordering implies xa <= ya and if xa = ya, xb <= yb. Otherwise xa < ya.
 --
@@ -185,7 +196,7 @@ instance DistributiveAction a b => Semigroup (Semi a b) where
 -- Then by ordered semigroup @act za xb <= act za yb@ implies @zb <> act za xb <= zb <> act za yb@
 --
 -- @
--- Semi za zb <> Semi xa xb 
+-- Semi za zb <> Semi xa xb
 -- = Semi (za <> xa) (zb <> act za xb) -- definition
 -- = Semi (za <> ya) (zb <> act za xb) -- xa = ya assumption, and @a@ is a strictly ordered semigroup
 -- <= Semi (za <> ya) (zb <> act za yb) -- by ordered semigroup observation above (or split into = and < cases to handle the strict ordered semigroup proof below)
@@ -204,8 +215,8 @@ instance DistributiveAction a b => Semigroup (Semi a b) where
 -- = Semi (xa <> za) (xa <> act xa zb) -- definition
 -- = Semi (ya <> za) (xa <> act xa zb) -- xa = ya assumption, and @a@ is a strictly ordered semigroup
 -- <= Semi (ya <> za) (ya <> act xa zb) -- strict ordered semigroup ordering
--- <= Semi (ya <> za) (ya <> act ya zb) -- 
--- 
+-- <= Semi (ya <> za) (ya <> act ya zb) --
+--
 -- Otherwise, xa < ya:
 --
 -- By the strict ordered semigroup: (xa < ya) implies (za <> xa < za <> ya)
@@ -223,10 +234,10 @@ instance (DistributiveAction a b, StrictlyOrderedSemigroup a, OrderedSemigroup b
 
 -- | Refinement of the proof for 'OrderedSemigroup'
 instance (DistributiveAction a b, StrictlyOrderedSemigroup a, StrictlyOrderedSemigroup b, StrictlyMonotoneAction a b) => StrictlyOrderedSemigroup (Semi a b) where
-  
+
 -- |
 -- @
--- mempty <> Semi a b 
+-- mempty <> Semi a b
 -- = Semi mempty mempty <> Semi a b -- definition
 -- = Semi (mempty <> a) (mempty <> act mempty b) -- definition
 -- = Semi a (mempty <> act mempty b) -- left identity
@@ -259,7 +270,7 @@ instance (MonoidAction a b, UnitaryAction a b) => Monoid (Semi a b) where
 -- @
 --
 -- @
--- Semi a b <> inv (Semi a b) 
+-- Semi a b <> inv (Semi a b)
 --   = Semi (a <> inv a) (act (inv a) b <> act (inv a) (inv b)) -- definition
 --   = Semi mempty (act (inv a) b <> act (inv a) (inv b)) -- right inverse law
 --   = Semi mempty (act (inv a) (b <> inv b)) -- distributive action
@@ -280,15 +291,16 @@ instance (MonoidAction a b, UnitaryAction a b) => Monoid (Semi a b) where
 -- = Semi a (act mempty b) -- right inverse
 -- = Semi a b -- unitary action
 -- @
-instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => InverseSemigroup (Semi a b) where
+instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => RegularSemigroup (Semi a b) where
   inv (Semi a b) = Semi (inv a) (inv a `act` inv b)
+instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => InverseSemigroup (Semi a b)
 instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => Group (Semi a b)
 
 -- | @
 -- act (a <> a') (Semi b c)
 -- = Semi (act (a <> a') b) (act (a <> a') c) -- definition
--- = Semi (act a (act a' b)) (act (a <> a') c)) -- semigroup action 
--- = Semi (act a (act a' b)) (act a (act a' c)) -- semigroup action 
+-- = Semi (act a (act a' b)) (act (a <> a') c)) -- semigroup action
+-- = Semi (act a (act a' b)) (act a (act a' c)) -- semigroup action
 -- = act a (Semi (act a' b) (act a' c)) -- definition (backwards)
 -- = act a (act a' (Semi b c)) -- definition (backwards)
 -- @
