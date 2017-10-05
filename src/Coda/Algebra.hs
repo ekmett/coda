@@ -11,13 +11,23 @@ import Data.Semigroup
 -- Groups
 --------------------------------------------------------------------------------
 
-
 -- | @
--- a <> inv a = mempty = inv a <> a
+-- inv (a <> b) = inv b <> inv a
+-- a <> inv a <> a = a
+-- inv a = inv a <> a <> inv a
 -- inv (inv a) = a
 -- @
-class Monoid a => Group a where
+class Semigroup a => InverseSemigroup a where
   inv :: a -> a
+
+-- | pushout
+class (InverseSemigroup a, Monoid a) => InverseMonoid a
+instance (InverseSemigroup a, Monoid a) => InverseMonoid a
+
+-- | A unipotent inverse monoid
+--
+-- @a <> inv a = mempty = inv a <> a@
+class InverseMonoid a => Group a
 
 --------------------------------------------------------------------------------
 -- Ordered algebraic structures
@@ -270,8 +280,9 @@ instance (MonoidAction a b, UnitaryAction a b) => Monoid (Semi a b) where
 -- = Semi a (act mempty b) -- right inverse
 -- = Semi a b -- unitary action
 -- @
-instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => Group (Semi a b) where
+instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => InverseSemigroup (Semi a b) where
   inv (Semi a b) = Semi (inv a) (inv a `act` inv b)
+instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => Group (Semi a b)
 
 -- | @
 -- act (a <> a') (Semi b c)
