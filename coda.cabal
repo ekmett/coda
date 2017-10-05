@@ -76,6 +76,7 @@ library
     Coda.Relative.Foldable
     Coda.Relative.List
     Coda.Relative.Measurement
+    Coda.Relative.Queue
 
     Coda.Sequence
 
