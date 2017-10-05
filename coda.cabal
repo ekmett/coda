@@ -71,6 +71,7 @@ library
 
     Coda.Relative.Absolute
     Coda.Relative.At
+    Coda.Relative.Cat
     Coda.Relative.Class
     Coda.Relative.Delta
     Coda.Relative.Foldable
