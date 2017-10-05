@@ -2,10 +2,10 @@
 {-# language BangPatterns #-}
 {-# language TypeFamilies #-}
 {-# language ViewPatterns #-}
-{-# language FlexibleInstances #-}
-{-# language MultiParamTypeClasses #-}
 {-# language RoleAnnotations #-}
 {-# language PatternSynonyms #-}
+{-# language FlexibleInstances #-}
+{-# language MultiParamTypeClasses #-}
 
 ---------------------------------------------------------------------------------
 --- |
@@ -19,64 +19,53 @@
 
 module Coda.Relative.List
   ( List(..)
-  , pattern Cons'
+  , pattern Cons
   , reverse
-  , rtoRList
   ) where
 
 import Coda.Relative.Class
 import Coda.Relative.Delta
 import Coda.Relative.Foldable
-import Control.Lens (AsEmpty(..),prism, uncons, Cons(..))
+import Control.Lens (AsEmpty(..), prism, Cons(..), ifoldMap)
 import Data.Default
 import Data.Function (on)
-import Data.List (unfoldr)
 import Data.Semigroup
 import GHC.Exts as Exts
+import qualified Prelude
 import Prelude hiding (reverse)
 import Text.Read
 
 -- | A list with an /O(1)/ 'rel', 'cons' and 'uncons', but /O(n)/ ('<>')
-data List a
-  = Nil
-  | Cons !Delta !a (List a)
+data List a = List !Delta [a]
 
 type role List nominal
 
 instance Relative (List a) where
-  rel _ Nil            = Nil
-  rel d (Cons d' a as) = Cons (d <> d') a as
+  rel 0 xs = xs
+  rel d (List d' as) = List (d <> d') as
+  {-# inline rel #-}
 
-rtoRList :: RelativeFoldable f => f a -> List a
-rtoRList = rfoldr Cons Nil 0
+pattern Cons :: Relative a => () => a -> List a -> List a
+pattern Cons a as <- List d ((rel d -> a):(List d -> as)) where
+  Cons a (List d as) = List d (rel (-d) a:as)
 
-pattern Cons' :: Relative a => () => a -> List a -> List a
-pattern Cons' a as <- Cons d (rel d -> a) (rel d -> as) where
-  Cons' a as = Cons mempty a as
-
-reverse :: Relative a => List a -> List a
-reverse = go mempty Nil where
-  go !d !acc (Cons d' a as) | d'' <- mappend d d' = go d'' (Cons mempty (rel d'' a) acc) as
-  go _   acc Nil = acc
+reverse :: List a -> List a
+reverse (List d as) = List d (Prelude.reverse as)
+{-# inline reverse #-}
 
 instance RelativeFoldable List where
-  rfoldMap f !d (Cons d' a as) | !d'' <- mappend d d' = f d'' a `mappend` rfoldMap f d'' as
-  rfoldMap _ _ Nil = mempty
-
-  rfoldr f z !d (Cons d' a as) | !d'' <- d <> d' = f d'' a (rfoldr f z d'' as)
-  rfoldr _ z _ Nil = z
-
-  rnull Nil = True
-  rnull _ = False
-
-  rlength = go 0 where
-    go !n Nil = n
-    go n (Cons _ _ as) = go (n+1) as
+  rfoldMap f !d (List d' as) = foldMap (f (d <> d')) as
+  {-# inline rfoldMap #-}
+  rfoldr f z !d (List d' as) = foldr (f (d <> d')) z as
+  {-# inline rfoldr #-}
+  rnull (List _ xs) = null xs
+  {-# inline rnull #-}
+  rlength (List _ xs) = length xs where
+  {-# inline rlength #-}
 
 instance RelativeFoldableWithIndex Int List where
-  irfoldMap = go 0 where
-    go !_ !_ !_ Nil = mempty
-    go i f d (Cons d' a as) | !d'' <- mappend d d' = f d'' i a `mappend` go (i+1) f d'' as
+  irfoldMap f d (List d' as) = ifoldMap (f (d <> d')) as
+  {-# inline irfoldMap #-}
 
 instance (Show a, Relative a) => Show (List a) where
   showsPrec d = showsPrec d . Exts.toList
@@ -86,39 +75,44 @@ instance (Read a, Relative a) => Read (List a) where
 
 instance (Eq a, Relative a) => Eq (List a) where
   (==) = (==) `on` Exts.toList
+  {-# inline (==) #-}
 
 instance (Ord a, Relative a) => Ord (List a) where
   compare = compare `on` Exts.toList
+  {-# inline compare #-}
 
 instance RelativeOrder a => RelativeOrder (List a)
 instance StrictRelativeOrder a => StrictRelativeOrder (List a)
-instance RelativeMonoid (List a)
+instance Relative a => RelativeMonoid (List a)
+
+instance Default (List a) where
+  def = List 0 []
 
 -- /O(n)/
-instance Semigroup (List a) where
-  (<>) = go 0 where
-    go d Nil bs = rel d bs
-    go d (Cons d' a as) bs = Cons d' a (go (d-d') as bs)
+instance Relative a => Semigroup (List a) where
+  List d as <> List d' bs | d'' <- d'-d = List d $ as ++ map (rel d'') bs
+  {-# inline (<>) #-}
 
 -- /O(n)/
-instance Monoid (List a) where
-  mempty = Nil
+instance Relative a => Monoid (List a) where
+  mempty = List 0 []
   mappend = (<>)
 
 instance Relative a => IsList (List a) where
   type Item (List a) = a
-  fromList = foldr Cons' Nil
-  toList   = unfoldr uncons
+  fromList = List 0
+  {-# inline conlike fromList #-}
+  toList (List d xs) = map (rel d) xs
+  {-# inline toList #-}
 
 instance AsEmpty (List a) where
-  _Empty = prism (const Nil) $ \case
-    Nil -> Right ()
-    x -> Left x
+  _Empty = prism (const def) $ \case
+    List _ [] -> Right ()
+    xs        -> Left xs
+  {-# inline _Empty #-}
 
-instance Relative a => Cons (List a) (List b) a b where
-  _Cons = prism (uncurry (Cons mempty)) $ \case
-    Nil -> Left Nil
-    Cons d a as -> Right (rel d a, rel d as)
-
-instance Default (List a) where
-  def = Nil
+instance (Relative a, Relative b) => Cons (List a) (List b) a b where
+  _Cons = prism (\(a,List d as) -> List d (rel (-d) a:as)) $ \case
+    List _ []     -> Left mempty
+    List d (a:as) -> Right (rel d a, List d as)
+  {-# inline _Cons #-}

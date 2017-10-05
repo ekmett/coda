@@ -28,13 +28,11 @@ module Coda.Relative.Map
   , toAscList
   , union
   , split
-  , toRList
   ) where
 
 import Coda.Relative.Class
 import Coda.Relative.Delta hiding (delta)
 import Coda.Relative.Foldable
-import Coda.Relative.List
 import Coda.Util.BitQueue
 import Control.Lens
 import Data.Default
@@ -51,10 +49,6 @@ data Map k a
   | Tip
 
 type role Map nominal nominal
-
--- pattern Bin' :: (Relative k, Relative a) => Size -> k -> a -> Map k a -> Map k a -> Map k a
--- pattern Bin' s k a l r <- Bin s d (rel d -> k) (rel d -> a) (rel d -> l) (rel d -> r) where
---  Bin' s k a l r = Bin s 0 k a l r
 
 instance Relative (Map k a) where
   rel _ Tip = Tip
@@ -89,9 +83,6 @@ instance RelativeFoldableWithIndex k (Map k) where
 
 toAscList :: (StrictRelativeOrder k, Relative a) => Map k a -> [(k,a)]
 toAscList = irfoldr (\d k x xs -> (rel d k,rel d x):xs) [] 0
-
-toRList :: Map k a -> List (k,a)
-toRList = irfoldr (\d k x xs -> Cons d (k,x) xs) Nil 0
 
 instance (StrictRelativeOrder k, Relative a, Eq a) => Eq (Map k a) where (==) = on (==) toAscList
 instance (StrictRelativeOrder k, Relative a, Ord a) => Ord (Map k a) where compare = on compare toAscList
