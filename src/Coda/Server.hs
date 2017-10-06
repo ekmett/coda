@@ -6,6 +6,8 @@
 {-# language FunctionalDependencies #-}
 {-# language FlexibleContexts #-}
 {-# language FlexibleInstances #-}
+{-# language DeriveGeneric #-}
+{-# language DeriveDataTypeable #-}
 {-# language UndecidableInstances #-}
 
 --------------------------------------------------------------------
@@ -27,6 +29,7 @@ module Coda.Server
 
 import Coda.Server.Options
 import Coda.Syntax.Document
+import Coda.Syntax.Line
 import Control.Applicative
 import Control.Monad.IO.Class
 import Control.Monad.State
@@ -34,7 +37,13 @@ import Control.Monad.Reader
 import Control.Lens hiding ((.=))
 import Data.Aeson
 import Data.ByteString.Lazy as Lazy
+import Data.Data
+import Data.Default
+import Data.FingerTree (Measured(..))
+import Data.HashMap.Strict
+import Data.Semigroup
 import Data.Text as Text
+import GHC.Generics
 import Language.Server.Builder
 import Language.Server.Protocol
 import Language.Server.Parser
@@ -54,15 +63,29 @@ putError i c t = -- do
 -- State
 --------------------------------------------------------------------------------
 
+
+data Stub = Stub deriving (Eq,Ord,Show,Read,Data,Generic)
+instance Default Stub where def = Stub
+instance Semigroup Stub where
+  Stub <> Stub = Stub
+instance Monoid Stub where
+  mempty = Stub
+  mappend = (<>)
+instance Measured Stub Stub where measure = id
+instance FromText Stub where fromText _ = Stub
+
+type Doc = Document Stub Stub
+type Docs = HashMap DocumentUri Doc
+
 data ServerState = ServerState
   { _shutdownRequested :: Bool
-  , _documents :: Documents
+  , _documents :: HashMap DocumentUri Doc
   } deriving Show
 
 makeFieldsNoPrefix ''ServerState
 
-class (HasShutdownRequested t Bool, HasDocuments t Documents) => HasServerState t
-instance (HasShutdownRequested t Bool, HasDocuments t Documents) => HasServerState t
+class (HasShutdownRequested t Bool, HasDocuments t Docs) => HasServerState t
+instance (HasShutdownRequested t Bool, HasDocuments t Docs) => HasServerState t
 
 --------------------------------------------------------------------------------
 -- Listening
