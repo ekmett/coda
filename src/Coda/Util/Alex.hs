@@ -21,6 +21,7 @@ module Coda.Util.Alex
   ) where
 
 import Coda.Relative.Delta
+import Coda.Syntax.Line
 import Data.Bits
 import Data.Data
 import Data.Hashable
@@ -61,6 +62,10 @@ instance HasDelta AlexInput where
 
 instance IsString AlexInput where
   fromString = AlexInput S0 '\n' 0 . fromString
+
+instance FromText AlexInput where
+  fromText = AlexInput S0 '\n' 0
+  {-# inline conlike fromText #-}
 
 ok :: a -> b -> Maybe (a,b)
 ok !a !b = Just (a,b)

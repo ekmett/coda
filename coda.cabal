@@ -70,12 +70,12 @@ library
     Coda.Data.View
 
     Coda.Relative.Absolute
-    Coda.Relative.At
     Coda.Relative.Cat
     Coda.Relative.Class
     Coda.Relative.Delta
     Coda.Relative.Foldable
     Coda.Relative.List
+    Coda.Relative.Located
     Coda.Relative.Measurement
     Coda.Relative.Queue
 
@@ -88,6 +88,7 @@ library
     Coda.Syntax.Keywords
     Coda.Syntax.Line
     Coda.Syntax.Rope
+    Coda.Syntax.Token
 
     Coda.Util.Aeson
     Coda.Util.Alex
