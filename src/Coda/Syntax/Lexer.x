@@ -25,7 +25,7 @@ import Coda.Relative.Delta
 import Coda.Relative.Located
 import Coda.Syntax.Dyck
 import Coda.Syntax.Token
-import Coda.Syntax.Line
+import Coda.Syntax.Rope
 import Coda.Util.Alex
 import Data.Data
 import Data.Default

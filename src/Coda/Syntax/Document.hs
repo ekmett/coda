@@ -30,7 +30,6 @@ module Coda.Syntax.Document
   ) where
 
 import Coda.Relative.Class
-import Coda.Syntax.Line
 import Coda.Syntax.Rope
 import Control.Lens
 import Control.Monad.State

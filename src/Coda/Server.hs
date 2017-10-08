@@ -30,7 +30,7 @@ module Coda.Server
 import Coda.Relative.Class
 import Coda.Server.Options
 import Coda.Syntax.Document
-import Coda.Syntax.Line
+import Coda.Syntax.Rope
 import Control.Applicative
 import Control.Monad.IO.Class
 import Control.Monad.State

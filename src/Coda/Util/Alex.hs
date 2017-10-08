@@ -21,7 +21,7 @@ module Coda.Util.Alex
   ) where
 
 import Coda.Relative.Delta
-import Coda.Syntax.Line
+import Coda.Syntax.Rope
 import Data.Bits
 import Data.Data
 import Data.Hashable

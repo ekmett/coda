@@ -34,7 +34,7 @@ module Coda.Syntax.Dyck
 
 import Control.Comonad
 import Control.Lens
-import Coda.Syntax.Line
+import Coda.Syntax.Rope
 import Coda.Syntax.Token
 import Coda.Relative.Cat as Cat
 import Coda.Relative.Class
