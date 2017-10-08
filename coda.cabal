@@ -54,15 +54,12 @@ library
   ghc-options: -Wall
   hs-source-dirs: src
   exposed-modules:
-    Coda.Algebra
-
     Coda.Console
     Coda.Console.Command
     Coda.Console.Completion
     Coda.Console.Options
     Coda.Console.Unicode
 
-    Coda.Data.Sequence
     Coda.Data.Sink
     Coda.Data.View
 
@@ -76,7 +73,6 @@ library
     Coda.Relative.Measurement
     Coda.Relative.Queue
     Coda.Relative.Rev
-
 
     Coda.Server
     Coda.Server.Options
