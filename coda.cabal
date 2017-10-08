@@ -60,7 +60,6 @@ library
     Coda.Console.Options
     Coda.Console.Unicode
 
-    Coda.Data.View
 
     Coda.Relative.Absolute
     Coda.Relative.Cat
