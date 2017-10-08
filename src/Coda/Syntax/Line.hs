@@ -32,6 +32,7 @@ module Coda.Syntax.Line
   , HasLineMeasure(..)
   ) where
 
+import Coda.Relative.Class
 import Coda.Relative.Delta
 import Control.Comonad
 import Data.Data
@@ -111,6 +112,7 @@ foldLines f z0 (Text a0 o0 l0) = go o0 o0 (o0+l0) a0 z0 where
 -- back and forth between 'Delta' and 'Position' in /O(log l)/ time, while still
 -- letting us use the compact single-integer Abelian group 'Delta' representation
 -- internally for almost all positioning.
+--
 data LineMeasure v = LineMeasure !Int !Delta v
   deriving (Eq, Ord, Show, Read, Data, Generic, Generic1, Functor, Foldable, Traversable)
 
@@ -123,14 +125,15 @@ instance HasDelta (LineMeasure v) where
 
 instance Hashable v => Hashable (LineMeasure v)
 
-instance Semigroup v => Semigroup (LineMeasure v) where
-  LineMeasure l d v <> LineMeasure l' d' v' = LineMeasure (l + l') (d <> d') (v <> v')
+instance RelativeMonoid v => Semigroup (LineMeasure v) where
+  LineMeasure l d v <> LineMeasure l' d' v' = LineMeasure (l + l') (d + d') (mappend v (rel d v'))
 
-instance Monoid v => Monoid (LineMeasure v) where
+instance RelativeMonoid v => Monoid (LineMeasure v) where
   mempty = LineMeasure 0 0 mempty
-  mappend (LineMeasure l d v) (LineMeasure l' d' v') = LineMeasure (l + l') (d <> d') (mappend v v')
+  mappend (LineMeasure l d v) (LineMeasure l' d' v') = LineMeasure (l + l') (d + d') (mappend v (rel d v'))
 
-instance Measured v a => Measured (LineMeasure v) (Line a) where
+-- Measured v a is somewhat the wrong constraint here
+instance (RelativeMonoid v, Measured v a) => Measured (LineMeasure v) (Line a) where
   measure (Line l a) = LineMeasure 1 (Delta $ Text.lengthWord16 l) (measure a)
 
 instance Default v => Default (LineMeasure v) where
@@ -150,6 +153,5 @@ instance HasLineMeasure (LineMeasure v) v where
   lineCount (LineMeasure l _ _) = l
   lineMeasure = id
 
-instance Measured v a => HasLineMeasure (Line a) v where
+instance (RelativeMonoid v, Measured v a) => HasLineMeasure (Line a) v where
   lineMeasure = measure
-

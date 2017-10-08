@@ -30,6 +30,9 @@ data Cat a = E | C a (Queue (Cat a))
 {-# complete_patterns ((:<)|C),(Empty|E) #-}
 #endif
 
+instance Default (Cat a) where
+  def = E
+
 instance Relative a => Relative (Cat a) where
   rel _ E = E
   rel 0 xs = xs

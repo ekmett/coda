@@ -27,6 +27,7 @@ module Coda.Server
   , showMessage
   ) where
 
+import Coda.Relative.Class
 import Coda.Server.Options
 import Coda.Syntax.Document
 import Coda.Syntax.Line
@@ -73,6 +74,8 @@ instance Monoid Stub where
   mappend = (<>)
 instance Measured Stub Stub where measure = id
 instance FromText Stub where fromText _ = Stub
+instance Relative Stub where rel _ Stub = Stub
+instance RelativeMonoid Stub
 
 type Doc = Document Stub Stub
 type Docs = HashMap DocumentUri Doc

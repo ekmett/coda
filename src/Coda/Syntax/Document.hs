@@ -19,6 +19,7 @@ module Coda.Syntax.Document
   , didClose
   ) where
 
+import Coda.Relative.Class
 import Coda.Syntax.Line
 import Coda.Syntax.Rope
 import Control.Lens
@@ -40,7 +41,7 @@ data Document v a = Document
   , _changed    :: !Bool -- differs than the contents on disk
   } deriving Show
 
-instance Measured v a => Measured (LineMeasure v) (Document v a) where
+instance (RelativeMonoid v, Measured v a) => Measured (LineMeasure v) (Document v a) where
   measure = views contents measure
 
 makeFieldsNoPrefix ''Document
@@ -51,6 +52,7 @@ class HasDocuments t d | t -> d where
 didOpen ::
   ( MonadState s m
   , HasDocuments s (HashMap DocumentUri (Document v a))
+  , RelativeMonoid v
   , Measured v a
   , FromText a
   ) => TextDocumentItem -> m ()
@@ -59,6 +61,7 @@ didOpen (TextDocumentItem u l v t) = documents.at u ?= Document l v (fromText t)
 didChange ::
   ( MonadState s m
   , HasDocuments s (HashMap DocumentUri (Document v a))
+  , RelativeMonoid v
   , Measured v a
   , FromText a
   ) => DidChangeTextDocumentParams -> m ()
@@ -75,6 +78,7 @@ didChange (DidChangeTextDocumentParams (VersionedTextDocumentIdentifier u v) cs)
 didSave ::
   ( MonadState s m
   , HasDocuments s (HashMap DocumentUri (Document v a))
+  , RelativeMonoid v
   , Measured v a
   , FromText a
   ) => DidSaveTextDocumentParams -> m ()

@@ -140,17 +140,21 @@ instance (Functor f, GRelative g) => GRelative (f :.: g) where
 
 -- | We can derive relativity generically.
 grel :: (Generic a, GRelative (Rep a)) => Delta -> a -> a
+grel 0 = id
 grel d = to . grel' d . from
 {-# INLINE grel #-}
 
 -- | Every functor can be relative.
 frel :: (Functor f, Relative a) => Delta -> f a -> f a
-frel = fmap fmap rel
+frel 0 = id
+frel f = fmap (rel f)
 {-# INLINE frel #-}
 
 -- | Every bifunctor can be relative.
 birel :: (Bifunctor f, Relative a, Relative b) => Delta -> f a b -> f a b
+birel 0 = id
 birel d = bimap (rel d) (rel d)
+{-# inline birel #-}
 
 --------------------------------------------------------------------------------
 -- Relative monoids

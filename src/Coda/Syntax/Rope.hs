@@ -5,6 +5,7 @@
 {-# language UndecidableInstances #-}
 {-# language FlexibleContexts #-}
 {-# language TypeFamilies #-}
+
 module Coda.Syntax.Rope
   ( Rope(..)
   , fromText
@@ -17,6 +18,7 @@ module Coda.Syntax.Rope
   , positionToDelta
   ) where
 
+import Coda.Relative.Class
 import Coda.Relative.Delta
 import Coda.Syntax.Line
 import Data.FingerTree
@@ -33,7 +35,7 @@ newtype Rope v a = Rope (FingerTree (LineMeasure v) (Line a))
 
 type role Rope nominal nominal
 
-instance (Measured v a, FromText a) => Semigroup (Rope v a) where
+instance (RelativeMonoid v, Measured v a, FromText a) => Semigroup (Rope v a) where
   Rope l <> Rope r = Rope $ case viewr l of
     EmptyR -> r
     ll :> Line m _
@@ -47,21 +49,21 @@ instance (Measured v a, FromText a) => Semigroup (Rope v a) where
           EmptyL -> l -- but there is no right rope
      | otherwise -> ll >< r
 
-instance (Measured v a, FromText a) => Monoid (Rope v a) where
+instance (RelativeMonoid v, Measured v a, FromText a) => Monoid (Rope v a) where
   mempty = Rope mempty
   mappend = (<>)
 
-instance Measured v a => Measured (LineMeasure v) (Rope v a) where
+instance (RelativeMonoid v, Measured v a) => Measured (LineMeasure v) (Rope v a) where
   measure (Rope r) = measure r
 
-instance (Measured v a, FromText a) => FromText (Rope v a) where
+instance (RelativeMonoid v, Measured v a, FromText a) => FromText (Rope v a) where
   fromText = foldLines step (Rope mempty) where
     step (Rope xs) x = Rope (xs |> fromText x)
 
-instance (Measured v a, FromText a) => IsString (Rope v a) where
+instance (RelativeMonoid v, Measured v a, FromText a) => IsString (Rope v a) where
  fromString = fromText . pack
 
-splitAtPosition :: (Measured v a, FromText a) => Position -> Rope v a -> (Rope v a, Rope v a)
+splitAtPosition :: (RelativeMonoid v, Measured v a, FromText a) => Position -> Rope v a -> (Rope v a, Rope v a)
 splitAtPosition (Position lno cno) (Rope xs) = case split (\x -> lineCount x >= lno) xs of
   (l, r) -> case viewr l of
     ll :> Line m _
@@ -69,36 +71,36 @@ splitAtPosition (Position lno cno) (Rope xs) = case split (\x -> lineCount x >= 
       | otherwise -> (Rope l, Rope r)
     EmptyR -> (Rope l, Rope r) -- out of bounds
 
-splitAtDelta :: (Measured v a, FromText a) => Delta -> Rope v a -> (Rope v a, Rope v a)
+splitAtDelta :: (RelativeMonoid v, Measured v a, FromText a) => Delta -> Rope v a -> (Rope v a, Rope v a)
 splitAtDelta d (Rope xs) = case split (\x -> delta x >= d) xs of
   (l, r) -> case viewl r of
     EmptyL -> (Rope l, Rope mempty)
     Line m _ :< rr
       | cno <- units d - units (measure l) -> (Rope $ l |> fromText (Text.takeWord16 cno m), Rope $ fromText (Text.dropWord16 cno m) <| rr)
 
-insertAt :: (Measured v a, FromText a) => Position -> Text -> Rope v a -> Rope v a
+insertAt :: (RelativeMonoid v, Measured v a, FromText a) => Position -> Text -> Rope v a -> Rope v a
 insertAt p t rope = case splitAtPosition p rope of
   (l, r) -> l <> fromText t <> r
 
-deleteRange :: (Measured v a, FromText a) => Range -> Rope v a -> Rope v a
+deleteRange :: (RelativeMonoid v, Measured v a, FromText a) => Range -> Rope v a -> Rope v a
 deleteRange (Range lo hi) doc = case splitAtPosition hi doc of
   (m, r) -> fst (splitAtPosition lo m) <> r
 
-replaceRange :: (Measured v a, FromText a) => Range -> Text -> Rope v a -> Rope v a
+replaceRange :: (RelativeMonoid v, Measured v a, FromText a) => Range -> Text -> Rope v a -> Rope v a
 replaceRange (Range lo hi) t doc = case splitAtPosition hi doc of
   (m, r) -> fst (splitAtPosition lo m) <> fromText t <> r
 
 -- | Compute an Language Server Protocol 'Position' from a 'Delta' given the associated text
 --
 -- Takes /O(log l)/ where l is the number of lines
-deltaToPosition :: Measured v a => Rope v a -> Delta -> Position
+deltaToPosition :: (RelativeMonoid v, Measured v a) => Rope v a -> Delta -> Position
 deltaToPosition (Rope t) (Delta d) = case split (\x -> units x >= d) t of
   (l, _) | ml <- measure l -> Position (lineCount ml) (d - units ml)
 
 -- | Convert from a Language Server Protocol 'Position' to a 'Delta' given the associated text.
 --
 -- /O(log l)/ where l is the number of lines
-positionToDelta :: Measured v a => Rope v a -> Position -> Delta
+positionToDelta :: (RelativeMonoid v, Measured v a) => Rope v a -> Position -> Delta
 positionToDelta (Rope t) (Position nl c16) = case split (\x -> lineCount x >= nl) t of
   (l, _) -> Delta $ units (measure l) + c16
 
