@@ -13,7 +13,7 @@
 {-# language FunctionalDependencies #-}
 {-# language GeneralizedNewtypeDeriving #-}
 
-module Coda.Sequence 
+module Coda.Data.Sequence 
   ( Seq(Empty,(:<),(:>))
   , drop, split, take
   ) where

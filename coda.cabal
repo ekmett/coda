@@ -62,8 +62,7 @@ library
     Coda.Console.Options
     Coda.Console.Unicode
 
-    Coda.Data.Queue
-    Coda.Data.Seq
+    Coda.Data.Sequence
     Coda.Data.Sink
     Coda.Data.View
 
@@ -78,7 +77,6 @@ library
     Coda.Relative.Queue
     Coda.Relative.Rev
 
-    Coda.Sequence
 
     Coda.Server
     Coda.Server.Options
