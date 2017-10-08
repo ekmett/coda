@@ -5,6 +5,16 @@
 {-# language BangPatterns #-}
 {-# language MultiParamTypeClasses #-}
 
+---------------------------------------------------------------------------------
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+---------------------------------------------------------------------------------
+
 -- | Okasaki real-time queue modified for /O(1)/ @rel@
 module Coda.Relative.Queue
   ( Queue((:<),Empty)
