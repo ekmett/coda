@@ -20,7 +20,6 @@ module Coda.Util.Aeson
   ( pattern JSON
   ) where
 
-import Coda.Util.Instances () -- Void instances
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Lens
