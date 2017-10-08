@@ -135,7 +135,7 @@ library
     lens                 >= 4.15     && < 5,
     lens-aeson           >= 1.0.2    && < 1.1,
     mtl                  >= 2.2.1    && < 2.3,
-    optparse-applicative >= 0.14     && < 0.15,
+    optparse-applicative >= 0.13     && < 0.15,
     profunctors          >= 5.2      && < 5.3,
     unordered-containers >= 0.2      && < 0.3,
     scientific           >= 0.3      && < 0.4,
