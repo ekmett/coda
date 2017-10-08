@@ -58,7 +58,6 @@ import System.IO
 putError :: MonadIO m => Maybe Id -> ErrorCode -> Text -> m ()
 putError i c t = -- do
   putMessage $ Response i Nothing (Just (ResponseError c t Nothing))
---  liftIO $ loggingLogger LevelError jsonRpc text
 
 --------------------------------------------------------------------------------
 -- State

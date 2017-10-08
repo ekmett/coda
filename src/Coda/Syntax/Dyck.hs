@@ -34,43 +34,13 @@ import Coda.Relative.Cat as Cat
 import Coda.Relative.Class
 import Coda.Relative.Delta
 import Coda.Relative.Located
+import Coda.Relative.Rev
 import Data.Data
 import Data.Default
 import Data.Semigroup
 import Data.Text
 import GHC.Generics hiding (from)
 import Prelude hiding (lex)
-
---------------------------------------------------------------------------------
--- Reversing
---------------------------------------------------------------------------------
-
--- reversing a catenable list, etc.
-newtype Rev f a
-  = Rev { runRev :: f a }
-  deriving (Eq,Ord,Show,Read)
-
-makePrisms ''Rev
-makeWrapped ''Rev
-
-instance Snoc (f a) (f b) a b => Cons (Rev f a) (Rev f b) a b where
-  _Cons = _Wrapped._Snoc.swapped.mapping (from _Wrapped)
-
-instance Cons (f a) (f b) a b => Snoc (Rev f a) (Rev f b) a b where
-  _Snoc = _Wrapped._Cons.mapping (from _Wrapped).swapped
-
-instance Default (f a) => Default (Rev f a) where
-  def = Rev def
-
-instance Semigroup (f a) => Semigroup (Rev f a) where
-  Rev a <> Rev b = Rev (b <> a)
-
-instance Monoid (f a) => Monoid (Rev f a) where
-  mempty = Rev mempty
-  mappend (Rev a) (Rev b) = Rev (mappend b a)
-
-instance Relative (f a) => Relative (Rev f a) where
-  rel d (Rev m) = Rev (rel d m)
 
 --------------------------------------------------------------------------------
 -- Rich Tokens

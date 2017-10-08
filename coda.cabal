@@ -78,6 +78,7 @@ library
     Coda.Relative.Located
     Coda.Relative.Measurement
     Coda.Relative.Queue
+    Coda.Relative.Rev
 
     Coda.Sequence
 
@@ -128,7 +129,6 @@ library
     data-default         >= 0.7.1.1  && < 0.8,
     deriving-compat      >= 0.3.6    && < 0.4,
     exceptions           >= 0.8.2.1  && < 0.9,
-    final-pretty-printer >= 0.1      && < 0.2,
     fingertree           >= 0.1.1    && < 0.2,
     ghc-prim,
     haskeline            >= 0.7.4    && < 0.8,
@@ -137,7 +137,6 @@ library
     kan-extensions       >= 5.0.2    && < 6,
     lens                 >= 4.15     && < 5,
     lens-aeson           >= 1.0.2    && < 1.1,
-    logging              >= 3.0.4    && < 3.1,
     mtl                  >= 2.2.1    && < 2.3,
     optparse-applicative >= 0.14     && < 0.15,
     profunctors          >= 5.2      && < 5.3,
@@ -150,6 +149,8 @@ library
     transformers         >= 0.5      && < 0.6,
     transformers-base    >= 0.4.4    && < 0.5,
     uri-encode           >= 1.5.0.5  && < 1.6
+
+--    final-pretty-printer >= 0.1      && < 0.2,
 
   build-tools: alex
 
