@@ -13,9 +13,10 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- Okasaki real-time queue modified for /O(1)/ @rel@
+--
 ---------------------------------------------------------------------------------
 
--- | Okasaki real-time queue modified for /O(1)/ @rel@
 module Coda.Relative.Queue
   ( Queue((:<),Empty)
   , snocQ
