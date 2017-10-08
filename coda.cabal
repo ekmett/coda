@@ -62,8 +62,6 @@ library
     Coda.Console.Options
     Coda.Console.Unicode
 
-    Coda.Data.Bwd
-    Coda.Data.Dyn
     Coda.Data.Queue
     Coda.Data.Seq
     Coda.Data.Sink
