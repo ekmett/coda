@@ -20,11 +20,14 @@ import Data.Set as Set
 
 -- | these are keywords that are only valid at the start of a top level statement
 startingKeywords :: Set String
-startingKeywords = ["data","import","infix","infixl","infixr","module","newtype","type"]
+startingKeywords =
+  [ "class", "data", "default", "import", "infix", "infixl"
+  , "infixr", "instance", "module", "newtype", "type"
+  ]
 
 -- | These are keywords that may occur anywhere in a source file
 keywords :: Set String
-keywords = ["qualified","case","in"]
+keywords = ["as", "case", "deriving", "else" , "hiding", "if", "in", "qualified", "then" ]
 
 -- | These are keywords that introduce layout
 layoutKeywords :: Set String
