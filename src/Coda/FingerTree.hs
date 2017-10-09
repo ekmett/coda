@@ -11,13 +11,14 @@
 {-# language TypeFamilies #-}
 {-# language LambdaCase #-}
 {-# language ExplicitNamespaces #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Coda.FingerTree
 -- Copyright   :  (c) Edward Kmett 2017, (c) Ross Paterson, Ralf Hinze 2006
 -- License     :  BSD-style
 -- Stability   :  experimental
--- Portability :  non-portable (MPTCs and functional dependencies)
+-- Portability :  non-portable
 --
 -----------------------------------------------------------------------------
 
@@ -25,24 +26,30 @@ module Coda.FingerTree
   ( FingerTree(Empty, Singleton , (:<), (:>))
   , Measured(..)
   -- * Construction
-  , empty, singleton
+  , empty
+  , singleton
   , fromList
   -- * Deconstruction
-  , null
-  -- ** Examining the ends
   -- ** Search
-  , SearchResult(..), search
+  , SearchResult(..)
+  , search
   -- ** Splitting
   -- | These functions are special cases of 'search'.
-  , split, takeUntil, dropUntil
+  , split
+  , takeUntil
+  , dropUntil
   -- * Transformation
   , reverse
   -- ** Maps
-  , fmap', fmapWithPos, fmapWithContext, unsafeFmap
+  , fmap'
+  , fmapWithPos
+  , fmapWithContext
+  , unsafeFmap
   -- ** Traversals
-  , traverse', traverseWithPos, traverseWithContext, unsafeTraverse
-  -- * Example
-  -- $example
+  , traverse'
+  , traverseWithPos
+  , traverseWithContext
+  , unsafeTraverse
   ) where
 
 import Control.Lens hiding (deep)
@@ -50,8 +57,7 @@ import Data.Default
 import Data.Semigroup
 import qualified Data.Foldable as Foldable
 import GHC.Exts
-import Prelude hiding (null, reverse)
-import qualified Prelude (null)
+import Prelude hiding (reverse)
 
 -- | /O(log(min(n1,n2)))/. Concatenate two sequences.
 instance Measured a => Semigroup (FingerTree a) where
@@ -415,11 +421,6 @@ snocDigit (One a) b = Two a b
 snocDigit (Two a b) c = Three a b c
 snocDigit (Three a b c) d = Four a b c d
 snocDigit (Four _ _ _ _) _ = illegal_argument "snocDigit"
-
--- | /O(1)/. Is this the empty sequence?
-null :: FingerTree a -> Bool
-null EmptyTree = True
-null _ = False
 
 rotL :: Measured a => FingerTree (Node a) -> Digit a -> FingerTree a
 rotL m sf = case m of
