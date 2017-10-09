@@ -26,6 +26,7 @@ import Coda.Relative.Delta
 import Coda.Relative.Located
 import Coda.Syntax.Dyck
 import Coda.Syntax.Keywords
+import Coda.Syntax.Mode
 import Coda.Syntax.Name
 import Coda.Syntax.Rich
 import Coda.Syntax.Rope
@@ -186,7 +187,7 @@ keyword xs d t l = token xs $ case readEither $ 'K' : cap (Text.unpack $ trim d 
   Left e -> Rich $ LexicalError (Delta d) e
 
 layoutKeyword :: Mode -> Action
-layoutKeyword i xs d t l = mode xs i $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
+layoutKeyword i xs d t l = layoutToken xs i $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
   Right kw -> TokKeyword (Delta d) kw
   Left e -> Rich $ LexicalError (Delta d) e
 

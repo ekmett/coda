@@ -25,44 +25,28 @@ module Coda.Syntax.Dyck
   -- Dyck language monoid
     Dyck(..), Opening(..), Closing(..)
   , token
-  , mode
+  , layoutToken
   , close
   , open
   , spine
-  , Mode(..)
   -- Support for multiple languages
   , Lexer(lex)
   ) where
 
 import Control.Comonad
 import Control.Lens
+import Coda.Syntax.Mode
 import Coda.Syntax.Rich
 import Coda.Syntax.Rope
 import Coda.Relative.Cat as Cat
 import Coda.Relative.Class
 import Coda.Relative.Rev
-import Data.Data
 import Data.Default
 import Data.Semigroup
 import Data.String
 import Data.Text
 import GHC.Generics hiding (from)
 import Prelude hiding (lex)
-
-newtype Mode
-  = Mode Int
-  deriving (Eq,Ord,Show,Read,Num,Data,Typeable,Generic)
-
-instance Default Mode where
-  def = 0
-
-instance Semigroup Mode where
-  x <> 0 = x
-  _ <> x = x
-
-instance Monoid Mode where
-  mempty = 0
-  mappend = (<>)
 
 --------------------------------------------------------------------------------
 -- Dyck Language
@@ -122,8 +106,8 @@ instance Relative a => Relative (Dyck a) where
 token :: Relative a => Dyck a -> a -> Dyck a
 token (Dyck l ms r s _ e) a = Dyck l ms r (snocCat s a) 0 e
 
-mode :: Relative a => Dyck a -> Mode -> a -> Dyck a
-mode (Dyck l ms r s _ e) i a = Dyck l ms r (snocCat s a) i e
+layoutToken :: Relative a => Dyck a -> Mode -> a -> Dyck a
+layoutToken (Dyck l ms r s _ e) i a = Dyck l ms r (snocCat s a) i e
 
 -- | O(1)
 close :: (Eq (Pair a), AsRich a a, Relative a) => Dyck a -> LocatedPair a -> Dyck a
@@ -176,3 +160,7 @@ instance Lexer a => FromText (Dyck a) where
 
 instance Lexer a => IsString (Dyck a) where
   fromString = fromText . fromString
+
+instance HasMode (Dyck a) where
+  mode (Dyck _ _ _ _ k _) = k
+

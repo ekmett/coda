@@ -76,6 +76,7 @@ library
     Coda.Syntax.Dyck
     Coda.Syntax.Keywords
     Coda.Syntax.Lexer
+    Coda.Syntax.Mode
     Coda.Syntax.Name
     Coda.Syntax.Rich
     Coda.Syntax.Rope
