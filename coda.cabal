@@ -78,8 +78,8 @@ library
     Coda.Syntax.Keywords
     Coda.Syntax.Lexer
     Coda.Syntax.Name
+    Coda.Syntax.Rich
     Coda.Syntax.Rope
-    Coda.Syntax.Token
 
     Coda.Util.Aeson
     Coda.Util.Alex

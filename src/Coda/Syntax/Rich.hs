@@ -4,11 +4,15 @@
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 {-# language DeriveDataTypeable #-}
+{-# language FunctionalDependencies #-}
 {-# language DeriveGeneric #-}
+{-# language PatternSynonyms #-}
+{-# language ViewPatterns #-}
 {-# language DeriveAnyClass #-}
 {-# language TypeFamilies #-}
 {-# language StandaloneDeriving #-}
 {-# language UndecidableInstances #-}
+{-# language ExplicitNamespaces #-}
 
 ---------------------------------------------------------------------------------
 -- |
@@ -20,14 +24,17 @@
 --
 ---------------------------------------------------------------------------------
 
-module Coda.Syntax.Token
+module Coda.Syntax.Rich
   ( Pair, LocatedPair
   -- Tokens
   , MismatchError(..)
-  , Token(..)
+  , Rich(..)
+  , AsRich(..)
+  , pattern Rich
   ) where
 
 import Control.Exception
+import Control.Lens
 import Coda.Relative.Cat as Cat
 import Coda.Relative.Class
 import Coda.Relative.Delta
@@ -58,23 +65,27 @@ instance (Show (Pair a), Typeable a) => Exception (MismatchError a)
 instance Relative (MismatchError a) where
   rel d (MismatchError l r) = MismatchError (rel d l) (rel d r)
 
-data Token a
-  = Token !a
-  | Nested {-# unpack #-} !(LocatedPair a) !(Cat (Token a))
-  | Mismatch {-# unpack #-} !(MismatchError a) !(Cat (Token a))
+data Rich a
+  = Nested {-# unpack #-} !(LocatedPair a) !(Cat a)
+  | Mismatch {-# unpack #-} !(MismatchError a) !(Cat a)
   | UnmatchedOpening {-# unpack #-} !(LocatedPair a)
   | UnmatchedClosing {-# unpack #-} !(LocatedPair a)
-  | LexicalError {-# unpack #-} !Delta
+  | LexicalError {-# unpack #-} !Delta String
 
-deriving instance (Relative a, Show (Pair a), Show a) => Show (Token a)
-deriving instance (Relative a, Read (Pair a), Read a) => Read (Token a)
-deriving instance (Relative a, Eq (Pair a), Eq a) => Eq (Token a)
-deriving instance (Relative a, Ord (Pair a), Ord a) => Ord (Token a)
+makeClassyPrisms ''Rich
 
-instance Relative a => Relative (Token a) where
-  rel d (Token a) = Token (rel d a)
+pattern Rich :: AsRich t a => () => Rich a -> t
+pattern Rich a <- (preview _Rich -> Just a) where
+  Rich a = _Rich # a
+
+deriving instance (Relative a, Show (Pair a), Show a) => Show (Rich a)
+deriving instance (Relative a, Read (Pair a), Read a) => Read (Rich a)
+deriving instance (Relative a, Eq (Pair a), Eq a) => Eq (Rich a)
+deriving instance (Relative a, Ord (Pair a), Ord a) => Ord (Rich a)
+
+instance Relative a => Relative (Rich a) where
   rel d (Nested dp xs) = Nested (rel d dp) (rel d xs)
   rel d (Mismatch e xs) = Mismatch  (rel d e) (rel d xs)
   rel d (UnmatchedOpening dp) = UnmatchedOpening (rel d dp)
   rel d (UnmatchedClosing dq) = UnmatchedClosing (rel d dq)
-  rel d (LexicalError d') = LexicalError (d+d')
+  rel d (LexicalError d' xs) = LexicalError (d+d') xs
