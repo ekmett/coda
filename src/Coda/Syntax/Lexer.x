@@ -3,6 +3,7 @@
 {-# language OverloadedStrings #-}
 {-# language TypeFamilies #-}
 {-# language DeriveDataTypeable #-}
+{-# language TemplateHaskell #-}
 {-# language DeriveGeneric #-}
 
 ---------------------------------------------------------------------------------
@@ -16,9 +17,7 @@
 ---------------------------------------------------------------------------------
 
 module Coda.Syntax.Lexer
-  ( Tok(..)
-  , TokenType(..)
-  , Pair(..)
+  ( Tok(..), Pair(..)
   ) where
 
 import Coda.Relative.Class
@@ -26,6 +25,7 @@ import Coda.Relative.Delta
 import Coda.Relative.Located
 import Coda.Syntax.Dyck
 import Coda.Syntax.Keywords
+import Coda.Syntax.Name
 import Coda.Syntax.Token
 import Coda.Syntax.Rope
 import Coda.Util.Alex
@@ -60,13 +60,13 @@ $symchar   = [$symbol \:]
 $nl        = [\n\r]
 $charesc   = [abfnrtv\\\"\'\&]
 
-@reservedid
+@keyid
   = as | case | class | data | default | deriving | else | hiding | if
   | import | in | infix | infixl | infixr | instance | module | newtype
   | qualified | then | type | do | let | of | where
 
-@reservedop =
-  ".." | ":" | "::" | "=" | \\ | "|" | "<-" | "->" | "@" | "~" | "=>"
+@keyop
+  = ".." | ":" | "::" | "=" | \\ | "|" | "<-" | "->" | "@" | "~" | "=>"
 
 @varid  = $small $idchar*
 @conid  = $large $idchar*
@@ -92,19 +92,19 @@ $cntrl = [$large \@\[\\\]\^\_]
 haskell :-
 <0> $white+ { skip }
 <0> "--"\-*[^$symbol].* { skip }
-<0> $special { lexeme LSpecial }
+<0> $special { tok }
 <0> $closing { closing }
 <0> $opening { opening }
-<0> @reservedid { keyword }
-<0> (@conid \.)+ @varid { lexeme LQVarId }
-<0> (@conid \.)+ @conid { lexeme LQConId }
-<0> @varid { lexeme LVarId }
-<0> @conid { lexeme LConId }
-<0> @reservedop { lexeme LReservedOp }
-<0> (@conid \.)+ @varop { lexeme LQVarOp }
-<0> (@conid \.)+ @conop { lexeme LQConOp }
-<0> @varop { lexeme LVarOp }
-<0> @conop { lexeme LConOp }
+<0> @keyid { keyword }
+<0> (@conid \.)+ @varid { qualified False False }
+<0> (@conid \.)+ @conid { qualified False True }
+<0> @varid { unqualified False False }
+<0> @conid { unqualified False True }
+<0> @keyop { tok }
+<0> (@conid \.)+ @varop { qualified True False }
+<0> (@conid \.)+ @conop { qualified True True }
+<0> @varop { unqualified True False }
+<0> @conop { unqualified True True }
 <0> @decimal { reader 0 TokInteger (Read.signed Read.decimal) }
 <0> 0[oO] @octal { octal }
 <0> 0[xX] @hexadecimal { reader 2 TokInteger Read.hexadecimal }
@@ -115,21 +115,9 @@ haskell :-
 
 {
 
-data TokenType
-  = LSpecial
-  | LQVarId
-  | LQConId
-  | LVarId
-  | LConId
-  | LReservedOp
-  | LQVarOp
-  | LQConOp
-  | LVarOp
-  | LConOp
-  deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
-
 data Tok
-  = Tok        {-# unpack #-} !Delta !TokenType {-# unpack #-} !Text
+  = Tok        {-# unpack #-} !Delta {-# unpack #-} !Text -- as yet uninterpreted lexemes
+  | TokName    {-# unpack #-} !Delta !Name
   | TokKeyword {-# unpack #-} !Delta !Keyword
   | TokInteger {-# unpack #-} !Delta !Integer
   | TokDouble  {-# unpack #-} !Delta {-# unpack #-} !Double
@@ -138,7 +126,8 @@ data Tok
   deriving (Eq,Ord,Show,Read,Data,Generic)
 
 instance Relative Tok where
-  rel d (Tok d' ty t) = Tok (d+d') ty t
+  rel d (Tok d' t) = Tok (d+d') t
+  rel d (TokName d' n) = TokName (d+d') n
   rel d (TokKeyword d' k) = TokKeyword (d+d') k
   rel d (TokInteger d' i) = TokInteger (d+d') i
   rel d (TokDouble d' f) = TokDouble (d+d') f
@@ -157,20 +146,27 @@ pair '{' = Brace
 pair '}' = Brace
 pair _ = error "bad pair"
 
-type Action = Dyck Tok -> Int -> Text -> Int -> Dyck Tok
-
-skip :: Action
-skip xs _ _ _ = xs
-
-lexeme :: TokenType -> Action
-lexeme ty xs d t len = token xs $ Token $ Tok (Delta d) ty $ Text.takeWord16 len $ Text.dropWord16 d t
-
 trim :: Int -> Text -> Int -> Text
 trim d t l = Text.takeWord16 l $ Text.dropWord16 d t
 
 cap :: String -> String
 cap (x:xs) = toUpper x : xs
 cap [] = []
+
+type Action = Dyck Tok -> Int -> Text -> Int -> Dyck Tok
+
+skip :: Action
+skip xs _ _ _ = xs
+
+qualified :: Bool -> Bool -> Action
+qualified o c xs d t ln = case Text.breakOnEnd "." (trim d t ln) of
+  (l,r) -> token xs $ Token $ TokName (Delta d) $ Qualified o c (Text.init l) r
+
+unqualified :: Bool -> Bool -> Action
+unqualified o c xs d t l = token xs $ Token $ TokName (Delta d) $ Unqualified o c (trim d t l)
+
+tok :: Action
+tok xs d t len = token xs $ Token $ Tok (Delta d) $ Text.takeWord16 len $ Text.dropWord16 d t
 
 keyword :: Action
 keyword xs d t l = token xs $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
