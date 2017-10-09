@@ -15,7 +15,6 @@ module MessageTest
   ( test_message
   ) where
 
-import Coda.Util.Instances ()
 import Control.Lens ((<&>))
 import Data.Aeson (ToJSON, FromJSON, Value(..), fromJSON, toJSON, Result(..))
 import Data.ByteString.Builder

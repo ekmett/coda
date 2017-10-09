@@ -1,5 +1,6 @@
 {-# language StandaloneDeriving #-}
 {-# language GeneralizedNewtypeDeriving #-}
+{-# language OverloadedLists #-}
 {-# language DeriveGeneric #-}
 {-# options_ghc -Wno-orphans #-}
 
@@ -55,13 +56,13 @@ model (Drop1 as) = Model.drop 1 (model as)
 
 eval :: ListModel -> List Delta
 eval (Concat xs ys) = eval xs `mappend` eval ys
-eval (Push a as) = Cons 0 a (eval as)
+eval (Push a as) = cons a (eval as)
 eval (Rel d as) = rel d (eval as)
 eval (Reverse as) = List.reverse (eval as)
-eval NilModel = Nil
+eval NilModel = []
 eval (Drop1 as) = case Lens.uncons (eval as) of
   Just (_, as') -> as'
-  Nothing -> Nil
+  Nothing -> []
 
 prop_list :: ListModel -> Property
 prop_list x = unfoldr Lens.uncons (eval x) === model x
