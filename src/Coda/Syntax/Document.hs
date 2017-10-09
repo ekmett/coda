@@ -49,7 +49,7 @@ data Document a = Document
   , _version    :: {-# unpack #-} !Int
   , _contents   :: !(Rope a)
   , _open       :: !Bool
-  , _changed    :: !Bool -- differs than the contents on disk
+  , _changed    :: !Bool -- differs from the contents on disk
   } deriving Show
 
 instance (RelativeMonoid (Measure a), Measured a) => Measured (Document a) where
