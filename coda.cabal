@@ -78,6 +78,7 @@ library
     Coda.Syntax.Lexer
     Coda.Syntax.Mode
     Coda.Syntax.Name
+    Coda.Syntax.Prefix
     Coda.Syntax.Rich
     Coda.Syntax.Rope
 
