@@ -40,8 +40,7 @@ import Coda.Relative.Class
 import Coda.Relative.Delta
 import Coda.Relative.Located
 import Data.Data
-import GHC.Generics hiding (from)
-import Prelude hiding (lex)
+import GHC.Generics
 
 --------------------------------------------------------------------------------
 -- Rich Tokens

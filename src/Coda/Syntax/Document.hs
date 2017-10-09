@@ -2,7 +2,6 @@
 {-# language TemplateHaskell #-}
 {-# language MultiParamTypeClasses #-}
 {-# language FunctionalDependencies #-}
-{-# language DuplicateRecordFields #-}
 {-# language OverloadedStrings #-}
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
@@ -40,9 +39,8 @@ import Data.Foldable (for_)
 import Data.Function (on)
 import Data.HashMap.Strict hiding (foldr)
 import Data.List (sortBy)
-import Data.Text as Text hiding (lines, foldr)
+import Data.Text as Text hiding (foldr)
 import Language.Server.Protocol
-import Prelude hiding (lines)
 
 data Document a = Document
   { _languageId :: !Text

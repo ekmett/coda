@@ -3,7 +3,6 @@
 {-# language LambdaCase #-}
 {-# language BangPatterns #-}
 {-# language TypeFamilies #-}
-{-# language ViewPatterns #-}
 {-# language RoleAnnotations #-}
 {-# language PatternSynonyms #-}
 {-# language FlexibleInstances #-}

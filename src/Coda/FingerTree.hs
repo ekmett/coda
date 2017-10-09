@@ -1,6 +1,5 @@
 {-# language CPP #-}
 {-# language MultiParamTypeClasses #-}
-{-# language FunctionalDependencies #-}
 {-# language FlexibleInstances #-}
 {-# language UndecidableInstances #-}
 {-# language DeriveTraversable #-}
@@ -414,13 +413,13 @@ consDigit :: a -> Digit a -> Digit a
 consDigit a (One b) = Two a b
 consDigit a (Two b c) = Three a b c
 consDigit a (Three b c d) = Four a b c d
-consDigit _ (Four _ _ _ _) = illegal_argument "consDigit"
+consDigit _ Four{} = illegal_argument "consDigit"
 
 snocDigit :: Digit a -> a -> Digit a
 snocDigit (One a) b = Two a b
 snocDigit (Two a b) c = Three a b c
 snocDigit (Three a b c) d = Four a b c d
-snocDigit (Four _ _ _ _) _ = illegal_argument "snocDigit"
+snocDigit Four{} _ = illegal_argument "snocDigit"
 
 rotL :: Measured a => FingerTree (Node a) -> Digit a -> FingerTree a
 rotL m sf = case m of

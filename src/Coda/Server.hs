@@ -113,8 +113,7 @@ listen = liftIO (parse parseMessage stdin) >>= \case
     Left s -> do
       putError Nothing ParseError (Text.pack s)
       listen
-    Right e -> do
-   --   System.IO.putStrLn stderr $ show e
+    Right e ->
       return e
 
 --------------------------------------------------------------------------------

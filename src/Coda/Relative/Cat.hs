@@ -1,7 +1,5 @@
 {-# language CPP #-}
-{-# language BangPatterns #-}
 {-# language TypeFamilies #-}
-{-# language ViewPatterns #-}
 {-# language PatternSynonyms #-}
 {-# language FlexibleContexts #-}
 {-# language FlexibleInstances #-}

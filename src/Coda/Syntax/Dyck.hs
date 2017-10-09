@@ -1,11 +1,8 @@
 {-# language BangPatterns #-}
 {-# language MultiParamTypeClasses #-}
-{-# language TemplateHaskell #-}
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
-{-# language DeriveDataTypeable #-}
 {-# language DeriveGeneric #-}
-{-# language GeneralizedNewtypeDeriving #-}
 {-# language TypeFamilies #-}
 {-# language StandaloneDeriving #-}
 {-# language UndecidableInstances #-}
@@ -45,7 +42,7 @@ import Data.Default
 import Data.Semigroup
 import Data.String
 import Data.Text
-import GHC.Generics hiding (from)
+import GHC.Generics
 import Prelude hiding (lex)
 
 --------------------------------------------------------------------------------

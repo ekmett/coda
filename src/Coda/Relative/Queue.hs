@@ -2,7 +2,6 @@
 {-# language LambdaCase #-}
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
-{-# language BangPatterns #-}
 {-# language MultiParamTypeClasses #-}
 
 ---------------------------------------------------------------------------------
