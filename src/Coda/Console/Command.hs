@@ -88,7 +88,7 @@ commands =
   [ cmd "help" & desc .~ "show help" & alts .~ ["?"] & body .~ showHelp
   , cmd "quit" & desc .~ "quit" & body.mapped .~ const (liftIO exitSuccess)
   , cmd "dyck" & desc .~ "debug dyck language tokenization" & body.mapped .~ \input ->
-       liftIO $ putStrLn $ show (fromString input :: Dyck Tok)
+       liftIO $ putStrLn $ show (fromString input :: Dyck Token)
   , cmd "version"
       & desc .~ "show the compiler version number"
       & body .~ \_ _ -> liftIO $ putStrLn version

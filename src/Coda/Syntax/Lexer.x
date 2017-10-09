@@ -18,7 +18,7 @@
 ---------------------------------------------------------------------------------
 
 module Coda.Syntax.Lexer
-  ( Tok(..), Pair(..)
+  ( Token(..), Pair(..)
   ) where
 
 import Coda.Relative.Class
@@ -111,46 +111,46 @@ haskell :-
 <0> (@conid \.)+ @conop { qualified True True }
 <0> @varop { unqualified True False }
 <0> @conop { unqualified True True }
-<0> @decimal { reader 0 TokInteger (Read.signed Read.decimal) }
+<0> @decimal { reader 0 TokenInteger (Read.signed Read.decimal) }
 <0> 0[oO] @octal { octal }
-<0> 0[xX] @hexadecimal { reader 2 TokInteger Read.hexadecimal }
+<0> 0[xX] @hexadecimal { reader 2 TokenInteger Read.hexadecimal }
 <0> @sign @decimal \. @decimal @exponent?
-  | @sign @decimal @exponent { reader 0 TokDouble (Read.signed Read.double) }
-<0> \' ($graphic # [\'\\] | " " | @escape) \' { literal TokChar }
-<0> \" @string* \" { literal TokString }
+  | @sign @decimal @exponent { reader 0 TokenDouble (Read.signed Read.double) }
+<0> \' ($graphic # [\'\\] | " " | @escape) \' { literal TokenChar }
+<0> \" @string* \" { literal TokenString }
 
 {
 
-data Tok
-  = Tok        {-# unpack #-} !Delta {-# unpack #-} !Text -- as yet uninterpreted lexemes
-  | TokName    {-# unpack #-} !Delta !Name
-  | TokKeyword {-# unpack #-} !Delta !Keyword
-  | TokInteger {-# unpack #-} !Delta !Integer
-  | TokDouble  {-# unpack #-} !Delta {-# unpack #-} !Double
-  | TokString  {-# unpack #-} !Delta !Text
-  | TokChar    {-# unpack #-} !Delta {-# unpack #-} !Char
-  | TokRich    !(Rich Tok)
+data Token
+  = Token        {-# unpack #-} !Delta {-# unpack #-} !Text -- as yet uninterpreted lexemes
+  | TokenName    {-# unpack #-} !Delta !Name
+  | TokenKeyword {-# unpack #-} !Delta !Keyword
+  | TokenInteger {-# unpack #-} !Delta !Integer
+  | TokenDouble  {-# unpack #-} !Delta {-# unpack #-} !Double
+  | TokenString  {-# unpack #-} !Delta !Text
+  | TokenChar    {-# unpack #-} !Delta {-# unpack #-} !Char
+  | TokenRich    !(Rich Token)
   deriving (Eq,Ord,Show,Read)
 
-instance Relative Tok where
-  rel d (Tok d' t) = Tok (d+d') t
-  rel d (TokName d' n) = TokName (d+d') n
-  rel d (TokKeyword d' k) = TokKeyword (d+d') k
-  rel d (TokInteger d' i) = TokInteger (d+d') i
-  rel d (TokDouble d' f) = TokDouble (d+d') f
-  rel d (TokString d' l) = TokString (d+d') l
-  rel d (TokChar d' l) = TokChar (d+d') l
-  rel d (TokRich r) = TokRich (rel d r)
+instance Relative Token where
+  rel d (Token d' t) = Token (d+d') t
+  rel d (TokenName d' n) = TokenName (d+d') n
+  rel d (TokenKeyword d' k) = TokenKeyword (d+d') k
+  rel d (TokenInteger d' i) = TokenInteger (d+d') i
+  rel d (TokenDouble d' f) = TokenDouble (d+d') f
+  rel d (TokenString d' l) = TokenString (d+d') l
+  rel d (TokenChar d' l) = TokenChar (d+d') l
+  rel d (TokenRich r) = TokenRich (rel d r)
 
-instance AsRich Tok Tok where
-  _Rich = prism TokRich $ \case
-    TokRich r -> Right r
+instance AsRich Token Token where
+  _Rich = prism TokenRich $ \case
+    TokenRich r -> Right r
     xs -> Left xs
 
-data instance Pair Tok = Brace | Bracket | Paren
+data instance Pair Token = Brace | Bracket | Paren
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Generic)
 
-pair :: Char -> Pair Tok
+pair :: Char -> Pair Token
 pair '(' = Paren
 pair ')' = Paren
 pair '[' = Bracket
@@ -166,29 +166,29 @@ cap :: String -> String
 cap (x:xs) = toUpper x : xs
 cap [] = []
 
-type Action = Dyck Tok -> Int -> Text -> Int -> Dyck Tok
+type Action = Dyck Token -> Int -> Text -> Int -> Dyck Token
 
 skip :: Action
 skip xs _ _ _ = xs
 
 qualified :: Bool -> Bool -> Action
 qualified o c xs d t ln = case Text.breakOnEnd "." (trim d t ln) of
-  (l,r) -> token xs $ TokName (Delta d) $ Qualified o c (Text.init l) r
+  (l,r) -> token xs $ TokenName (Delta d) $ Qualified o c (Text.init l) r
 
 unqualified :: Bool -> Bool -> Action
-unqualified o c xs d t l = token xs $ TokName (Delta d) $ Unqualified o c (trim d t l)
+unqualified o c xs d t l = token xs $ TokenName (Delta d) $ Unqualified o c (trim d t l)
 
 tok :: Action
-tok xs d t len = token xs $ Tok (Delta d) $ Text.takeWord16 len $ Text.dropWord16 d t
+tok xs d t len = token xs $ Token (Delta d) $ Text.takeWord16 len $ Text.dropWord16 d t
 
 keyword :: Action
 keyword xs d t l = token xs $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
-  Right kw -> TokKeyword (Delta d) kw
+  Right kw -> TokenKeyword (Delta d) kw
   Left e -> Rich $ LexicalError (Delta d) e
 
 layoutKeyword :: Mode -> Action
 layoutKeyword i xs d t l = layoutToken xs i $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
-  Right kw -> TokKeyword (Delta d) kw
+  Right kw -> TokenKeyword (Delta d) kw
   Left e -> Rich $ LexicalError (Delta d) e
 
 opening :: Action
@@ -197,20 +197,20 @@ opening xs d t _ = open xs $ Located (Delta d) $ case Text.iter t d of Text.Iter
 closing :: Action
 closing xs d t _ = close xs $ Located (Delta d) $ case Text.iter t d of Text.Iter c _ -> pair c
 
-literal :: Read a => (Delta -> a -> Tok) -> Action
+literal :: Read a => (Delta -> a -> Token) -> Action
 literal f xs d t l = token xs $ case readEither $ Text.unpack $ trim d t l of
   Left e  -> Rich $ LexicalError (Delta d) e
   Right a -> f (Delta d) a
 
-reader :: Int -> (Delta -> a -> Tok) -> Read.Reader a -> Action
+reader :: Int -> (Delta -> a -> Token) -> Read.Reader a -> Action
 reader o f p xs d t l = token xs $ case p $ trim (d+o) t (l-o) of
   Left e       -> Rich $ LexicalError (Delta d) e
   Right (a, _) -> f (Delta d) a
 
 octal :: Action
-octal = reader 2 TokInteger $ \ txt -> Right (Text.foldl' (\n d -> n*8 + fromIntegral (digitToInt d)) 0 txt, "")
+octal = reader 2 TokenInteger $ \ txt -> Right (Text.foldl' (\n d -> n*8 + fromIntegral (digitToInt d)) 0 txt, "")
 
-instance Lexer Tok where
+instance Lexer Token where
   lex t0 = go t0 (fromText t0) def where
     go t inp xs = case alexScan inp 0 of
       AlexEOF              -> xs
