@@ -25,6 +25,7 @@ import Coda.Relative.Class
 import Coda.Relative.Delta
 import Coda.Relative.Located
 import Coda.Syntax.Dyck
+import Coda.Syntax.Keywords
 import Coda.Syntax.Token
 import Coda.Syntax.Rope
 import Coda.Util.Alex
@@ -36,6 +37,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.Read as Read
 import Data.Text.Unsafe as Text
 import GHC.Generics
+import Text.Read (readEither)
 
 }
 
@@ -46,11 +48,11 @@ $opening   = [\(\[\{]
 $digit     = 0-9
 $ascsymbol = [\!\#\$\%\&\*\+\.\/\<\=\>\?\@\\\^\|\-\~]
 $unisymbol = [] -- TODO
-$symbol    = [$ascsymbol $unisymbol] # [$special \_\:\"\']
+$symbol    = [$ascsymbol $unisymbol] # [$special $closing $opening \_\:\"\']
 $large     = [A-Z \xc0-\xd6 \xd8-\xde]
 $small     = [a-z \xdf-\xf6 \xf8-\xff \_]
 $alpha     = [$small $large]
-$graphic   = [$small $large $symbol $digit $special \:\"\']
+$graphic   = [$small $large $symbol $digit $special $closing $opening \:\"\']
 $octit     = 0-7
 $hexit     = [0-9 A-F a-f]
 $idchar    = [$alpha $digit \']
@@ -59,9 +61,10 @@ $nl        = [\n\r]
 $charesc   = [abfnrtv\\\"\'\&]
 
 @reservedid
-  = as | case | class | data | default | deriving | do | else | hiding | if
-  | import | in | infix | infixl | infixr | instance | let | module | newtype
-  | of | qualified | then | type | where
+  = as | case | class | data | default | deriving | else | hiding | if
+  | import | in | infix | infixl | infixr | instance | module | newtype
+  | qualified | then | type | do | let | of | where
+
 @reservedop =
   ".." | ":" | "::" | "=" | \\ | "|" | "<-" | "->" | "@" | "~" | "=>"
 
@@ -92,7 +95,7 @@ haskell :-
 <0> $special { lexeme LSpecial }
 <0> $closing { closing }
 <0> $opening { opening }
-<0> @reservedid { lexeme LReservedId }
+<0> @reservedid { keyword }
 <0> (@conid \.)+ @varid { lexeme LQVarId }
 <0> (@conid \.)+ @conid { lexeme LQConId }
 <0> @varid { lexeme LVarId }
@@ -102,19 +105,18 @@ haskell :-
 <0> (@conid \.)+ @conop { lexeme LQConOp }
 <0> @varop { lexeme LVarOp }
 <0> @conop { lexeme LConOp }
-<0> @decimal { decimal }
+<0> @decimal { reader 0 TokInteger (Read.signed Read.decimal) }
 <0> 0[oO] @octal { octal }
-<0> 0[xX] @hexadecimal { hexadecimal }
+<0> 0[xX] @hexadecimal { reader 2 TokInteger Read.hexadecimal }
 <0> @sign @decimal \. @decimal @exponent?
-  | @sign @decimal @exponent { double }
-<0> \' ($graphic # [\'\\] | " " | @escape) \' { lexeme LChar }
-<0> \" @string* \" { lexeme LString }
+  | @sign @decimal @exponent { reader 0 TokDouble (Read.signed Read.double) }
+<0> \' ($graphic # [\'\\] | " " | @escape) \' { literal TokChar }
+<0> \" @string* \" { literal TokString }
 
 {
 
 data TokenType
   = LSpecial
-  | LReservedId
   | LQVarId
   | LQConId
   | LVarId
@@ -124,22 +126,24 @@ data TokenType
   | LQConOp
   | LVarOp
   | LConOp
-  | LInteger
-  | LFloat
-  | LChar
-  | LString
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
 
 data Tok
   = Tok        {-# unpack #-} !Delta !TokenType {-# unpack #-} !Text
+  | TokKeyword {-# unpack #-} !Delta !Keyword
   | TokInteger {-# unpack #-} !Delta !Integer
-  | TokDouble  {-# unpack #-} !Delta !Double
+  | TokDouble  {-# unpack #-} !Delta {-# unpack #-} !Double
+  | TokString  {-# unpack #-} !Delta !Text
+  | TokChar    {-# unpack #-} !Delta {-# unpack #-} !Char
   deriving (Eq,Ord,Show,Read,Data,Generic)
 
 instance Relative Tok where
   rel d (Tok d' ty t) = Tok (d+d') ty t
+  rel d (TokKeyword d' k) = TokKeyword (d+d') k
   rel d (TokInteger d' i) = TokInteger (d+d') i
   rel d (TokDouble d' f) = TokDouble (d+d') f
+  rel d (TokString d' l) = TokString (d+d') l
+  rel d (TokChar d' l) = TokChar (d+d') l
 
 data instance Pair Tok = Brace | Bracket | Paren
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
@@ -161,23 +165,36 @@ skip xs _ _ _ = xs
 lexeme :: TokenType -> Action
 lexeme ty xs d t len = token xs $ Token $ Tok (Delta d) ty $ Text.takeWord16 len $ Text.dropWord16 d t
 
+trim :: Int -> Text -> Int -> Text
+trim d t l = Text.takeWord16 l $ Text.dropWord16 d t
+
+cap :: String -> String
+cap (x:xs) = toUpper x : xs
+cap [] = []
+
+keyword :: Action
+keyword xs d t l = token xs $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
+  Right kw -> Token $ TokKeyword (Delta d) kw
+  Left _ -> LexicalError (Delta d)
+
 opening :: Action
 opening xs d t _ = open xs $ Located (Delta d) $ case Text.iter t d of Text.Iter c _ -> pair c
 
 closing :: Action
 closing xs d t _ = close xs $ Located (Delta d) $ case Text.iter t d of Text.Iter c _ -> pair c
 
+literal :: Read a => (Delta -> a -> Tok) -> Action
+literal f xs d t l = token xs $ case readEither $ Text.unpack $ trim d t l of
+  Left _  -> LexicalError (Delta d)
+  Right a -> Token $ f (Delta d) a
+
 reader :: Int -> (Delta -> a -> Tok) -> Read.Reader a -> Action
-reader o f p xs d t l = token xs $ case p $ Text.takeWord16 (l-o) $ Text.dropWord16 (d+o) t of
+reader o f p xs d t l = token xs $ case p $ trim (d+o) t (l-o) of
   Left _       -> LexicalError (Delta d)
   Right (a, _) -> Token $ f (Delta d) a
 
-decimal, double, hexadecimal, octal :: Action
-decimal     = reader 0 TokInteger (Read.signed Read.decimal)
-double      = reader 0 TokDouble (Read.signed Read.double)
-hexadecimal = reader 2 TokInteger Read.hexadecimal
-octal       = reader 2 TokInteger $ \ txt -> Right (Text.foldl' go 0 txt, "") where
-  go n d = n * 8 + fromIntegral (digitToInt d)
+octal :: Action
+octal = reader 2 TokInteger $ \ txt -> Right (Text.foldl' (\n d -> n*8 + fromIntegral (digitToInt d)) 0 txt, "")
 
 instance Lexer Tok where
   lex t0 = go t0 (fromText t0) def where

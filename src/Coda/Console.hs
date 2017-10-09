@@ -49,5 +49,5 @@ loop = do
       loop
     Just ""      -> loop
     Just input   -> do
-      outputStrLn $ show $ (fromString input :: Dyck Tok)
+      outputStrLn $ show $ spine (fromString input :: Dyck Tok)
       loop
