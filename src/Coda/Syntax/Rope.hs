@@ -45,7 +45,8 @@ import Coda.Relative.Delta
 import Control.Comonad
 import Data.Data
 import Data.Default
-import Data.FingerTree
+import qualified Data.FingerTree as F
+import Data.FingerTree hiding (SearchResult(..))
 import Data.Hashable
 import Data.Profunctor.Unsafe
 import Data.Semigroup
@@ -55,7 +56,7 @@ import qualified Data.Text.Array as Text
 import Data.Text.Internal (Text(..))
 import Data.Text.Unsafe as Text
 import GHC.Generics
-import Language.Server.Protocol
+import Language.Server.Protocol hiding (error)
 
 class FromText a where
   fromText :: Text -> a
@@ -204,19 +205,23 @@ instance (RelativeMonoid v, Measured v a, FromText a) => IsString (Rope v a) whe
  fromString = fromText . pack
 
 splitAtPosition :: (RelativeMonoid v, Measured v a, FromText a) => Position -> Rope v a -> (Rope v a, Rope v a)
-splitAtPosition (Position lno cno) (Rope xs) = case split (\x -> lineCount x >= lno) xs of
-  (l, r) -> case viewr l of
-    ll :> Line m _
-      | cno < Text.lengthWord16 m -> (Rope $ ll |> fromText (Text.takeWord16 cno m), Rope $ fromText (Text.dropWord16 cno m) <| r)
-      | otherwise -> (Rope l, Rope r)
-    EmptyR -> (Rope l, Rope r) -- out of bounds
+splitAtPosition (Position lno cno) (Rope xs) = case search (\x _ -> lineCount x >= lno) xs of
+  F.Position l lm@(Line m _) r
+    | cno < Text.lengthWord16 m ->
+      (Rope $ l |> fromText (Text.takeWord16 cno m), Rope $ fromText (Text.dropWord16 cno m) <| r)
+    | otherwise -> (Rope (l |> lm), Rope r)
+  F.OnLeft -> (Rope xs, mempty)
+  F.OnRight -> (mempty, Rope xs)
+  F.Nowhere -> error "splitAtPosition: nowhere"
 
 splitAtDelta :: (RelativeMonoid v, Measured v a, FromText a) => Delta -> Rope v a -> (Rope v a, Rope v a)
-splitAtDelta d (Rope xs) = case split (\x -> delta x >= d) xs of
-  (l, r) -> case viewl r of
-    EmptyL -> (Rope l, Rope mempty)
-    Line m _ :< rr
-      | cno <- units d - units (measure l) -> (Rope $ l |> fromText (Text.takeWord16 cno m), Rope $ fromText (Text.dropWord16 cno m) <| rr)
+splitAtDelta d (Rope xs) = case search (\x _ -> delta x >= d) xs of
+  F.Position l (Line m _) r
+      | !cno <- units d - units (measure l) ->
+        (Rope $ l |> fromText (Text.takeWord16 cno m), Rope $ fromText (Text.dropWord16 cno m) <| r)
+  F.OnLeft -> (Rope xs, mempty)
+  F.OnRight -> (mempty, Rope xs)
+  F.Nowhere -> error "splitAtDelta: nowhere"
 
 insertAt :: (RelativeMonoid v, Measured v a, FromText a) => Position -> Text -> Rope v a -> Rope v a
 insertAt p t rope = case splitAtPosition p rope of
