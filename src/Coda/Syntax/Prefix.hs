@@ -2,7 +2,12 @@
 {-# language DeriveGeneric #-}
 {-# language OverloadedStrings #-}
 
-module Coda.Syntax.Prefix where
+module Coda.Syntax.Prefix
+  ( SemigroupWithZero(..)
+  , WithZero(..)
+  , Prefix(..)
+  , joinAndCompare
+  ) where
 
 import Coda.Syntax.Rope
 import Data.Char (isSpace)
@@ -16,12 +21,42 @@ import Prelude
 -- | @
 -- zero <> a = zero = a <> zero
 -- @
-class Semigroup a => SemigroupWithZero a where zero :: a
-instance Num a => SemigroupWithZero (Product a) where zero = Product 0
-instance (Ord a, Bounded a) => SemigroupWithZero (Max a) where zero = Max minBound
-instance (Ord a, Bounded a) => SemigroupWithZero (Min a) where zero = Min maxBound
+class Semigroup a => SemigroupWithZero a where
+  zero :: a
 
--- | line prefixes form a semigroup with a zero 
+instance SemigroupWithZero All where
+  zero = All False
+
+instance SemigroupWithZero Any where
+  zero = Any True
+
+instance SemigroupWithZero a => SemigroupWithZero (Dual a) where
+  zero = Dual zero
+
+instance Num a => SemigroupWithZero (Product a) where
+  zero = Product 0
+
+instance (Ord a, Bounded a) => SemigroupWithZero (Max a) where
+  zero = Max minBound
+
+instance (Ord a, Bounded a) => SemigroupWithZero (Min a) where
+  zero = Min maxBound
+
+-- adjoin a zero element to a semigroup
+data WithZero a
+  = Zero
+  | NonZero a
+  deriving (Eq,Ord,Show,Read)
+
+instance Semigroup a => Semigroup (WithZero a) where
+  Zero <> _ = Zero
+  _ <> Zero = Zero
+  NonZero a <> NonZero b = NonZero (a <> b)
+
+instance Semigroup a => SemigroupWithZero (WithZero a) where
+  zero = Zero
+
+-- | line prefixes form a semigroup with a zero
 newtype Prefix = Prefix Text deriving (Eq,Show,Generic,Data)
 
 joinAndCompare :: Prefix -> Prefix -> Either Prefix Ordering
