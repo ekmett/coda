@@ -22,16 +22,15 @@ instance (Ord a, Bounded a) => SemigroupWithZero (Min a) where zero = Min maxBou
 -- | line prefixes form a semigroup with a zero 
 newtype Prefix = Prefix Text deriving (Eq,Show,Generic,Data)
 
--- join and compare in the partial ordering
-joinAndCompare :: Prefix -> Prefix -> (Prefix, Maybe Ordering)
+joinAndCompare :: Prefix -> Prefix -> Either Prefix Ordering
 joinAndCompare (Prefix xs) (Prefix ys) = case commonPrefixes xs ys of
-    Just (c, l, r) -> (Prefix c, cmp l r)
-    Nothing        -> (Prefix "", cmp xs ys)
+    Just (c, l, r) -> cmp c l r
+    Nothing        -> cmp "" xs ys
   where
-    cmp "" "" = Just EQ
-    cmp "" _  = Just LT
-    cmp _  "" = Just GT
-    cmp _  _  = Nothing
+    cmp _ "" "" = Right EQ
+    cmp _ "" _  = Right LT
+    cmp _ _  "" = Right GT
+    cmp c _  _  = Left (Prefix c)
 
 instance Semigroup Prefix where
   Prefix xs <> Prefix ys
