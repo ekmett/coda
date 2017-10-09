@@ -29,17 +29,16 @@
 <a name="line-20"></a>  <span class='hs-layout'>(</span> <span class='hs-varid'>pattern</span> <span class='hs-conid'>JSON</span>
 <a name="line-21"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-22"></a>
-<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Util</span><span class='hs-varop'>.</span><span class='hs-conid'>Instances</span> <span class='hs-conid'>()</span> <span class='hs-comment'>-- Void instances</span>
-<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
-<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span>
-<a name="line-26"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
-<a name="line-27"></a>
-<a name="line-28"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
-<a name="line-29"></a><span class='hs-comment'>-- Utilities</span>
-<a name="line-30"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
-<a name="line-31"></a>
-<a name="line-32"></a><a name="pattern"></a><span class='hs-definition'>pattern</span> <span class='hs-conid'>JSON</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>FromJSON</span> <span class='hs-varid'>a</span><span class='hs-layout'>,</span> <span class='hs-conid'>ToJSON</span> <span class='hs-varid'>a</span><span class='hs-layout'>,</span> <span class='hs-conid'>AsJSON</span> <span class='hs-varid'>t</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>t</span>
-<a name="line-33"></a><span class='hs-definition'>pattern</span> <span class='hs-conid'>JSON</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-layout'>(</span><span class='hs-varid'>preview</span> <span class='hs-sel'>_JSON</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Just</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-34"></a>  <span class='hs-conid'>JSON</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-sel'>_JSON</span> <span class='hs-cpp'>#</span> <span class='hs-varid'>a</span>
+<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span>
+<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Aeson</span><span class='hs-varop'>.</span><span class='hs-conid'>Lens</span>
+<a name="line-26"></a>
+<a name="line-27"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-28"></a><span class='hs-comment'>-- Utilities</span>
+<a name="line-29"></a><span class='hs-comment'>--------------------------------------------------------------------------------</span>
+<a name="line-30"></a>
+<a name="line-31"></a><a name="pattern"></a><span class='hs-definition'>pattern</span> <span class='hs-conid'>JSON</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>FromJSON</span> <span class='hs-varid'>a</span><span class='hs-layout'>,</span> <span class='hs-conid'>ToJSON</span> <span class='hs-varid'>a</span><span class='hs-layout'>,</span> <span class='hs-conid'>AsJSON</span> <span class='hs-varid'>t</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>t</span>
+<a name="line-32"></a><span class='hs-definition'>pattern</span> <span class='hs-conid'>JSON</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-layout'>(</span><span class='hs-varid'>preview</span> <span class='hs-sel'>_JSON</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Just</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-33"></a>  <span class='hs-conid'>JSON</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-sel'>_JSON</span> <span class='hs-cpp'>#</span> <span class='hs-varid'>a</span>
 </pre></body>
 </html>
