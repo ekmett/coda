@@ -70,8 +70,8 @@ executeCommand :: String -> IO ()
 executeCommand txt = case getCommand txt of
   Just (c,args,input)  -> view body c args input
   Nothing          -> do
-    sayLn $ text "coda: error: Unknown command:" <+> text (show txt)
-    showHelp [] txt
+    sayLn $ red (text "Unknown command") <+> bold (text (show (cons ':' txt)))
+    sayLn $ text "Use" <+> bold (text (show ":?")) <+> "for help."
 
 showHelp :: [String] -> String -> IO ()
 showHelp _ _ = sayLn $ vsep (map format commands) where
