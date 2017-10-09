@@ -20,11 +20,12 @@
 module Coda.Relative.Queue
   ( Queue((:<),Empty)
   , snocQ
+  , size
+  , null
   ) where
 
 import Coda.Relative.Class
 import Coda.Relative.Delta
-import Coda.Relative.Foldable
 import Control.Lens
 import Data.Default
 import Data.Function (on)
@@ -33,6 +34,7 @@ import Data.Profunctor.Unsafe
 import Data.Semigroup
 import GHC.Exts as Exts
 import Text.Read
+import Prelude hiding (null)
 
 -- @Q d f r s@ maintains @length s = length f - length r@
 data Queue a = Q {-# unpack #-} !Delta [a] [a] [a]
@@ -47,14 +49,12 @@ instance Relative (Queue a) where
 instance Default (Queue a) where
   def = Q 0 [] [] [] 
 
-instance RelativeFoldable Queue where
-  rnull (Q _ [] _ _) = True
-  rnull _ = False
+size :: Queue a -> Int
+size (Q _ _ rs ss) = length ss + 2 * length rs
 
-  rlength (Q _ _ rs ss) = length ss + 2 * length rs
-
-  rfoldMap f d (Q d' fs rs _)
-    | !d'' <- d <> d' = foldMap (f d'') fs `mappend` getDual (foldMap (Dual #. f d'') rs)
+null :: Queue a -> Bool
+null (Q _ [] _ _) = True
+null _ = False
 
 instance Relative a => IsList (Queue a) where
   type Item (Queue a) = a

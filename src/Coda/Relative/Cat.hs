@@ -21,18 +21,20 @@ module Coda.Relative.Cat
   ( Cat
   , snocCat
   , singleton
+  , null
   ) where
 
 import Control.Lens
 import Coda.Relative.Class
-import Coda.Relative.Foldable
-import Coda.Relative.Queue
+import Coda.Relative.Queue hiding (null)
+import qualified Coda.Relative.Queue as Q
 import Data.Default
 import Data.Function (on)
 import Data.List (unfoldr)
 import Data.Semigroup
 import GHC.Exts as Exts
 import Text.Read
+import Prelude hiding (null)
 
 -- invariant, all recursive cat's are non-empty
 data Cat a = E | C a (Queue (Cat a))
@@ -49,13 +51,10 @@ instance Relative a => Relative (Cat a) where
   rel d (C a as) = C (rel d a) (rel d as)
   {-# inline rel #-}
 
-instance RelativeFoldable Cat where
-  rnull E = True
-  rnull _ = False
-  {-# inline rnull #-}
-
-  rfoldMap f !d (C a as) = f d a `mappend` rfoldMap (rfoldMap f) d as
-  rfoldMap _ _ E = mempty
+null :: Cat a -> Bool
+null E = True
+null _ = False
+{-# inline null #-}
 
 instance Relative a => Semigroup (Cat a) where
   xs <> E = xs
@@ -75,7 +74,7 @@ link x q ys = C x (snocQ q ys)
 linkAll :: Relative a => Queue (Cat a) -> Cat a
 linkAll q = case uncons q of
   Just (cat@(C a t), q')
-    | rnull q'  -> cat
+    | Q.null q' -> cat
     | otherwise -> link a t (linkAll q')
   Just (E, q') -> linkAll q' -- recursive case
   Nothing -> E

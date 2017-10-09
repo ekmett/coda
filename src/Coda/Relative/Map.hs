@@ -28,11 +28,11 @@ module Coda.Relative.Map
   , toAscList
   , union
   , split
+  , irfoldr
   ) where
 
 import Coda.Relative.Class
 import Coda.Relative.Delta hiding (delta)
-import Coda.Relative.Foldable
 import Coda.Util.BitQueue
 import Control.Lens
 import Data.Default
@@ -55,31 +55,13 @@ instance Relative (Map k a) where
   rel 0 m   = m -- improve sharing
   rel d (Bin s d' k a l r) = Bin s (d+d') k a l r
 
--- | A Map with /O(1)/ rel, /O(log n)/ insert/lookup/delete
---
--- Uses @lens@ and 'Foldable' for the bulk of the API
-instance RelativeFoldable (Map k) where
-  rfoldMap f !d (Bin _ d' _ a l r) | !d'' <- d+d' = rfoldMap f d'' l <> f d'' a <> rfoldMap f d'' r
-  rfoldMap _ _ Tip = mempty
-
-  rfoldr f z !d (Bin _ d' _ a l r) | !d'' <- d+d' = rfoldr f (f d'' a (rfoldr f z d'' r)) d'' l
-  rfoldr _ z _ Tip = z
-
-  rnull Tip = True
-  rnull _ = False
-
-  rlength Tip = 0
-  rlength (Bin s _ _ _ _ _) = s
-
 size :: Map k a -> Int
-size = rlength
+size (Bin s _ _ _ _ _) = s
+size Tip = 0
 
-instance RelativeFoldableWithIndex k (Map k) where
-  irfoldMap _ !_ Tip = mempty
-  irfoldMap f d (Bin _ d' k a l r) | !d'' <- d <> d' = irfoldMap f d'' l <> f d'' k a <> irfoldMap f d'' r
-
-  irfoldr _ z !_ Tip = z
-  irfoldr f z d (Bin _ d' k a l r) | !d'' <- d <> d' = irfoldr f (f d'' k a (irfoldr f z d'' r)) d'' l
+irfoldr :: (Delta -> k -> a -> r -> r) -> r -> Delta -> Map k a -> r
+irfoldr _ z !_ Tip = z
+irfoldr f z d (Bin _ d' k a l r) | !d'' <- d <> d' = irfoldr f (f d'' k a (irfoldr f z d'' r)) d'' l
 
 toAscList :: (StrictRelativeOrder k, Relative a) => Map k a -> [(k,a)]
 toAscList = irfoldr (\d k x xs -> (rel d k,rel d x):xs) [] 0

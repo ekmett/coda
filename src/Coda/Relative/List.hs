@@ -25,8 +25,7 @@ module Coda.Relative.List
 
 import Coda.Relative.Class
 import Coda.Relative.Delta
-import Coda.Relative.Foldable
-import Control.Lens (AsEmpty(..), prism, Cons(..), ifoldMap)
+import Control.Lens (AsEmpty(..), prism, Cons(..))
 import Data.Default
 import Data.Function (on)
 import Data.Semigroup
@@ -52,20 +51,6 @@ pattern Cons a as <- List d ((rel d -> a):(List d -> as)) where
 reverse :: List a -> List a
 reverse (List d as) = List d (Prelude.reverse as)
 {-# inline reverse #-}
-
-instance RelativeFoldable List where
-  rfoldMap f !d (List d' as) = foldMap (f (d <> d')) as
-  {-# inline rfoldMap #-}
-  rfoldr f z !d (List d' as) = foldr (f (d <> d')) z as
-  {-# inline rfoldr #-}
-  rnull (List _ xs) = null xs
-  {-# inline rnull #-}
-  rlength (List _ xs) = length xs where
-  {-# inline rlength #-}
-
-instance RelativeFoldableWithIndex Int List where
-  irfoldMap f d (List d' as) = ifoldMap (f (d <> d')) as
-  {-# inline irfoldMap #-}
 
 instance (Show a, Relative a) => Show (List a) where
   showsPrec d = showsPrec d . Exts.toList
