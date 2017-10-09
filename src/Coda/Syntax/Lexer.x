@@ -64,7 +64,7 @@ $charesc   = [abfnrtv\\\"\'\&]
 @keyid
   = as | case | class | data | default | deriving | else | hiding | if
   | import | in | infix | infixl | infixr | instance | module | newtype
-  | qualified | then | type | do | let | of | where
+  | qualified | then | type
 
 @keyop
   = ".." | ":" | "::" | "=" | \\ | "|" | "<-" | "->" | "@" | "~" | "=>"
@@ -96,6 +96,10 @@ haskell :-
 <0> $special { tok }
 <0> $closing { closing }
 <0> $opening { opening }
+<0> do { layoutKeyword 1 }
+<0> let { layoutKeyword 2 }
+<0> of { layoutKeyword 3 }
+<0> where { layoutKeyword 4 }
 <0> @keyid { keyword }
 <0> (@conid \.)+ @varid { qualified False False }
 <0> (@conid \.)+ @conid { qualified False True }
@@ -178,6 +182,11 @@ tok xs d t len = token xs $ Tok (Delta d) $ Text.takeWord16 len $ Text.dropWord1
 
 keyword :: Action
 keyword xs d t l = token xs $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
+  Right kw -> TokKeyword (Delta d) kw
+  Left e -> Rich $ LexicalError (Delta d) e
+
+layoutKeyword :: Mode -> Action
+layoutKeyword i xs d t l = mode xs i $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
   Right kw -> TokKeyword (Delta d) kw
   Left e -> Rich $ LexicalError (Delta d) e
 

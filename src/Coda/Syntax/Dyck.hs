@@ -5,7 +5,7 @@
 {-# language FlexibleContexts #-}
 {-# language DeriveDataTypeable #-}
 {-# language DeriveGeneric #-}
-{-# language DeriveAnyClass #-}
+{-# language GeneralizedNewtypeDeriving #-}
 {-# language TypeFamilies #-}
 {-# language StandaloneDeriving #-}
 {-# language UndecidableInstances #-}
@@ -21,13 +21,15 @@
 ---------------------------------------------------------------------------------
 
 module Coda.Syntax.Dyck
-  ( 
+  (
   -- Dyck language monoid
     Dyck(..), Opening(..), Closing(..)
   , token
+  , mode
   , close
   , open
   , spine
+  , Mode(..)
   -- Support for multiple languages
   , Lexer(lex)
   ) where
@@ -39,12 +41,28 @@ import Coda.Syntax.Rope
 import Coda.Relative.Cat as Cat
 import Coda.Relative.Class
 import Coda.Relative.Rev
+import Data.Data
 import Data.Default
 import Data.Semigroup
 import Data.String
 import Data.Text
 import GHC.Generics hiding (from)
 import Prelude hiding (lex)
+
+newtype Mode
+  = Mode Int
+  deriving (Eq,Ord,Show,Read,Num,Data,Typeable,Generic)
+
+instance Default Mode where
+  def = 0
+
+instance Semigroup Mode where
+  x <> 0 = x
+  _ <> x = x
+
+instance Monoid Mode where
+  mempty = 0
+  mappend = (<>)
 
 --------------------------------------------------------------------------------
 -- Dyck Language
@@ -56,8 +74,20 @@ data Opening a
 data Closing a
   = Closing !(Cat a) {-# unpack #-} !(LocatedPair a)
 
+-- | @Dyck l ms r s k e@
+--
+-- @k@ indicates if the last token was a layout keyword, and if so can provide a
+-- numerical indicator as to which one. 0 means either no it wasn't or that we
+-- haven't seen a
 data Dyck a
-  = Dyck !(Cat (Closing a)) !(Cat a) !(Rev Cat (Opening a)) !(Cat a) !(Cat (MismatchError a))
+  = Dyck
+    !(Cat (Closing a))
+    !(Cat a)
+    !(Rev Cat (Opening a))
+    !(Cat a)
+    {-# unpack #-} !Mode
+    !(Cat (MismatchError a)) -- errors
+
 
 deriving instance Generic (Opening a)
 deriving instance Generic (Closing a)
@@ -86,41 +116,44 @@ instance Relative a => Relative (Closing a) where
   rel d (Closing xs q) = Closing (rel d xs) (rel d q)
 
 instance Relative a => Relative (Dyck a) where
-  rel d (Dyck l ms r s e) = Dyck (rel d l) (rel d ms) (rel d r) (rel d s) (rel d e)
+  rel d (Dyck l ms r s k e) = Dyck (rel d l) (rel d ms) (rel d r) (rel d s) k (rel d e)
 
 -- | O(1)
 token :: Relative a => Dyck a -> a -> Dyck a
-token (Dyck l ms r s e) a = Dyck l ms r (snocCat s a) e
+token (Dyck l ms r s _ e) a = Dyck l ms r (snocCat s a) 0 e
+
+mode :: Relative a => Dyck a -> Mode -> a -> Dyck a
+mode (Dyck l ms r s _ e) i a = Dyck l ms r (snocCat s a) i e
 
 -- | O(1)
 close :: (Eq (Pair a), AsRich a a, Relative a) => Dyck a -> LocatedPair a -> Dyck a
-close (Dyck l ms (r' :> Opening dp rs) s e) dq
- | extract dp == extract dq  = Dyck l ms r' (Cat.singleton $ Rich $ Nested dp (rs<>s)) e
- | !f <- MismatchError dp dq = Dyck l ms r' (Cat.singleton $ Rich $ Mismatch f (rs<>s)) (snocCat e f)
-close (Dyck l ms _ s e) dq = Dyck (snocCat l $ Closing (ms <> s) dq) mempty mempty mempty e
+close (Dyck l ms (r' :> Opening dp rs) s _ e) dq
+ | extract dp == extract dq  = Dyck l ms r' (Cat.singleton $ Rich $ Nested dp (rs<>s)) 0 e
+ | !f <- MismatchError dp dq = Dyck l ms r' (Cat.singleton $ Rich $ Mismatch f (rs<>s)) 0 (snocCat e f)
+close (Dyck l ms _ s _ e) dq = Dyck (snocCat l $ Closing (ms <> s) dq) mempty mempty mempty 0 e
 
 -- | O(1)
 open :: Relative a => Dyck a -> LocatedPair a -> Dyck a
-open (Dyck l m (r' :> Opening dp rs) s e) dq = Dyck l m ((r' :> Opening dp (rs<>s)) :> Opening dq mempty) s e
-open (Dyck l m _ s e) dp = Dyck l (m<>s) (Rev $ Cat.singleton $ Opening dp mempty) mempty e
+open (Dyck l m (r' :> Opening dp rs) s _ e) dq = Dyck l m ((r' :> Opening dp (rs<>s)) :> Opening dq mempty) s 0 e
+open (Dyck l m _ s _ e) dp = Dyck l (m<>s) (Rev $ Cat.singleton $ Opening dp mempty) mempty 0 e
 
 instance Default (Dyck a) where
-  def = Dyck def def def def def
+  def = Dyck def def def def def def
 
 -- | O(k) in the number of canceled contexts
 --
 -- Note: positions are not shifted, so you'll need to use this inside a semi-direct product with Delta.
 instance (Eq (Pair a), AsRich a a, Relative a) => Semigroup (Dyck a) where
-  Dyck l0 m0 r0 s0 e0 <> Dyck l1 m1 r1 s1 e1 = go l0 m0 r0 s0 e0 l1 m1 r1 s1 e1 where
-    go l2 m2 (r2' :> Opening dp xs) s2 e2 (Closing ys dq :< l3') m3 r3 s3 e3
-      | extract dp == extract dq  = go l2 m2 r2' (Cat.singleton $ Rich $ Nested dp (xs<>s2<>ys))  e2             l3' m3 r3 s3 e3
-      | !f <- MismatchError dp dq = go l2 m2 r2' (Cat.singleton $ Rich $ Mismatch f (xs<>s2<>ys)) (snocCat e2 f) l3' m3 r3 s3 e3
-    go l2 m2 (r2' :> Opening dp xs) s2 e2 _ m3 r3 s3 e3 = Dyck l2 m2 ((r2' :> Opening dp (xs<>s2<>m3))<>r3) s3 (e2<>e3)
-    go l2 m2 _ s2 e2 (Closing xs dp :< l3') m3 r3 s3 e3 = Dyck (l2<>(Closing (m2<>s2<>xs) dp :< l3')) m3 r3 s3 (e2<>e3)
-    go l2 m2 _ s2 e2 _ m3 r3 s3 e3 = Dyck l2 (m2<>s2<>m3) r3 s3 (e2<>e3)
+  Dyck l0 m0 r0 s0 k0 e0 <> Dyck l1 m1 r1 s1 k1 e1 = go l0 m0 r0 s0 e0 l1 m1 r1 s1 (k0 <> k1) e1 where
+    go l2 m2 (r2' :> Opening dp xs) s2 e2 (Closing ys dq :< l3') m3 r3 s3 k3 e3
+      | extract dp == extract dq  = go l2 m2 r2' (Cat.singleton $ Rich $ Nested dp (xs<>s2<>ys))  e2             l3' m3 r3 s3 k3 e3
+      | !f <- MismatchError dp dq = go l2 m2 r2' (Cat.singleton $ Rich $ Mismatch f (xs<>s2<>ys)) (snocCat e2 f) l3' m3 r3 s3 k3 e3
+    go l2 m2 (r2' :> Opening dp xs) s2 e2 _ m3 r3 s3 k3 e3 = Dyck l2 m2 ((r2' :> Opening dp (xs<>s2<>m3))<>r3) s3 k3 (e2<>e3)
+    go l2 m2 _ s2 e2 (Closing xs dp :< l3') m3 r3 s3 k3 e3 = Dyck (l2<>(Closing (m2<>s2<>xs) dp :< l3')) m3 r3 s3 k3 (e2<>e3)
+    go l2 m2 _ s2 e2 _ m3 r3 s3 k3 e3 = Dyck l2 (m2<>s2<>m3) r3 s3 k3 (e2<>e3)
 
 instance (Eq (Pair a), AsRich a a, Relative a) => Monoid (Dyck a) where
-  mempty = Dyck mempty mempty mempty mempty mempty
+  mempty = Dyck mempty mempty mempty mempty mempty mempty
   mappend = (<>)
   {-# inline mappend #-}
 
@@ -128,7 +161,7 @@ instance (Eq (Pair a), AsRich a a, Relative a) => RelativeMonoid (Dyck a)
 
 -- convert a dyck language skeleton to a set of tokens (including unmatched closings and openings)
 spine :: (AsRich a a, Relative a) => Dyck a -> Cat a
-spine (Dyck l0 ms0 r0 s0 _) = go1 l0 <> ms0 <> go2 r0 <> s0 where
+spine (Dyck l0 ms0 r0 s0 _ _) = go1 l0 <> ms0 <> go2 r0 <> s0 where
   go1 (Closing xs dp :< l') = xs <> (Rich (UnmatchedClosing dp) :< go1 l')
   go1 _ = mempty
   go2 (r' :> Opening dp ys) = go2 r' <> (Rich (UnmatchedOpening dp) :< ys)
