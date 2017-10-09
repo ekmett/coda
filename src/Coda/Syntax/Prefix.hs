@@ -13,7 +13,9 @@ import Data.Text as Text
 import GHC.Generics hiding (Prefix)
 import Prelude
 
--- | zero <> a = zero = a <> zero
+-- | @
+-- zero <> a = zero = a <> zero
+-- @
 class Semigroup a => SemigroupWithZero a where zero :: a
 instance Num a => SemigroupWithZero (Product a) where zero = Product 0
 instance (Ord a, Bounded a) => SemigroupWithZero (Max a) where zero = Max minBound
