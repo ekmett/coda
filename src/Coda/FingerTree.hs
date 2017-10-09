@@ -124,11 +124,6 @@ nodeToDigit (Node3 _ a b c) = Three a b c
 -- access to the ends in constant time, and append and split in time
 -- logarithmic in the size of the smaller piece.
 --
--- The collection is also parameterized by a measure type @v@, which
--- is used to specify a position in the sequence for the 'split' operation.
--- The types of the operations enforce the constraint @'Measured' v a@,
--- which also implies that the type @v@ is determined by @a@.
---
 -- A variety of abstract data types can be implemented by using different
 -- element types and measurements.
 
