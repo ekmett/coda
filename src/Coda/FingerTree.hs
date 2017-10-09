@@ -45,20 +45,24 @@ module Coda.FingerTree
   -- $example
   ) where
 
-import Prelude hiding (null, reverse)
-import qualified Prelude (null)
 import Control.Lens hiding (deep)
+import Data.Default
 import Data.Semigroup
 import qualified Data.Foldable as Foldable
 import GHC.Exts
+import Prelude hiding (null, reverse)
+import qualified Prelude (null)
 
 -- | /O(log(min(n1,n2)))/. Concatenate two sequences.
 instance Measured a => Semigroup (FingerTree a) where
   (<>) = appendFingerTree0
 
 instance Measured a => Monoid (FingerTree a) where
-  mempty = empty
+  mempty = EmptyTree
   mappend = (<>)
+
+instance Default (FingerTree a) where
+  def = EmptyTree
 
 data Digit a
   = One a
