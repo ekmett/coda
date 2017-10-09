@@ -41,6 +41,7 @@ import Coda.Relative.Class
 import Coda.Relative.Rev
 import Data.Default
 import Data.Semigroup
+import Data.String
 import Data.Text
 import GHC.Generics hiding (from)
 import Prelude hiding (lex)
@@ -139,3 +140,6 @@ class Lexer a where
 
 instance Lexer a => FromText (Dyck a) where
   fromText = lex
+
+instance Lexer a => IsString (Dyck a) where
+  fromString = fromText . fromString

@@ -1,3 +1,4 @@
+{-# language OverloadedStrings #-}
 --------------------------------------------------------------------
 -- |
 -- Copyright : (c) Edward Kmett 2017, (c) Edward Kmett and Dan Doel 2012-2014
@@ -14,6 +15,9 @@ module Coda.Console
   , console
   ) where
   
+import Coda.Syntax.Dyck
+import Coda.Syntax.Lexer
+import Data.String
 import Coda.Console.Command
 import Coda.Console.Completion
 import Coda.Console.Options
@@ -45,5 +49,5 @@ loop = do
       loop
     Just ""      -> loop
     Just input   -> do
-      outputStrLn $ "Input was: " ++ input
+      outputStrLn $ show $ (fromString input :: Dyck Tok)
       loop
