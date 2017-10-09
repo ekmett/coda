@@ -10,6 +10,7 @@
 {-# language PatternSynonyms #-}
 {-# language TypeFamilies #-}
 {-# language LambdaCase #-}
+{-# language ExplicitNamespaces #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Coda.FingerTree
@@ -48,7 +49,8 @@ import Prelude hiding (null, reverse)
 import qualified Prelude (null)
 import Control.Lens hiding (deep)
 import Data.Semigroup
-import Data.Foldable (toList)
+import qualified Data.Foldable as Foldable
+import GHC.Exts
 
 -- | /O(log(min(n1,n2)))/. Concatenate two sequences.
 instance Measured a => Semigroup (FingerTree a) where
@@ -152,13 +154,13 @@ instance Foldable FingerTree where
   null _ = False
 
 instance Eq a => Eq (FingerTree a) where
-  xs == ys = toList xs == toList ys
+  xs == ys = Foldable.toList xs == Foldable.toList ys
 
 instance Ord a => Ord (FingerTree a) where
-  compare xs ys = compare (toList xs) (toList ys)
+  compare xs ys = compare (Foldable.toList xs) (Foldable.toList ys)
 
 instance Show a => Show (FingerTree a) where
-  showsPrec p xs = showParen (p > 10) $ showString "fromList " . shows (toList xs)
+  showsPrec p xs = showParen (p > 10) $ showString "fromList " . shows (Foldable.toList xs)
 
 -- | Like 'fmap', but with constraints on the element types.
 fmap' :: Measured b => (a -> b) -> FingerTree a -> FingerTree b
@@ -362,10 +364,14 @@ empty = EmptyTree
 singleton :: a -> FingerTree a
 singleton = Singleton
 
--- | /O(n)/. Create a sequence from a finite list of elements.
--- The opposite operation 'toList' is supplied by the 'Foldable' instance.
-fromList :: Measured a => [a] -> FingerTree a
-fromList = foldr (<|) EmptyTree
+instance Measured a => IsList (FingerTree a) where
+  type Item (FingerTree a) = a
+
+  -- | /O(n)/. Create a sequence from a finite list of elements.
+  -- The opposite operation 'toList' is supplied by the 'Foldable' instance.
+  fromList = foldr (<|) EmptyTree
+
+  toList = Foldable.toList
 
 instance (Measured a, Measured b) => Cons (FingerTree a) (FingerTree b) a b where
   _Cons = prism kons unkons where
@@ -393,7 +399,7 @@ instance AsEmpty (FingerTree a) where
   _Empty = prism (const EmptyTree) $ \case
     EmptyTree -> Right ()
     xs -> Left xs
-    
+
 consDigit :: a -> Digit a -> Digit a
 consDigit a (One b) = Two a b
 consDigit a (Two b c) = Three a b c
