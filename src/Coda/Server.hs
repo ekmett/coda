@@ -9,6 +9,7 @@
 {-# language DeriveGeneric #-}
 {-# language DeriveDataTypeable #-}
 {-# language UndecidableInstances #-}
+{-# language TypeFamilies #-}
 
 --------------------------------------------------------------------
 -- |
@@ -27,6 +28,7 @@ module Coda.Server
   , showMessage
   ) where
 
+import Coda.FingerTree (Measured(..))
 import Coda.Relative.Class
 import Coda.Server.Options
 import Coda.Syntax.Document
@@ -40,7 +42,6 @@ import Data.Aeson
 import Data.ByteString.Lazy as Lazy
 import Data.Data
 import Data.Default
-import Data.FingerTree (Measured(..))
 import Data.HashMap.Strict
 import Data.Semigroup
 import Data.Text as Text
@@ -71,12 +72,14 @@ instance Semigroup Stub where
 instance Monoid Stub where
   mempty = Stub
   mappend = (<>)
-instance Measured Stub Stub where measure = id
+instance Measured Stub where
+  type Measure Stub = Stub
+  measure = id
 instance FromText Stub where fromText _ = Stub
 instance Relative Stub where rel _ Stub = Stub
 instance RelativeMonoid Stub
 
-type Doc = Document Stub Stub
+type Doc = Document Stub
 type Docs = HashMap DocumentUri Doc
 
 data ServerState = ServerState

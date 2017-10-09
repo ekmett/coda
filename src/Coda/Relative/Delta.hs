@@ -2,6 +2,9 @@
 {-# language DeriveDataTypeable #-}
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
+{-# language TypeFamilies #-}
+{-# language FlexibleContexts #-}
+{-# language UndecidableInstances #-}
 
 ---------------------------------------------------------------------------------
 -- |
@@ -22,9 +25,9 @@ module Coda.Relative.Delta
   , HasOrderedDelta
   ) where
 
+import Coda.FingerTree
 import Data.Data
 import Data.Default
-import Data.FingerTree
 import Data.Hashable
 import Data.Semigroup
 import GHC.Generics
@@ -50,7 +53,8 @@ instance Hashable Delta
 instance Default Delta where
   def = Delta def
 
-instance Measured Delta Delta where
+instance Measured Delta where
+  type Measure Delta = Delta
   measure = id
 
 instance Semigroup Delta where
@@ -76,7 +80,7 @@ units y = case delta y of
 instance HasDelta Delta where
   delta = id
 
-instance (Measured v a, HasDelta v) => HasDelta (FingerTree v a) where
+instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where
   delta = delta . measure
 
 --------------------------------------------------------------------------------
@@ -92,7 +96,7 @@ instance (Measured v a, HasDelta v) => HasDelta (FingerTree v a) where
 -- @
 class (Monoid t, HasDelta t) => HasMonoidalDelta t where
 instance HasMonoidalDelta Delta
-instance (Measured v a, HasMonoidalDelta v) => HasMonoidalDelta (FingerTree v a)
+instance (Measured a, HasMonoidalDelta (Measure a)) => HasMonoidalDelta (FingerTree a)
 
 --------------------------------------------------------------------------------
 -- Monotone deltas

@@ -5,6 +5,8 @@
 {-# language DuplicateRecordFields #-}
 {-# language OverloadedStrings #-}
 {-# language FlexibleContexts #-}
+{-# language UndecidableInstances #-}
+{-# language TypeFamilies #-}
 
 ---------------------------------------------------------------------------------
 -- |
@@ -33,7 +35,7 @@ import Coda.Relative.Class
 import Coda.Syntax.Rope
 import Control.Lens
 import Control.Monad.State
-import Data.FingerTree (Measured(..))
+import Coda.FingerTree (Measured(..))
 import Data.Foldable (for_)
 import Data.Function (on)
 import Data.HashMap.Strict hiding (foldr)
@@ -42,15 +44,16 @@ import Data.Text as Text hiding (lines, foldr)
 import Language.Server.Protocol
 import Prelude hiding (lines)
 
-data Document v a = Document
+data Document a = Document
   { _languageId :: !Text
   , _version    :: {-# unpack #-} !Int
-  , _contents   :: !(Rope v a)
+  , _contents   :: !(Rope a)
   , _open       :: !Bool
   , _changed    :: !Bool -- differs than the contents on disk
   } deriving Show
 
-instance (RelativeMonoid v, Measured v a) => Measured (LineMeasure v) (Document v a) where
+instance (RelativeMonoid (Measure a), Measured a) => Measured (Document a) where
+  type Measure (Document a) = Measure (Rope a)
   measure = views contents measure
 
 makeFieldsNoPrefix ''Document
@@ -60,18 +63,18 @@ class HasDocuments t d | t -> d where
 
 didOpen ::
   ( MonadState s m
-  , HasDocuments s (HashMap DocumentUri (Document v a))
-  , RelativeMonoid v
-  , Measured v a
+  , HasDocuments s (HashMap DocumentUri (Document a))
+  , RelativeMonoid (Measure a)
+  , Measured a
   , FromText a
   ) => TextDocumentItem -> m ()
 didOpen (TextDocumentItem u l v t) = documents.at u ?= Document l v (fromText t) True False
 
 didChange ::
   ( MonadState s m
-  , HasDocuments s (HashMap DocumentUri (Document v a))
-  , RelativeMonoid v
-  , Measured v a
+  , HasDocuments s (HashMap DocumentUri (Document a))
+  , RelativeMonoid (Measure a)
+  , Measured a
   , FromText a
   ) => DidChangeTextDocumentParams -> m ()
 didChange (DidChangeTextDocumentParams (VersionedTextDocumentIdentifier u v) cs) =
@@ -86,9 +89,9 @@ didChange (DidChangeTextDocumentParams (VersionedTextDocumentIdentifier u v) cs)
 
 didSave ::
   ( MonadState s m
-  , HasDocuments s (HashMap DocumentUri (Document v a))
-  , RelativeMonoid v
-  , Measured v a
+  , HasDocuments s (HashMap DocumentUri (Document a))
+  , RelativeMonoid (Measure a)
+  , Measured a
   , FromText a
   ) => DidSaveTextDocumentParams -> m ()
 didSave (DidSaveTextDocumentParams t mt) =

@@ -60,6 +60,8 @@ library
     Coda.Console.Options
     Coda.Console.Unicode
 
+    Coda.FingerTree
+
     Coda.Relative.Absolute
     Coda.Relative.Cat
     Coda.Relative.Class
