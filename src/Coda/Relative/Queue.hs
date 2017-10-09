@@ -30,7 +30,6 @@ import Control.Lens
 import Data.Default
 import Data.Function (on)
 import Data.List (unfoldr)
-import Data.Profunctor.Unsafe
 import Data.Semigroup
 import GHC.Exts as Exts
 import Text.Read
