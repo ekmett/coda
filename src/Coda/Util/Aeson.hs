@@ -28,6 +28,7 @@ import Data.Aeson.Lens
 -- Utilities
 --------------------------------------------------------------------------------
 
+-- | Match anything we know how to parse from JSON
 pattern JSON :: (FromJSON a, ToJSON a, AsJSON t) => () => a -> t
 pattern JSON a <- (preview _JSON -> Just a) where
   JSON a = _JSON # a
