@@ -37,10 +37,14 @@ instance Num a => SemigroupWithZero (Product a) where
   zero = Product 0
 
 instance (Ord a, Bounded a) => SemigroupWithZero (Max a) where
-  zero = Max minBound
+  zero = Max maxBound
 
 instance (Ord a, Bounded a) => SemigroupWithZero (Min a) where
-  zero = Min maxBound
+  zero = Min minBound
+
+-- | pushout
+class (SemigroupWithZero a, Monoid a) => MonoidWithZero a
+instance (SemigroupWithZero a, Monoid a) => MonoidWithZero a
 
 -- adjoin a zero element to a semigroup
 data WithZero a
