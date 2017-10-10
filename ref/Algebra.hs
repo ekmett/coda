@@ -11,25 +11,15 @@ import Data.Semigroup
 -- Groups
 --------------------------------------------------------------------------------
 
--- | @
+-- | a regular semigroup where all idempotents commute
 -- inv (a <> b) = inv b <> inv a
 -- a <> inv a <> a = a
 -- inv a = inv a <> a <> inv a
 -- inv (inv a) = a
--- @
-class Semigroup a => RegularSemigroup a where
-  inv :: a -> a
-
--- | pushout
-class (RegularSemigroup a, Monoid a) => RegularMonoid a
-instance (RegularSemigroup a, Monoid a) => RegularMonoid a
-
--- | a regular semigroup where all idempotents commute
---
--- @
 -- and [ x <> y == y <> x | x <- [ a <> inv a, inv a <> a ] | y <- [ b <> inv b, inv b <> b ] ]
 -- @
-class RegularSemigroup a => InverseSemigroup a
+class Semigroup a => InverseSemigroup a where
+  inv :: a -> a
 
 -- | pushout
 class (InverseSemigroup a, Monoid a) => InverseMonoid a
@@ -39,6 +29,13 @@ instance (InverseSemigroup a, Monoid a) => InverseMonoid a
 --
 -- @a <> inv a = mempty = inv a <> a@
 class InverseMonoid a => Group a
+
+--------------------------------------------------------------------------------
+-- Band (semilattice)
+--------------------------------------------------------------------------------
+
+-- | Every element is an idempotent
+class InverseSemigroup a => Band a
 
 --------------------------------------------------------------------------------
 -- Ordered algebraic structures
@@ -93,6 +90,43 @@ instance (Group a, MonoidAction a b) => GroupAction a b
 --------------------------------------------------------------------------------
 
 class Semigroup a => Band a
+instance Ord a => Band (Min a)
+instance Ord a => Band (Max a)
+instance Band All
+instance Band Any
+instance Band a => Band (Dual a)
+
+--------------------------------------------------------------------------------
+-- With Zero
+--------------------------------------------------------------------------------
+
+-- | @
+-- zero <> a = zero = a <> zero
+-- @
+class Semigroup a => SemigroupWithZero a where
+  zero :: a
+
+instance (Ord a, Bounded a) => SemigroupWithZero (Min a) where
+  zero = minBound
+
+instance (Ord a, Bounded a) => SemigroupWithZero (Max a) where
+  zero = maxBound
+
+instance Num a => SemigroupWithZero (Product a) where
+  zero = Product 0
+
+instance SemigroupWithZero a => SemigroupWithZero (Dual a) where
+  zero = Dual zero
+
+instance SemigroupWithZero All where
+  zero = All False
+
+instance SemigroupWithZero Any where
+  zero = Any True
+
+-- | pushout
+class (SemigroupWithZero a, Monoid a) => MonoidWithZero a
+instance (SemigroupWithZero a, Monoid a) => MonoidWithZero a
 
 --------------------------------------------------------------------------------
 -- Monotone Actions
@@ -266,6 +300,23 @@ instance (MonoidAction a b, UnitaryAction a b) => Monoid (Semi a b) where
 -- | The semidirect product of groups is a group, given a unitary action between them
 --
 -- @
+-- inv (inv (Semi a b))
+-- = inv (Semi (inv a) (inv a `act` inv b)) -- definition
+-- = Semi (inv (inv a)) (inv (inv a) `act` inv (inv a `act` inv b)) -- definition
+-- = Semi a (inv (inv a) `act` inv (inv a `act` inv b)) -- inverse inverse
+-- = Semi a (a `act` inv (inv a `act` inv b)) -- inverse inverse
+-- = Semi a (a `act` inv a `act` (inv (inv b))) -- by inverse action lemma for unitary actions
+-- = Semi a (a `act` inv a `act` b) -- inverse inverse
+-- = Semi a (act (a <> inv a) b) -- semigroup action
+-- = Semi a (act mempty b) -- right inverse
+-- = Semi a b -- unitary action
+-- @
+
+instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => InverseSemigroup (Semi a b) where
+  inv (Semi a b) = Semi (inv a) (inv a `act` inv b)
+
+-- |
+-- @
 -- inv (Semi a b) <> Semi a b
 --   = Semi (inv a <> a) (act (inv a) (inv b) <> act (inv a) b) -- definition
 --   = Semi mempty (act (inv a) (inv b) <> act (inv a) b) -- left inverse law
@@ -284,22 +335,6 @@ instance (MonoidAction a b, UnitaryAction a b) => Monoid (Semi a b) where
 --   = Semi mempty mempty -- unitary action
 --   = mempty -- definition
 -- @
---
--- @
--- inv (inv (Semi a b))
--- = inv (Semi (inv a) (inv a `act` inv b)) -- definition
--- = Semi (inv (inv a)) (inv (inv a) `act` inv (inv a `act` inv b)) -- definition
--- = Semi a (inv (inv a) `act` inv (inv a `act` inv b)) -- inverse inverse
--- = Semi a (a `act` inv (inv a `act` inv b)) -- inverse inverse
--- = Semi a (a `act` inv a `act` (inv (inv b))) -- by inverse action lemma for unitary actions
--- = Semi a (a `act` inv a `act` b) -- inverse inverse
--- = Semi a (act (a <> inv a) b) -- semigroup action
--- = Semi a (act mempty b) -- right inverse
--- = Semi a b -- unitary action
--- @
-instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => RegularSemigroup (Semi a b) where
-  inv (Semi a b) = Semi (inv a) (inv a `act` inv b)
-instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => InverseSemigroup (Semi a b)
 instance (Group a, Group b, MonoidAction a b, UnitaryAction a b) => Group (Semi a b)
 
 -- | @
