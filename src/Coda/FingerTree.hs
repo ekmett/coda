@@ -22,7 +22,7 @@
 -----------------------------------------------------------------------------
 
 module Coda.FingerTree
-  ( FingerTree(Empty, Singleton , (:<), (:>))
+  ( FingerTree(Empty, EmptyTree, Singleton , (:<), (:>))
   , Measured(..)
   -- * Construction
   , empty
@@ -51,9 +51,12 @@ module Coda.FingerTree
   , unsafeTraverse
   ) where
 
+import Coda.Relative.Delta
 import Control.Lens hiding (deep)
 import Data.Default
 import Data.Semigroup
+import Data.Text (Text)
+import Data.Text.Unsafe
 import qualified Data.Foldable as Foldable
 import GHC.Exts
 import Prelude hiding (reverse)
@@ -68,6 +71,15 @@ instance Measured a => Monoid (FingerTree a) where
 
 instance Default (FingerTree a) where
   def = EmptyTree
+
+instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where
+  delta = delta . measure
+
+instance (Measured a, HasMonoidalDelta (Measure a)) => HasMonoidalDelta (FingerTree a)
+
+instance Measured Delta where
+  type Measure Delta = Delta
+  measure = id
 
 data Digit a
   = One a
@@ -88,6 +100,10 @@ class Monoid (Measure a) => Measured a where
 instance Measured a => Measured (Digit a) where
   type Measure (Digit a) = Measure a
   measure = foldMap measure
+
+instance Measured Text where
+  type Measure Text = Delta
+  measure = Delta . lengthWord16
 
 ---------------------------
 -- 4.2 Caching measurements

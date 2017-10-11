@@ -25,11 +25,12 @@ module Coda.Relative.Delta
   , HasOrderedDelta
   ) where
 
-import Coda.FingerTree
 import Data.Data
 import Data.Default
 import Data.Hashable
 import Data.Semigroup
+import Data.Text
+import Data.Text.Unsafe
 import GHC.Generics
 import Text.Read
 
@@ -52,10 +53,6 @@ instance Hashable Delta
 
 instance Default Delta where
   def = Delta def
-
-instance Measured Delta where
-  type Measure Delta = Delta
-  measure = id
 
 instance Semigroup Delta where
   (<>) = (+)
@@ -80,8 +77,9 @@ units y = case delta y of
 instance HasDelta Delta where
   delta = id
 
-instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where
-  delta = delta . measure
+instance HasDelta Text where
+  delta = Delta . lengthWord16
+
 
 --------------------------------------------------------------------------------
 -- Monoidal deltas
@@ -96,7 +94,7 @@ instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where
 -- @
 class (Monoid t, HasDelta t) => HasMonoidalDelta t where
 instance HasMonoidalDelta Delta
-instance (Measured a, HasMonoidalDelta (Measure a)) => HasMonoidalDelta (FingerTree a)
+instance HasMonoidalDelta Text
 
 --------------------------------------------------------------------------------
 -- Monotone deltas
