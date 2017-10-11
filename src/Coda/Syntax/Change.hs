@@ -19,6 +19,7 @@
 
 module Coda.Syntax.Change where
 
+import Coda.Algebra.Zero
 import Coda.FingerTree as FingerTree
 import Coda.Relative.Class
 import Coda.Relative.Delta
@@ -135,6 +136,9 @@ instance Composable a => Semigroup (Partial a) where
   e@Fail{} <> _ = e
   _ <> e@Fail{} = e
   {-# inline (<>) #-}
+
+instance Composable a => SemigroupWithZero (Partial a) where
+  zero = fail "zero"
 
 instance Composable Delta where
   compose a b
