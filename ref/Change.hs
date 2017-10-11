@@ -3,6 +3,8 @@
 {-# language ScopedTypeVariables #-}
 {-# language OverloadedStrings #-}
 {-# language BangPatterns #-}
+{-# language ViewPatterns #-}
+{-# language PatternSynonyms #-}
 {-# language DeriveFunctor #-}
 {-# language GeneralizedNewtypeDeriving #-}
 #if __GLASGOW_HASKELL__ < 802
@@ -39,6 +41,16 @@ dropDelta = dropWord16 . units
 splitDelta :: Delta -> Text -> (Text, Text)
 splitDelta d t = (takeDelta d t, dropDelta d t)
 
+consText :: Text -> FingerTree Text -> FingerTree Text
+consText a as
+  | Text.null a = as
+  | otherwise = a :< as
+
+snocText :: FingerTree Text -> Text -> FingerTree Text
+snocText as a
+  | Text.null a = as
+  | otherwise = as :> a
+
 --------------------------------------------------------------------------------
 -- Grading Changes
 --------------------------------------------------------------------------------
@@ -70,26 +82,37 @@ instance Num Grade where
   signum (Grade a b) = Grade (signum a) (signum b)
   fromInteger a = Grade (fromInteger a) (fromInteger a)
 
+-- not an inverse semigroup
+invGrade :: Grade -> Grade
+invGrade (Grade a b) = Grade b a
+
 --------------------------------------------------------------------------------
 -- Single edits
 --------------------------------------------------------------------------------
 
+-- TODO:
+-- del "hi" <> ins "hi" should become something that checks positions 1 and 2 are exactly "hi"
+-- currently this is too permissive.
+
 -- Edits generate Change
-data Edit
-  = Insert !Delta !(FingerTree Text) -- inserted text
-  | Delete !Delta !(FingerTree Text) -- deleted text
+data Edit = Edit !Bool !Delta !(FingerTree Text) -- True if an insert
   deriving (Show)
 
+pattern Insert :: Delta -> FingerTree Text -> Edit
+pattern Insert d xs = Edit True d xs
+
+pattern Delete :: Delta -> FingerTree Text -> Edit
+pattern Delete d xs = Edit False d xs
+
+#if __GLASGOW_HASKELL__ >= 802
+{-# complete_patterns Edit | (Insert, Delete) #-}
+#endif
+
 instance Eq Edit where
-  Delete d xs == Delete e ys = d == e && chunky xs == chunky ys
-  Insert d xs == Insert e ys = d == e && chunky xs == chunky ys
-  _ == _ = False
+  Edit b d xs == Edit c e ys = b == c && d == e && chunky xs == chunky ys
 
 instance Ord Edit where
-  compare (Delete d xs) (Delete e ys) = compare d e <> compare (chunky xs) (chunky ys)
-  compare (Insert d xs) (Insert e ys) = compare d e <> compare (chunky xs) (chunky ys)
-  compare Insert{} Delete{} = LT
-  compare Delete{} Insert{} = LT
+  compare (Edit b d xs) (Edit c e ys) = compare b c <> compare d e <> compare (chunky xs) (chunky ys)
 
 instance Measured Edit where
   type Measure Edit = Grade
@@ -104,12 +127,11 @@ instance HasDelta Edit where
 instance HasOrderedDelta Edit
 
 invEdit :: Edit -> Edit
-invEdit (Insert n t) = Delete n t
-invEdit (Delete n t) = Insert n t
+invEdit (Edit b n t) = Edit (not b) n t
+-- measure (invEdit e) = invGrade (measure e)
 
 instance Relative Edit where
-  rel d (Insert n t) = Insert (d+n) t
-  rel d (Delete n t) = Delete (d+n) t
+  rel d (Edit b n t) = Edit b (d+n) t
 
 censor :: Either a b -> Maybe b
 censor = either (const Nothing) Just
@@ -170,7 +192,11 @@ editText (Delete n s) t = do
 -- 5) all inserts and deletes have non-empty finger-trees of text fragments
 data Change
   = Change !(FingerTree Edit) !Delta
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord) -- ,Show)
+
+instance Show Change where
+  show e = case ppChange e of
+    (x,y,z) -> x ++ "\n" ++ y ++ "\n" ++ z
 
 instance Relative Change where
   rel d (Change (e :< es) d') = Change (rel d e :< es) d'
@@ -221,30 +247,20 @@ collapseT n0 (s0 :< xs0) (t0 :< ys0) = go n0 s0 xs0 t0 ys0 where
       t' :< ys' -> go (n+r) s' xs t' ys'
     Just (r, Just s', Just t') -> Both (n+r) (s' :< xs) (t' :< ys)
 collapseT _ _ _ = error "collapseN: invariant 5 violated"
-  
+
 collapse :: FingerTree Edit -> Edit -> Edit -> FingerTree Edit -> Delta -> Change
-collapse xs (Insert n as) (Insert 0 bs) ys d = Change ((xs |> Insert n (as <> bs)) <> ys) d -- restore invariant 1
-collapse xs (Delete n as) (Delete 0 bs) ys d = Change ((xs |> Delete n (as <> bs)) <> ys) d -- restore invariant 2
-collapse xs (Insert n as) (Delete 0 bs) ys d = case collapseT n as bs of -- restore invariant 4
-  Neither n' -> concatEdits xs n' ys d -- invariant 5
-  Both n' as' bs' -> Change (((xs |> Insert n' as') |> Delete 0 bs') <> ys) d -- no common prefix
-  EitherLeft n' as' -> case ys of
-    Insert 0 bs' :< ys' -> Change ((xs |> Insert n' (as' <> bs')) <> ys') d -- restore invariant 1
-    _ -> Change ((xs |> Insert n' as) <> ys) d
-  EitherRight 0 bs' -> case xs of
-    xs' :> Delete n' as' -> Change ((xs' |> Delete n' (as' <> bs')) <> ys) d -- restore invariant 2
-    _ -> Change ((xs |> Delete 0 as) <> ys) d
-  EitherRight n' bs' -> Change ((xs |> Delete n' bs') <> ys) d
-collapse xs (Delete n as) (Insert 0 bs) ys d = case collapseT n as bs of -- restore invariant 3
+collapse xs (Edit u n as) (Edit v 0 bs) ys d
+  | u == v = Change ((xs |> Edit u n (as <> bs)) <> ys) d
+  | u = case collapseT n as bs of  -- only collapse on ins <> del
   Neither n' -> concatEdits xs n' ys d
-  Both n' as' bs' -> Change (((xs |> Delete n' as') |> Insert 0 bs') <> ys) d -- no common prefix
+  Both n' as' bs' -> Change (((xs |> Edit u n' as') |> Edit v 0 bs') <> ys) d
   EitherLeft n' as' -> case ys of
-    Delete 0 bs' :< ys' -> Change ((xs |> Delete n' (as' <> bs')) <> ys') d -- restore invariant 2
-    _ -> Change ((xs |> Delete n' as) <> ys) d
+    Edit u' 0 bs' :< ys' | u == u' -> Change ((xs |> Edit u n' (as' <> bs')) <> ys') d
+    _ -> Change ((xs |> Edit u n' as) <> ys) d
   EitherRight 0 bs' -> case xs of
-    xs' :> Insert n' as' -> Change ((xs' |> Insert n' (as' <> bs')) <> ys) d -- restore invariant 1
-    _ -> Change ((xs |> Insert 0 as) <> ys) d
-  EitherRight n' bs' -> Change ((xs |> Insert n' bs') <> ys) d
+    xs' :> Edit v' n' as' | v == v' -> Change ((xs' |> Edit v n' (as' <> bs')) <> ys) d
+    _ -> Change ((xs |> Edit v 0 as) <> ys) d
+  EitherRight n' bs' -> Change ((xs |> Edit v n' bs') <> ys) d
 collapse xs s t ys d = Change (((xs |> s) |> t) <> ys) d
 
 concatEdits :: FingerTree Edit -> Delta -> FingerTree Edit -> Delta -> Change
@@ -288,22 +304,15 @@ changeDelta (Change xs d) i = case search (\m _ -> i < delta m) xs of
   Nowhere -> Left "changePos: Nowhere"
   
 changeText :: Change -> Text -> Either String Text
-changeText (Change xs d) t 
-  | o <- delta xs
-  , delta t == o + d
-  = (<> dropDelta o t) <$> runApp (foldMapWithPos step xs)
+changeText (Change xs d) t
+  | o <- delta xs, delta t == o + d = (<> dropDelta o t) <$> runApp (foldMapWithPos step xs)
   | otherwise = Left "changeText: wrong length"
   where step g e = App $ editText e $ takeDelta (delta e) $ dropDelta (delta g) t
- 
 
-class FromEdit a where
-  edit :: Edit -> a
+edit :: Edit -> Change
+edit e = Change (FingerTree.singleton e) 0
 
-instance FromEdit Edit where
-  edit = id
-
-instance FromEdit Change where
-  edit e = Change (FingerTree.singleton e) 0
+-- simple change construction api
 
 ins :: Text -> Change
 ins = edit . Insert 0 . snocText mempty
@@ -314,15 +323,29 @@ del = edit . Delete 0 . snocText mempty
 cpy :: Delta -> Change
 cpy = Change mempty
 
-consText :: Text -> FingerTree Text -> FingerTree Text
-consText a as
-  | Text.null a = as
-  | otherwise = a :< as
+-- pretty printing for debugging
 
-snocText :: FingerTree Text -> Text -> FingerTree Text
-snocText as a
-  | Text.null a = as
-  | otherwise = as :> a
+ppCopy :: Delta -> (String, String, String)
+ppCopy (units -> d) =
+  ( Prelude.replicate d '∧'
+  , Prelude.replicate d '|'
+  , Prelude.replicate d '∨'
+  )
+
+flop :: Bool -> a -> a -> a -> (a, a, a)
+flop False x y z = (x,y,z)
+flop True x y z = (z,y,x)
+
+ppEdit :: Edit -> (String, String, String)
+ppEdit (Edit b d xs)
+  | spaces <- Prelude.replicate (units xs) ' '
+  = ppCopy d <> flop b (foldMap unpack xs) spaces spaces
+
+ppChange :: Change -> (String, String, String)
+ppChange (Change xs d) = foldMap ppEdit xs <> ppCopy d
+
+pp :: Change -> IO ()
+pp e = traverseOf_ each putStrLn (ppChange e)
 
 --------------------------------------------------------------------------------
 -- everything from here down is probably broken!
@@ -384,3 +407,4 @@ stripChangeSuffixes _ y = Right y
 -- try to compose changes
 composeChange :: Change -> Change -> Maybe Change
 composeChange xs ys = censor (changeChange xs ys)
+
