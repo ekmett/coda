@@ -325,12 +325,23 @@ splitChange i c@(Change xs d) = case search (\m _ -> i <= delta m) xs of
         (Change (l :> Edit n (fl |> fml) mempty) 0, t, Change (Edit 0 (fmr <| fr) mempty :< r) d) 
     where j = i - delta l
 
+splitChange_ :: Delta -> Change -> (Change, Change)
+splitChange_ i c = case splitChange i c of
+  (l,md,r) -> (l <> dels md, r) 
+ 
 -- | @
 -- censor (editChange e >=> editChange (invEdit e) >=> editChange e) = censor (editChange e)
 -- censor (editChange (invEdit e) >=> editChange e >=> editChange (invEdit e)) = censor (editChange (invEdit e))
 -- @
 editChange :: Edit -> Change -> Partial Change
-editChange (Edit d f t) c = case splitChange d c of
-  (l,md,r) -> do
+editChange (Edit d f t) c = case splitChange_ d c of
+  (l,r) -> do
     t' <- changeText r (fold t)
-    pure $ l <> dels md <> dels f <> ins t'
+    pure $ l <> dels f <> ins t'
+
+-- changeChange f g   represents categorical composition: g . f 
+changeChange :: Change -> Change -> Partial Change
+changeChange (Change xs0 d0) c0 = go xs0 d0 c0 where
+  go (e :< es) d c = case splitChange_ (delta e) c of (l, r) -> (<>) <$> editChange e l <*> go es d c
+  go EmptyTree d c 
+    | Grade o n <- measure c = c <$ unless (n == d) (die $ "changeChange: mismatch " ++ show (o,n,d))
