@@ -86,7 +86,6 @@ instance Applicative Partial where
   Fail e *> _ = Fail e
   {-# inline (*>) #-}
 
-  -- no guarantee that the first error comes up, just 'an' error.
   m <* OK{} = m
   _ <* Fail e = Fail e
   {-# inline (<*) #-}
@@ -204,6 +203,12 @@ class (Measured t, HasDelta (Measure t)) => Splittable t where
 
   {-# minimal splitDelta | (takeDelta, dropDelta) #-}
 
+instance Splittable Delta where
+  splitDelta i j
+    | i < 0 = (0,j)
+    | i < j = (i,j - i)
+    | otherwise = (j,0)
+
 instance Splittable Text where
   takeDelta = takeWord16 . units
   dropDelta = dropWord16 . units
@@ -270,10 +275,10 @@ ppBar :: (String, String)
 ppBar = ("|","|")
 
 instance PP Delta where
-  pp (units -> n) = (Prelude.replicate n '∧', Prelude.replicate n '∨')
+  pp n = (pad n '∧', pad n '∨')
 
-pad :: Delta -> String
-pad (units -> n) = Prelude.replicate n '_'
+pad :: Delta -> Char -> String
+pad = Prelude.replicate . units
 
 pretty :: PP a => a -> IO ()
 pretty e = traverseOf_ each putStrLn (pp e)
@@ -324,22 +329,16 @@ instance Inverse Grade where
 --------------------------------------------------------------------------------
 
 -- Edits generate Change
-data Edit = Edit !Delta !(FingerTree Text) !(FingerTree Text) -- requirement and replacement
-  deriving (Show)
-
-instance Eq Edit where
-  Edit b as bs == Edit c cs ds = b == c && chunky as == chunky cs && chunky bs == chunky ds
-
-instance Ord Edit where
-  Edit b as bs `compare` Edit c cs ds = compare b c <> compare (chunky as) (chunky cs) <> compare (chunky bs) (chunky ds)
+data Edit = Edit !Delta !Delta !Delta -- requirement and replacement
+  deriving (Eq, Ord, Show)
 
 instance Measured Edit where
   type Measure Edit = Grade
-  measure (Edit n f t) = Grade (n + delta f) (n + delta t)
+  measure (Edit n f t) = Grade (n + f) (n + t)
 
 -- @delta = delta . measure@
 instance HasDelta Edit where
-  delta (Edit n f _) = n + delta f
+  delta (Edit n f _) = n + f
 
 instance HasOrderedDelta Edit
 
@@ -363,26 +362,9 @@ instance Editable Delta where
     | i < n = pure i
     | otherwise = fail "index too large"
 
-instance Editable Text where
-  edit (Edit n f t) s = do
-    unless (delta s - delta f == n) $ fail $ "editText: precondition failed: " ++ show (s, f, n)
-    s' <- stripSuffixes f s
-    let r = s' <> fold t
-    unless (delta r - delta t == n) $ fail $ "editText: postcondition failed: " ++ show (s, f, r, t, n)
-    pure r
-
-instance Editable (FingerTree Text) where
-  edit (Edit n f t) s = do
-    unless (delta s - delta f == n) $ fail $ "editText: precondition failed: " ++ show (s, f, n)
-    s' <- stripSuffixes f s
-    let r = s' <> t
-    unless (delta r - delta t == n) $ fail $ "editText: postcondition failed: " ++ show (s, f, r, t, n)
-    pure r
-
 instance PP Edit where
   pp (Edit b f t)
-    | d <- delta f, e <- delta t, c <- max e d
-    = pp b <> ( foldMap unpack f <> pad (c - d), foldMap unpack t <> pad (c - e))
+    | c <- max f t = pp b <> (pad f '-' <> pad (c-f) ' ', pad t '+' <> pad (c-t) ' ')
 
 class FromEdit a where
   fromEdit :: Edit -> a
@@ -390,17 +372,14 @@ class FromEdit a where
 instance FromEdit Edit where
   fromEdit = id
 
-inss :: FromEdit a => FingerTree Text -> a
-inss xs = fromEdit (Edit 0 mempty xs)
+ins :: FromEdit a => Delta -> a
+ins n = fromEdit (Edit 0 0 n)
 
-dels :: FromEdit a => FingerTree Text -> a
-dels xs = fromEdit (Edit 0 xs mempty)
+del :: FromEdit a => Delta -> a
+del n = fromEdit (Edit 0 n 0)
 
-ins :: FromEdit a => Text -> a
-ins = inss . FingerTree.singleton
-
-del :: FromEdit a => Text -> a
-del = dels . FingerTree.singleton
+cpy :: FromEdit a => Delta -> a
+cpy n = fromEdit (Edit n 0 0)
 
 --------------------------------------------------------------------------------
 -- Multiple edits
@@ -412,6 +391,8 @@ del = dels . FingerTree.singleton
 -- 1) no two edits with 0 spaces between them. they get coalesced into a single edit node
 --
 -- 2) all edits have at least one of the finger-trees non-empty
+--
+-- Changes are simplicial morphisms
 data Change = Change !(FingerTree Edit) !Delta
   deriving (Eq,Ord,Show)
   -- = Change !(FingerTree Edit) !Delta
@@ -481,27 +462,10 @@ instance Changeable Delta where
     OnLeft -> fail "changePos: index < 0"
     Nowhere -> fail "changePos: Nowhere"
   
--- | /O(cn)/ for @c@ changes on text of length @n@
-instance Changeable Text where
-  change c@(Change xs d) t
-    | o <- delta xs, delta t == o + d = (<> dropDelta o t) <$> runApp (foldMapWithPos go xs)
-    | otherwise = fail $ "changeText: " ++ show (c,t)
-    where go g e = App $ edit e $ takeDelta (delta e) $ dropDelta (delta g) t
-
--- | /O(c log n)/ in the number @c@ of changes and @n@ of text fragments
-instance Changeable (FingerTree Text) where
-  change c@(Change xs d) t
-    | o <- delta xs, delta t == o + d = (<> dropDelta o t) <$> runApp (foldMapWithPos go xs)
-    | otherwise = fail $ "changeText: " ++ show (c,t)
-    where go g e = App $ edit e $ takeDelta (delta e) $ dropDelta (delta g) t
-
 instance FromEdit Change where
   fromEdit e
     | Grade 0 0 <- measure e = C0 0
     | otherwise = Change (FingerTree.singleton e) 0
-
-cpy :: Delta -> Change
-cpy = Change mempty
 
 instance PP Change where
   pp (Change xs d) = foldMap pp xs <> pp d
@@ -512,6 +476,8 @@ instance PP Change where
 -- delta (fst $ splitChange d c) = max 0 (min d (grade c))
 -- delta (snd $ splitChange d c) = max 0 (min d (grade c - d))
 -- @
+--
+-- O(log n)
 instance Splittable Change where
   splitDelta i c@(Change xs d) = case search (\m _ -> i <= delta m) xs of
     Nowhere -> error "splitChange: Nowhere"
@@ -519,11 +485,11 @@ instance Splittable Change where
     OnRight | i' <- i - delta xs -> (Change xs i', cpy (d-i))
     Position l (Edit n f t) r
       | j < n -> (Change l j, Change (Edit (n-j) f t <| r) d)
-      | (fl,fr) <- splitDelta (j - n) f -> (Change l n <> dels fl <> inss t, dels fr <> Change r d)
+      | (fl,fr) <- splitDelta (j - n) f -> (Change l n <> del fl <> ins t, del fr <> Change r d)
       where j = i - delta l
 
 instance Editable Change where
-  edit (Edit d f t) (splitDelta d -> (l,r)) = change r (fold t) <&> \t' -> l <> dels f <> ins t'
+  edit (Edit d f t) (splitDelta d -> (l,r)) = change r t <&> \t' -> l <> del f <> ins t'
 
 -- | @change f g@ provides @g . f@
 instance Changeable Change where
@@ -542,6 +508,4 @@ instance Composable Change where
 -- generalize is idempotent
 generalize :: Change -> Change
 generalize (Change xs d) = foldMap go xs <> cpy d where
-  go (Edit n f t)
-    | k <- min (delta f) (delta t)
-    = cpy (n + k) <> dels (dropDelta k f) <> inss (dropDelta k t)
+  go (Edit n f t) | k <- min f t = fromEdit (Edit (n + k) (dropDelta k f) (dropDelta k t))
