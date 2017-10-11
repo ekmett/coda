@@ -11,6 +11,7 @@
 {-# language OverloadedStrings #-}
 {-# language ScopedTypeVariables #-}
 {-# language GeneralizedNewtypeDeriving #-}
+{-# language UndecidableSuperClasses #-}
 
 #if __GLASGOW_HASKELL__ < 802
 {-# options_ghc -Wno-incomplete-patterns #-}
@@ -136,12 +137,17 @@ instance Composable a => Semigroup (Partial a) where
   _ <> e@Fail{} = e
   {-# inline (<>) #-}
 
+instance Composable Delta where
+  compose a b
+    | a == b    = pure a
+    | otherwise = fail $ "compose Delta " ++ show a ++ " /= " ++ show b
+
 --------------------------------------------------------------------------------
 -- Inverse
 --------------------------------------------------------------------------------
 
 -- Makes 'Partial a' an inverse semigroup
-class Composable a => Inverse a where
+class (Inverse (Idempotent a), Composable a, Idempotent (Idempotent a) ~ Idempotent a) => Inverse a where
   inverse :: a -> a
 
   -- | Inverse gives us an inverse category, but the 'types' aren't parameters and are down here at the value level
@@ -166,6 +172,10 @@ class Composable a => Inverse a where
 instance Inverse a => InverseSemigroup (Partial a) where
   inv = fmap inverse
   {-# inline inv #-}
+
+-- not to be confused with inv!
+instance Inverse Delta where
+  inverse a = a 
 
 --------------------------------------------------------------------------------
 -- Text Utilities
