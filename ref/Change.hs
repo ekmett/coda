@@ -7,6 +7,7 @@
 {-# language PatternSynonyms #-}
 {-# language DeriveFunctor #-}
 {-# language GeneralizedNewtypeDeriving #-}
+
 #if __GLASGOW_HASKELL__ < 802
 {-# options_ghc -Wno-incomplete-patterns #-}
 #endif
@@ -159,9 +160,11 @@ stripSuffixes _ y = pure y
 -- @
 editText :: Edit -> Text -> Partial Text
 editText (Edit n f t) s = do
-  unless (delta s - delta f + delta t == n) $ die $ "editText: " ++ show (n,f,t,s)
-  r <- stripSuffixes f s
-  pure (s <> fold t)
+  unless (delta s - delta f == n) $ die $ "editText: precondition failed: " ++ show (s, f, n)
+  s' <- stripSuffixes f s
+  let r = s <> fold t
+  unless (delta r - delta t == n) $ die $ "editText: postcondition failed: " ++ show (r, t, n)
+  pure r
 
 --------------------------------------------------------------------------------
 -- Multiple edits
@@ -227,7 +230,7 @@ instance (Applicative f, Monoid a) => Monoid (App f a) where
 -- @
 changeDelta :: Change -> Delta -> Partial Delta
 changeDelta (Change xs d) i = case search (\m _ -> i < delta m) xs of
-  Position l e _ | Grade o n <- measure l -> pure (n + i - o)
+  Position l _ _ | Grade o n <- measure l -> pure (n + i - o)
   OnRight
     | Grade o n <- measure xs, res <- i - o, res <= d -> Right (n + res)
     | otherwise -> die "changePos: Past end"
@@ -235,35 +238,51 @@ changeDelta (Change xs d) i = case search (\m _ -> i < delta m) xs of
   Nowhere -> die "changePos: Nowhere"
   
 changeText :: Change -> Text -> Partial Text
-changeText (Change xs d) t
+changeText c@(Change xs d) t
   | o <- delta xs, delta t == o + d = (<> dropDelta o t) <$> runApp (foldMapWithPos step xs)
-  | otherwise = die "changeText: wrong length"
+  | otherwise = die $ "changeText: " ++ show (c,t)
   where step g e = App $ editText e $ takeDelta (delta e) $ dropDelta (delta g) t
 
-edit :: Edit -> Change
-edit e = Change (FingerTree.singleton e) 0
+class FromEdit a where
+  edit :: Edit -> a
 
-ins :: Text -> Change
-ins "" = cpy 0
-ins t  = edit (Edit 0 mempty (FingerTree.singleton t))
+instance FromEdit Change where
+  edit e 
+    | Grade 0 0 <- measure e = Change mempty 0
+    | otherwise = Change (FingerTree.singleton e) 0
 
-del :: Text -> Change
-del = invChange . ins
+instance FromEdit Edit where
+  edit = id
+
+inss :: FromEdit a => FingerTree Text -> a
+inss xs = edit (Edit 0 mempty xs)
+
+dels :: FromEdit a => FingerTree Text -> a
+dels xs = edit (Edit 0 xs mempty)
+
+ins :: FromEdit a => Text -> a
+ins = inss . FingerTree.singleton
+
+del :: FromEdit a => Text -> a
+del = dels . FingerTree.singleton
 
 cpy :: Delta -> Change
 cpy = Change mempty
 
 -- pretty printing for debugging
 
+class Pretty a where
+  pp :: a -> (String, String, String)
+
 ppBar :: (String, String, String)
 ppBar = ("|","|","|")
 
-ppCopy :: Delta -> (String, String, String)
-ppCopy (units -> d) =
-  ( Prelude.replicate d '∧'
-  , Prelude.replicate d '|'
-  , Prelude.replicate d '∨'
-  )
+instance Pretty Delta where
+  pp (units -> d) =
+    ( Prelude.replicate d '∧'
+    , Prelude.replicate d '|'
+    , Prelude.replicate d '∨'
+    )
 
 flop :: Bool -> a -> a -> a -> (a, a, a)
 flop False x y z = (x,y,z)
@@ -272,39 +291,50 @@ flop True x y z = (z,y,x)
 pad :: Delta -> String
 pad n = Prelude.replicate (units n) ' '
 
-ppEdit :: Edit -> (String, String, String)
-ppEdit (Edit b f t)
-  | d <- delta f, e <- delta t, c <- max e d 
-  = ppCopy b <> ppBar <> ( foldMap unpack f <> pad (c - d), pad c, foldMap unpack t <> pad (c - e))
+instance Pretty Edit where
+  pp (Edit b f t)
+    | d <- delta f, e <- delta t, c <- max e d 
+    = pp b <> ppBar <> ( foldMap unpack f <> pad (c - d), pad c, foldMap unpack t <> pad (c - e))
 
-ppChange :: Change -> (String, String, String)
-ppChange (Change xs d) = foldMap (\x -> ppEdit x <> ppBar) xs <> ppCopy d
+instance Pretty Change where
+  pp (Change xs d) = foldMap (\x -> pp x <> ppBar) xs <> pp d
 
-pp :: Change -> IO ()
-pp e = traverseOf_ each putStrLn (ppChange e)
+pretty :: Pretty a => a -> IO ()
+pretty e = traverseOf_ each putStrLn (pp e)
 
 --------------------------------------------------------------------------------
 -- everything from here down is probably broken!
 --------------------------------------------------------------------------------
 
+-- |
 -- the middle result is an under-determined 'del' that can be slid freely between the two changes
 --
--- @c = case splitChange d c of (l, m, r) -> l <> maybe mempty (foldMap del) m <> r@
-splitChange :: Delta -> Change -> (Change, Maybe (FingerTree Text), Change)
+-- @c = case splitChange d c of (l, m, r) -> l <> dels m <> r@
+splitChange :: Delta -> Change -> (Change, FingerTree Text, Change)
 splitChange i c@(Change xs d) = case search (\m _ -> i <= delta m) xs of
   Nowhere -> error "splitChange: Nowhere"
-  OnLeft -> (mempty, Nothing, c)
-  OnRight | i' <- i - delta xs -> (Change xs i', Nothing, cpy (d-i))
+  OnLeft -> (mempty, mempty, c)
+  OnRight | i' <- i - delta xs -> (Change xs i', mempty, cpy (d-i))
   Position l (Edit n f t) r 
-    | j < n -> (Change l j, Nothing, Change (Edit (n-j) f t <| r) d)
+    | j < n -> (Change l j, mempty, Change (Edit (n-j) f t <| r) d)
     | otherwise -> case search (\m _ -> j <= delta m) f of
       Nowhere -> error "splitChange: Nowhere(2)"
-      OnLeft -> (Change l n, Just t, Change (Edit 0 f mempty <| r) d) -- j == n
+      OnLeft -> (Change l n, t, Change (Edit 0 f mempty <| r) d) -- j == n
       OnRight -> error "splitChange: OnRight(2)"
       Position fl (splitDelta (j - delta fl) -> (fml, fmr)) fr ->
-        (Change (l :> Edit n (fl |> fml) mempty) 0, Just t, Change (Edit 0 (fmr <| fr) mempty :< r) d) 
+        (Change (l :> Edit n (fl |> fml) mempty) 0, t, Change (Edit 0 (fmr <| fr) mempty :< r) d) 
     where j = i - delta l
 
+-- | @
+-- censor (editChange e >=> editChange (invEdit e) >=> editChange e) = censor (editChange e)
+-- censor (editChange (invEdit e) >=> editChange e >=> editChange (invEdit e)) = censor (editChange (invEdit e))
+-- @
+editChange :: Edit -> Change -> Partial Change
+editChange (Edit d f t) c = case splitChange d c of
+  (l,md,r) -> do
+    f' <- changeText r (fold f)
+    pure $ l <> dels md <> del f' <> inss t
+    
 {-
 
 takeChange, dropChange :: Delta -> Change -> Change
@@ -318,19 +348,6 @@ changeChange (Change xs d) t
   | otherwise = Left "changeText: wrong length"
   where
     step g e = App $ editChange e $ takeChange (delta e) $ dropChange (delta g) t
-
--- | @
--- censor (editChange e >=> editChange (invEdit e) >=> editChange e) = censor (editChange e)
--- censor (editChange (invEdit e) >=> editChange e >=> editChange (invEdit e)) = censor (editChange (invEdit e))
--- @
-editChange :: Edit -> Change -> Partial Change
-editChange (Insert n s) t = do
-  unless (n == delta t) $ Left ("insert: expected " ++ show n ++ " characters, but was given: " ++ show t)
-  pure (t <> foldMap ins s)
-editChange (Delete n s) t = do
-  r <- stripChangeSuffixes s t
-  unless (n == delta r) $ Left ("delete: expected " ++ show n ++ " characters, but was given: " ++ show r) 
-  pure r
 
 -- validate that this change can be applied to this text at the end and compute the left hand derivative
 stripChangeSuffix :: Text -> Change -> Partial Change
