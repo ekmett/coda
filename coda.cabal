@@ -76,6 +76,7 @@ library
     Coda.Server
     Coda.Server.Options
 
+    Coda.Syntax.Change
     Coda.Syntax.Document
     Coda.Syntax.Dyck
     Coda.Syntax.Keywords
