@@ -85,7 +85,6 @@ instance Num Grade where
   signum (Grade a b) = Grade (signum a) (signum b)
   fromInteger a = Grade (fromInteger a) (fromInteger a)
 
--- not an inverse semigroup
 invGrade :: Grade -> Grade
 invGrade (Grade a b) = Grade b a
 
