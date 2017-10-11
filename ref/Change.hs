@@ -54,6 +54,44 @@ snocText as a
   | Text.null a = as
   | otherwise = as :> a
 
+-- void viewed as having one undistinguishable inhabitant: an error message
+-- no pure function can distinguish its inhabitants.
+data Error
+
+instance Eq Error where _ == _ = True 
+instance Ord Error where compare _ _ = EQ
+instance Show Error where showsPrec d !e = error "error"
+
+type Partial = Either Error
+
+die :: String -> Partial a
+die e = Left (error e) -- now we're equal damn it
+
+-- pretty printing for debugging
+
+class Pretty a where
+  pp :: a -> (String, String, String)
+
+ppBar :: (String, String, String)
+ppBar = ("|","|","|")
+
+instance Pretty Delta where
+  pp (units -> d) =
+    ( Prelude.replicate d '∧'
+    , Prelude.replicate d '|'
+    , Prelude.replicate d '∨'
+    )
+
+flop :: Bool -> a -> a -> a -> (a, a, a)
+flop False x y z = (x,y,z)
+flop True x y z = (z,y,x)
+
+pad :: Delta -> String
+pad n = Prelude.replicate (units n) ' '
+
+pretty :: Pretty a => a -> IO ()
+pretty e = traverseOf_ each putStrLn (pp e)
+
 --------------------------------------------------------------------------------
 -- Grading Changes
 --------------------------------------------------------------------------------
@@ -85,14 +123,17 @@ instance Num Grade where
   signum (Grade a b) = Grade (signum a) (signum b)
   fromInteger a = Grade (fromInteger a) (fromInteger a)
 
-invGrade :: Grade -> Grade
-invGrade (Grade a b) = Grade b a
-
+-- idempotent
 idGrade :: Delta -> Grade
 idGrade d = Grade d d
 
-composeGrade :: Alternative f => Grade -> Grade -> f Grade
-composeGrade (Grade b' c) (Grade a b) = Grade a c <$ guard (b == b')
+composeGrade :: Grade -> Grade -> Partial Grade
+composeGrade (Grade b' c) (Grade a b)
+  = Grade a c <$ unless (b == b') (die "grade mismatch")
+
+-- not an inverse semigroup under <>, but rather under composition with failure
+invGrade :: Grade -> Grade
+invGrade (Grade a b) = Grade b a
 
 --------------------------------------------------------------------------------
 -- Single edits
@@ -125,21 +166,9 @@ invEdit (Edit d f t) = Edit d t f
 instance Relative Edit where
   rel d (Edit n f t) = Edit (d+n) f t
 
-partial :: MonadFail m => Partial a -> m a
-partial (Left e) = fail e
-partial (Right a) = pure a
-
-censor :: Partial b -> Maybe b
-censor = partial
-
-type Partial = Either String
-
-die :: String -> Partial a
-die = Left
-
 -- | @
--- censor (editDelta e >=> editDelta (invEdit e) >=> editDelta e) = censor (editDelta e)
--- censor (editDelta (invEdit e) >=> editDelta e >=> editDelta (invEdit e)) = censor (editDelta (invEdit e))
+-- editDelta e >=> editDelta (invEdit e) >=> editDelta e = editDelta e
+-- editDelta (invEdit e) >=> editDelta e >=> editDelta (invEdit e) = editDelta (invEdit e)
 -- @
 editDelta :: Edit -> Delta -> Partial Delta
 editDelta (Edit n _ _) i
@@ -154,8 +183,8 @@ stripSuffixes (xs :> x) y = case stripSuffix x y of
 stripSuffixes _ y = pure y
 
 -- | @
--- censor (editText e >=> editText (invEdit e) >=> editText e) = censor (editText e)
--- censor (editText (invEdit e) >=> editText e >=> editText (invEdit e)) = censor (editText (invEdit e))
+-- editText e >=> editText (invEdit e) >=> editText e = editText e
+-- editText (invEdit e) >=> editText e >=> editText (invEdit e) = editText (invEdit e)
 -- @
 editText :: Edit -> Text -> Partial Text
 editText (Edit n f t) s = do
@@ -199,7 +228,7 @@ instance Relative Change where
   rel d (C0 d')      = C0 (d+d')
   rel d (CN e es d') = CN (rel d e) es d'
 
--- | This measures the size of the domain, @delta (invChange d)@ measures the codomain
+-- | This measures the size of the domain, @delta (inv d)@ measures the codomain
 instance HasDelta Change where
   delta (Change es d) = delta es + d
 
@@ -238,8 +267,8 @@ instance (Applicative f, Monoid a) => Monoid (App f a) where
 -- | /O(log(min(k,n-k)))/ where there are @n@ edits, @k@ of which occur before the position in question
 --
 -- @
--- censor (changeDelta e >=> changeDelta (invChange e) >=> changeDelta e) = censor (changeDelta e)
--- censor (changeDelta (invChange e) >=> changeDelta e >=> changeDelta (invChange e)) = censor (changeDelta (invChange e))
+-- changeDelta e >=> changeDelta (invChange e) >=> changeDelta e = changeDelta e
+-- changeDelta (invChange e) >=> changeDelta e >=> changeDelta (invChange e) = changeDelta (invChange e)
 -- @
 changeDelta :: Change -> Delta -> Partial Delta
 changeDelta (Change xs d) i = case search (\m _ -> i < delta m) xs of
@@ -282,27 +311,6 @@ del = dels . FingerTree.singleton
 cpy :: Delta -> Change
 cpy = Change mempty
 
--- pretty printing for debugging
-
-class Pretty a where
-  pp :: a -> (String, String, String)
-
-ppBar :: (String, String, String)
-ppBar = ("|","|","|")
-
-instance Pretty Delta where
-  pp (units -> d) =
-    ( Prelude.replicate d '∧'
-    , Prelude.replicate d '|'
-    , Prelude.replicate d '∨'
-    )
-
-flop :: Bool -> a -> a -> a -> (a, a, a)
-flop False x y z = (x,y,z)
-flop True x y z = (z,y,x)
-
-pad :: Delta -> String
-pad n = Prelude.replicate (units n) ' '
 
 instance Pretty Edit where
   pp (Edit b f t)
@@ -312,12 +320,6 @@ instance Pretty Edit where
 instance Pretty Change where
   pp (Change xs d) = foldMap (\x -> pp x <> ppBar) xs <> pp d
 
-pretty :: Pretty a => a -> IO ()
-pretty e = traverseOf_ each putStrLn (pp e)
-
---------------------------------------------------------------------------------
--- everything from here down is probably broken!
---------------------------------------------------------------------------------
 
 -- |
 -- @c = case splitChange d c of (l, r) -> l <> r
@@ -341,8 +343,8 @@ splitChange i c@(Change xs d) = case search (\m _ -> i <= delta m) xs of
     where j = i - delta l
 
 -- | @
--- censor (editChange e >=> editChange (invEdit e) >=> editChange e) = censor (editChange e)
--- censor (editChange (invEdit e) >=> editChange e >=> editChange (invEdit e)) = censor (editChange (invEdit e))
+-- editChange e >=> editChange (invEdit e) >=> editChange e = editChange e
+-- editChange (invEdit e) >=> editChange e >=> editChange (invEdit e) = editChange (invEdit e)
 -- @
 editChange :: Edit -> Change -> Partial Change
 editChange (Edit d f t) c = do
@@ -361,6 +363,7 @@ changeChange (Change xs0 d0) c0 = go xs0 d0 c0 where
     pure c
 
 -- | @composeChange f g@ represents categorical composition @f . g@
+
 composeChange :: Change -> Change -> Partial Change
 composeChange = flip changeChange
 
