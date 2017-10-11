@@ -26,7 +26,7 @@ import Control.Applicative as Applicative
 import Control.Lens
 import Control.Monad (MonadPlus(..), unless)
 import Control.Monad.Fail (MonadFail(fail))
-import Data.Foldable (fold)
+import Data.Default
 import Data.Semigroup
 import Data.Text as Text
 import qualified Data.Text.Lazy as Lazy
@@ -332,6 +332,9 @@ instance Inverse Grade where
 data Edit = Edit !Delta !Delta !Delta -- requirement and replacement
   deriving (Eq, Ord, Show)
 
+instance Default Edit where
+  def = Edit 0 0 0
+
 instance Measured Edit where
   type Measure Edit = Grade
   measure (Edit n f t) = Grade (n + f) (n + t)
@@ -348,6 +351,13 @@ inverseEdit (Edit d f t) = Edit d t f
 
 instance Relative Edit where
   rel d (Edit n f t) = Edit (d+n) f t
+
+instance Splittable Edit where
+  splitDelta i e@(Edit n f t) 
+    | i < 0 = (def, e)
+    | i < n = (cpy i, Edit (n-1) f t)
+    | nf <- n+f, i < nf = (Edit n (nf - i) t, Edit 0 (f + i - nf) 0)
+    | otherwise = (e, def)
 
 -- | @
 -- edit e >=> edit (inverseEdit e) >=> edit e = edit e
@@ -392,7 +402,7 @@ cpy n = fromEdit (Edit n 0 0)
 --
 -- 2) all edits have at least one of the finger-trees non-empty
 --
--- Changes are simplicial morphisms
+-- Changes are simplicial morphisms, monotone functions between finite sets of integers that start at 0
 data Change = Change !(FingerTree Edit) !Delta
   deriving (Eq,Ord,Show)
   -- = Change !(FingerTree Edit) !Delta
@@ -494,6 +504,7 @@ instance Editable Change where
 -- | @change f g@ provides @g . f@
 instance Changeable Change where
   change (Change xs0 d0) = go xs0 d0 where
+    -- TODO: figure out an optimal split ordering by adding a cost to each edit
     go (e :< es) d (splitDelta (delta (inverseEdit e)) -> (l,r)) = (<>) <$> edit e l <*> go es d r
     go EmptyTree d c = do
       unless (delta c == d) $ fail $ "changeChange: leftover mismatch " ++ show (delta c,d)
