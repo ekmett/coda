@@ -1,19 +1,26 @@
+{-# language CPP #-}
 {-# language DeriveDataTypeable #-}
+{-# language PatternSynonyms #-}
 {-# language DeriveGeneric #-}
 {-# language DeriveTraversable #-}
 {-# language FlexibleInstances #-}
 {-# language UndecidableInstances #-}
+{-# language GeneralizedNewtypeDeriving #-}
 
 module Coda.Algebra.Zero
   ( SemigroupWithZero(..)
-  , WithZero(..)
+  , WithZero(Zero,NonZero,WithZero)
   ) where
 
+import Control.Applicative
+import Control.Monad
+import Control.Monad.Zip
 import Data.Data hiding (Prefix)
 import Data.Semigroup
 import Data.String
-import GHC.Generics hiding (Prefix)
+import GHC.Generics hiding (Prefix, prec)
 import Prelude
+import Text.Read
 
 -- | @
 -- zero <> a = zero = a <> zero
@@ -44,22 +51,37 @@ class (SemigroupWithZero a, Monoid a) => MonoidWithZero a
 instance (SemigroupWithZero a, Monoid a) => MonoidWithZero a
 
 -- adjoin a zero element to a semigroup
-data WithZero a = Zero | NonZero a
-  deriving (Eq,Ord,Show,Read,Data,Typeable,Generic,Generic1,Functor,Foldable,Traversable)
+newtype WithZero a = WithZero { runWithZero :: Maybe a }
+  deriving (Eq,Ord,Data,Generic,Generic1,Functor,Foldable,Traversable,Applicative,Alternative,Monad,MonadPlus,MonadZip)
+
+#if __GLASGOW_HASKELL__ >= 802
+{-# complete_patterns WithZero | (Zero, NonZero) #-}
+#endif
+
+pattern Zero :: WithZero a
+pattern Zero = WithZero Nothing
+
+pattern NonZero :: a -> WithZero a
+pattern NonZero a = WithZero (Just a)
+
+instance Show a => Show (WithZero a) where
+  showsPrec d Zero = showString "Zero"
+  showsPrec d (NonZero a) = showParen (d > 10) $ showString "NonZero " . showsPrec 11 a
+
+instance Read a => Read (WithZero a) where
+  readPrec = parens $ (prec 10 $ do Ident "Zero" <- lexP; return Zero)
+                  +++ (prec 10 $ do Ident "NonZero" <- lexP; NonZero <$> step readPrec)
+  readListPrec = readListPrecDefault
 
 instance Semigroup a => Semigroup (WithZero a) where
-  Zero <> _ = Zero
-  _ <> Zero = Zero
-  NonZero a <> NonZero b = NonZero (a <> b)
+  (<>) = liftA2 (<>)
 
 instance Semigroup a => SemigroupWithZero (WithZero a) where
-  zero = Zero
+  zero = empty
 
 instance Monoid a => Monoid (WithZero a) where
-  mempty = NonZero mempty
-  mappend Zero _ = Zero
-  mappend _ Zero = Zero
-  mappend (NonZero a) (NonZero b) = NonZero (mappend a b)
+  mempty = empty
+  mappend = liftA2 mappend
 
 instance IsString a => IsString (WithZero a) where
   fromString = NonZero . fromString
