@@ -162,8 +162,8 @@ editText :: Edit -> Text -> Partial Text
 editText (Edit n f t) s = do
   unless (delta s - delta f == n) $ die $ "editText: precondition failed: " ++ show (s, f, n)
   s' <- stripSuffixes f s
-  let r = s <> fold t
-  unless (delta r - delta t == n) $ die $ "editText: postcondition failed: " ++ show (r, t, n)
+  let r = s' <> fold t
+  unless (delta r - delta t == n) $ die $ "editText: postcondition failed: " ++ show (s, f, r, t, n)
   pure r
 
 --------------------------------------------------------------------------------
@@ -332,35 +332,5 @@ splitChange i c@(Change xs d) = case search (\m _ -> i <= delta m) xs of
 editChange :: Edit -> Change -> Partial Change
 editChange (Edit d f t) c = case splitChange d c of
   (l,md,r) -> do
-    f' <- changeText r (fold f)
-    pure $ l <> dels md <> del f' <> inss t
-    
-{-
-
-takeChange, dropChange :: Delta -> Change -> Change
-takeChange d c = fst $ splitChange d c
-dropChange d c = snd $ splitChange d c
-
--- compose changes in series
-changeChange :: Change -> Change -> Partial Change
-changeChange (Change xs d) t 
-  | o <- delta xs, delta t == o + d = (<> dropChange o t) <$> runApp (foldMapWithPos step xs)
-  | otherwise = Left "changeText: wrong length"
-  where
-    step g e = App $ editChange e $ takeChange (delta e) $ dropChange (delta g) t
-
--- validate that this change can be applied to this text at the end and compute the left hand derivative
-stripChangeSuffix :: Text -> Change -> Partial Change
-stripChangeSuffix t c 
-  | n <- delta t - delta c, n >= 0, (l,r) <- splitChange n c = l <$ changeText r t
-  | otherwise = Left "stripChangeSuffix: suffix too long to match"
-
-stripChangeSuffixes :: FingerTree Text -> Change -> Partial Change
-stripChangeSuffixes (xs :> x) y = stripChangeSuffix x y >>= stripChangeSuffixes xs
-stripChangeSuffixes _ y = Right y
-
--- try to compose changes
-composeChange :: Change -> Change -> Maybe Change
-composeChange xs ys = censor (changeChange xs ys)
-
--}
+    t' <- changeText r (fold t)
+    pure $ l <> dels md <> dels f <> ins t'
