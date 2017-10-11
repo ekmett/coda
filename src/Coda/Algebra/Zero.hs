@@ -9,7 +9,7 @@
 
 module Coda.Algebra.Zero
   ( SemigroupWithZero(..)
-  , WithZero(Zero,NonZero,WithZero)
+  , WithZero(Zero,NonZero,WithZero,runWithZero)
   ) where
 
 import Control.Applicative
@@ -65,8 +65,8 @@ pattern NonZero :: a -> WithZero a
 pattern NonZero a = WithZero (Just a)
 
 instance Show a => Show (WithZero a) where
-  showsPrec d Zero = showString "Zero"
   showsPrec d (NonZero a) = showParen (d > 10) $ showString "NonZero " . showsPrec 11 a
+  showsPrec _ _Zero = showString "Zero"
 
 instance Read a => Read (WithZero a) where
   readPrec = parens $ (prec 10 $ do Ident "Zero" <- lexP; return Zero)
