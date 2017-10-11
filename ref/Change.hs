@@ -16,12 +16,14 @@ import Coda.Relative.Class
 import Coda.Relative.Delta
 import Control.Applicative
 import Control.Lens
-import Control.Monad (unless)
+import Control.Monad (guard, unless)
+import Control.Monad.Fail
 import Data.Foldable (fold)
 import Data.Semigroup
 import Data.Text as Text
 import qualified Data.Text.Lazy as Lazy
 import Data.Text.Unsafe
+import Prelude hiding (fail)
 
 --------------------------------------------------------------------------------
 -- Utilities
@@ -86,93 +88,80 @@ instance Num Grade where
 invGrade :: Grade -> Grade
 invGrade (Grade a b) = Grade b a
 
+idGrade :: Delta -> Grade 
+idGrade d = Grade d d 
+
+composeGrade :: Alternative f => Grade -> Grade -> f Grade
+composeGrade (Grade b' c) (Grade a b) = Grade a c <$ guard (b == b')
+
 --------------------------------------------------------------------------------
 -- Single edits
 --------------------------------------------------------------------------------
 
--- TODO:
--- del "hi" <> ins "hi" should become something that checks positions 1 and 2 are exactly "hi"
--- currently this is too permissive.
-
 -- Edits generate Change
-data Edit = Edit !Bool !Delta !(FingerTree Text) -- True if an insert
+data Edit = Edit !Delta !(FingerTree Text) !(FingerTree Text) -- requirement and replacement
   deriving (Show)
 
-pattern Insert :: Delta -> FingerTree Text -> Edit
-pattern Insert d xs = Edit True d xs
-
-pattern Delete :: Delta -> FingerTree Text -> Edit
-pattern Delete d xs = Edit False d xs
-
-#if __GLASGOW_HASKELL__ >= 802
-{-# complete_patterns Edit | (Insert, Delete) #-}
-#endif
-
 instance Eq Edit where
-  Edit b d xs == Edit c e ys = b == c && d == e && chunky xs == chunky ys
+  Edit b as bs == Edit c cs ds = b == c && chunky as == chunky cs && chunky bs == chunky ds
 
 instance Ord Edit where
-  compare (Edit b d xs) (Edit c e ys) = compare b c <> compare d e <> compare (chunky xs) (chunky ys)
+  Edit b as bs `compare` Edit c cs ds = compare b c <> compare (chunky as) (chunky cs) <> compare (chunky bs) (chunky ds)
 
 instance Measured Edit where
   type Measure Edit = Grade
-  measure (Insert n t) = Grade n (n + delta t)
-  measure (Delete n t) = Grade (n + delta t) n
+  measure (Edit n f t) = Grade (n + delta f) (n + delta t)
 
 -- @delta = delta . measure@
 instance HasDelta Edit where
-  delta (Insert n _) = n
-  delta (Delete n t) = n + measure t
+  delta (Edit n f _) = n + delta f 
 
 instance HasOrderedDelta Edit
 
-invEdit :: Edit -> Edit
-invEdit (Edit b n t) = Edit (not b) n t
 -- measure (invEdit e) = invGrade (measure e)
+invEdit :: Edit -> Edit
+invEdit (Edit d f t) = Edit d t f
 
 instance Relative Edit where
-  rel d (Edit b n t) = Edit b (d+n) t
+  rel d (Edit n f t) = Edit (d+n) f t
 
-censor :: Either a b -> Maybe b
-censor = either (const Nothing) Just
+partial :: MonadFail m => Partial a -> m a
+partial (Left e) = fail e
+partial (Right a) = pure a
+
+censor :: Partial b -> Maybe b
+censor = partial
+
+type Partial = Either String
+
+die :: String -> Partial a
+die = Left
 
 -- | @
--- modulo the exact text of the helpful error
---
 -- censor (editDelta e >=> editDelta (invEdit e) >=> editDelta e) = censor (editDelta e)
 -- censor (editDelta (invEdit e) >=> editDelta e >=> editDelta (invEdit e)) = censor (editDelta (invEdit e))
 -- @
---
-editDelta :: Edit -> Delta -> Either String Delta
-editDelta (Insert n t) i
-  | i < 0 = Left "negative index"
-  | i < n = Right i
-  | i < n + nt = Right (i + nt)
-  | otherwise = Left "index too large"
-   where nt = measure t
-editDelta (Delete n _) i
-  | i < 0 = Left "negative index"
-  | i < n = Right i
-  | otherwise = Left "index too large"
+editDelta :: Edit -> Delta -> Partial Delta
+editDelta (Edit n _ _) i
+  | i < 0 = die "negative index"
+  | i < n = pure i
+  | otherwise = die "index too large"
   
-stripSuffixes :: FingerTree Text -> Text -> Either String Text
+stripSuffixes :: FingerTree Text -> Text -> Partial Text
 stripSuffixes (xs :> x) y = case stripSuffix x y of
   Just y' -> stripSuffixes xs y'
-  Nothing -> Left (show x ++ " is not a suffix of " ++ show y)
-stripSuffixes _ y = Right y
+  Nothing -> die $ show x ++ " is not a suffix of " ++ show y
+stripSuffixes _ y = pure y
 
 -- | @
 -- censor (editText e >=> editText (invEdit e) >=> editText e) = censor (editText e)
 -- censor (editText (invEdit e) >=> editText e >=> editText (invEdit e)) = censor (editText (invEdit e))
 -- @
-editText :: Edit -> Text -> Either String Text
-editText (Insert n s) t = do
-  unless (n == delta t) $ Left ("insert: expected " ++ show n ++ " characters, but was given: " ++ show t)
-  pure (t <> fold s)
-editText (Delete n s) t = do
-  r <- stripSuffixes s t
-  unless (n == delta r) $ Left ("delete: expected " ++ show n ++ " characters, but was given: " ++ show r) 
-  pure r
+editText :: Edit -> Text -> Partial Text
+editText (Edit n f t) s = do
+  unless (delta s - delta f + delta t == n) $ die $ "editText: " ++ show (n,f,t,s)
+  r <- stripSuffixes f s
+  pure (s <> fold t)
 
 --------------------------------------------------------------------------------
 -- Multiple edits
@@ -181,15 +170,8 @@ editText (Delete n s) t = do
 -- |
 -- Invariants: 
 --
--- 1) no two inserts with 0 spaces between them. they get coalesced into a single insert node
---
--- 2) no two deletes with 0 spaces between them. they get coalesced into a single delete node
---
--- 3) no deletes followed by an insert that re-inserts the same prefix we just deleted
---
--- 4) no inserts followed by a delete that deletes the same prefix we just deleted
---
--- 5) all inserts and deletes have non-empty finger-trees of text fragments
+-- 1) no two edits with 0 spaces between them. they get coalesced into a single edit node
+-- 2) all edits have one of the finger-trees non-empty
 data Change
   = Change !(FingerTree Edit) !Delta
   deriving (Eq,Ord) -- ,Show)
@@ -208,68 +190,18 @@ instance HasDelta Change where
 
 instance Measured Change where
   type Measure Change = Grade
-  measure (Change xs d) = rel d (measure xs) -- uses commutativity
-
--- the identity change on a text n words long
-idChange :: Delta -> Change
-idChange = Change mempty
+  measure (Change xs d) = rel d (measure xs) -- abuses commutativity
 
 invChange :: Change -> Change
 invChange (Change xs d) = Change (fmap' invEdit xs) d
 
-commonPrefixLength :: Text -> Text -> Maybe (Delta, Maybe Text, Maybe Text)
-commonPrefixLength xs ys = do
-  (as,bs,cs) <- commonPrefixes xs ys
-  pure (delta as, if Text.null bs then Nothing else Just bs, if Text.null bs then Nothing else Just cs)
-
-data Collapse
-  = Neither !Delta
-  | EitherLeft !Delta !(FingerTree Text)
-  | EitherRight !Delta !(FingerTree Text)
-  | Both !Delta !(FingerTree Text) !(FingerTree Text)
-
-collapseT :: Delta -> FingerTree Text -> FingerTree Text -> Collapse
-collapseT n0 (s0 :< xs0) (t0 :< ys0) = go n0 s0 xs0 t0 ys0 where
-  go n s xs t ys = case commonPrefixLength s t of
-    Nothing -> Both n (s :< xs) (t :< ys) -- no common prefix
-    Just (r, Nothing, Nothing) -> case xs of
-      EmptyTree -> case ys of
-        EmptyTree -> Neither (n+r)
-        _ -> EitherRight (n+r) ys
-      s' :< xs' -> case ys of
-        EmptyTree -> EitherLeft (n+r) xs
-        t' :< ys' -> go (n+r) s' xs' t' ys'
-    Just (r, Nothing, Just t') -> case xs of
-      EmptyTree -> EitherRight (n+r) (t' :< ys)
-      s' :< xs' -> go (n+r) s' xs' t' ys
-    Just (r, Just s', Nothing) -> case ys of
-      EmptyTree -> EitherLeft (n+r) (s' :< xs)
-      t' :< ys' -> go (n+r) s' xs t' ys'
-    Just (r, Just s', Just t') -> Both (n+r) (s' :< xs) (t' :< ys)
-collapseT _ _ _ = error "collapseN: invariant 5 violated"
-
-collapse :: FingerTree Edit -> Edit -> Edit -> FingerTree Edit -> Delta -> Change
-collapse xs (Edit u n as) (Edit v 0 bs) ys d
-  | u == v = Change ((xs |> Edit u n (as <> bs)) <> ys) d
-  | u = case collapseT n as bs of  -- only collapse on ins <> del
-  Neither n' -> concatEdits xs n' ys d
-  Both n' as' bs' -> Change (((xs |> Edit u n' as') |> Edit v 0 bs') <> ys) d
-  EitherLeft n' as' -> case ys of
-    Edit u' 0 bs' :< ys' | u == u' -> Change ((xs |> Edit u n' (as' <> bs')) <> ys') d
-    _ -> Change ((xs |> Edit u n' as) <> ys) d
-  EitherRight 0 bs' -> case xs of
-    xs' :> Edit v' n' as' | v == v' -> Change ((xs' |> Edit v n' (as' <> bs')) <> ys) d
-    _ -> Change ((xs |> Edit v 0 as) <> ys) d
-  EitherRight n' bs' -> Change ((xs |> Edit v n' bs') <> ys) d
-collapse xs s t ys d = Change (((xs |> s) |> t) <> ys) d
-
 concatEdits :: FingerTree Edit -> Delta -> FingerTree Edit -> Delta -> Change
-concatEdits EmptyTree 0 ys        e = Change ys e
+concatEdits EmptyTree 0 ys e = Change ys e
 concatEdits EmptyTree d EmptyTree e = Change EmptyTree (d+e)
-concatEdits xs        d EmptyTree e = Change xs (d+e)
+concatEdits xs d EmptyTree e = Change xs (d+e)
 concatEdits EmptyTree d (t :< ys) e = Change (rel d t <| ys) e
-concatEdits (xs :> s) 0 (t :< ys) e = collapse xs s t ys e
-concatEdits xs        d (t :< ys) e = Change ((xs |> rel d t) <> ys) e
+concatEdits (xs :> Edit n as bs) 0 (Edit 0 cs ds :< ys) e = Change ((xs |> Edit n (as <> cs) (bs <> ds)) <> ys) e
+concatEdits xs d (t :< ys) e = Change ((xs |> rel d t) <> ys) e
 
 -- | given a change x that will successfully apply to t, and a change y that successfully applies to s
 -- concatChange x y successfully applies to (t <> s)
@@ -294,36 +226,38 @@ instance (Applicative f, Monoid a) => Monoid (App f a) where
 -- censor (changeDelta e >=> changeDelta (invChange e) >=> changeDelta e) = censor (changeDelta e)
 -- censor (changeDelta (invChange e) >=> changeDelta e >=> changeDelta (invChange e)) = censor (changeDelta (invChange e))
 -- @
-changeDelta :: Change -> Delta -> Either String Delta
+changeDelta :: Change -> Delta -> Partial Delta
 changeDelta (Change xs d) i = case search (\m _ -> i < delta m) xs of
-  Position l e _ | Grade o n <- measure l -> (n +) <$> editDelta e (i - o)
+  Position l e _ | Grade o n <- measure l -> pure (n + i - o)
   OnRight
     | Grade o n <- measure xs, res <- i - o, res <= d -> Right (n + res)
-    | otherwise -> Left "changePos: Past end"
-  OnLeft -> Left "changePos: index < 0"
-  Nowhere -> Left "changePos: Nowhere"
+    | otherwise -> die "changePos: Past end"
+  OnLeft -> die "changePos: index < 0"
+  Nowhere -> die "changePos: Nowhere"
   
-changeText :: Change -> Text -> Either String Text
+changeText :: Change -> Text -> Partial Text
 changeText (Change xs d) t
   | o <- delta xs, delta t == o + d = (<> dropDelta o t) <$> runApp (foldMapWithPos step xs)
-  | otherwise = Left "changeText: wrong length"
+  | otherwise = die "changeText: wrong length"
   where step g e = App $ editText e $ takeDelta (delta e) $ dropDelta (delta g) t
 
 edit :: Edit -> Change
 edit e = Change (FingerTree.singleton e) 0
 
--- simple change construction api
-
 ins :: Text -> Change
-ins = edit . Insert 0 . snocText mempty
+ins "" = cpy 0
+ins t  = edit (Edit 0 mempty (FingerTree.singleton t))
 
 del :: Text -> Change
-del = edit . Delete 0 . snocText mempty
+del = invChange . ins
 
 cpy :: Delta -> Change
 cpy = Change mempty
 
 -- pretty printing for debugging
+
+ppBar :: (String, String, String)
+ppBar = ("|","|","|")
 
 ppCopy :: Delta -> (String, String, String)
 ppCopy (units -> d) =
@@ -336,13 +270,16 @@ flop :: Bool -> a -> a -> a -> (a, a, a)
 flop False x y z = (x,y,z)
 flop True x y z = (z,y,x)
 
+pad :: Delta -> String
+pad n = Prelude.replicate (units n) ' '
+
 ppEdit :: Edit -> (String, String, String)
-ppEdit (Edit b d xs)
-  | spaces <- Prelude.replicate (units xs) ' '
-  = ppCopy d <> flop b (foldMap unpack xs) spaces spaces
+ppEdit (Edit b f t)
+  | d <- delta f, e <- delta t, c <- max e d 
+  = ppCopy b <> ppBar <> ( foldMap unpack f <> pad (c - d), pad c, foldMap unpack t <> pad (c - e))
 
 ppChange :: Change -> (String, String, String)
-ppChange (Change xs d) = foldMap ppEdit xs <> ppCopy d
+ppChange (Change xs d) = foldMap (\x -> ppEdit x <> ppBar) xs <> ppCopy d
 
 pp :: Change -> IO ()
 pp e = traverseOf_ each putStrLn (ppChange e)
@@ -350,6 +287,8 @@ pp e = traverseOf_ each putStrLn (ppChange e)
 --------------------------------------------------------------------------------
 -- everything from here down is probably broken!
 --------------------------------------------------------------------------------
+
+{-
 
 splitEdits :: Delta -> FingerTree Edit -> Edit -> FingerTree Edit -> Delta -> (Change, Change)
 splitEdits i xs (Insert n as) ys d = (Change xs i, Change (Insert (n-i) as <| ys) d)
@@ -374,7 +313,7 @@ takeChange d c = fst $ splitChange d c
 dropChange d c = snd $ splitChange d c
 
 -- compose changes in series
-changeChange :: Change -> Change -> Either String Change
+changeChange :: Change -> Change -> Partial Change
 changeChange (Change xs d) t 
   | o <- delta xs, delta t == o + d = (<> dropChange o t) <$> runApp (foldMapWithPos step xs)
   | otherwise = Left "changeText: wrong length"
@@ -385,7 +324,7 @@ changeChange (Change xs d) t
 -- censor (editChange e >=> editChange (invEdit e) >=> editChange e) = censor (editChange e)
 -- censor (editChange (invEdit e) >=> editChange e >=> editChange (invEdit e)) = censor (editChange (invEdit e))
 -- @
-editChange :: Edit -> Change -> Either String Change
+editChange :: Edit -> Change -> Partial Change
 editChange (Insert n s) t = do
   unless (n == delta t) $ Left ("insert: expected " ++ show n ++ " characters, but was given: " ++ show t)
   pure (t <> foldMap ins s)
@@ -395,12 +334,12 @@ editChange (Delete n s) t = do
   pure r
 
 -- validate that this change can be applied to this text at the end and compute the left hand derivative
-stripChangeSuffix :: Text -> Change -> Either String Change
+stripChangeSuffix :: Text -> Change -> Partial Change
 stripChangeSuffix t c 
   | n <- delta t - delta c, n >= 0, (l,r) <- splitChange n c = l <$ changeText r t
   | otherwise = Left "stripChangeSuffix: suffix too long to match"
 
-stripChangeSuffixes :: FingerTree Text -> Change -> Either String Change
+stripChangeSuffixes :: FingerTree Text -> Change -> Partial Change
 stripChangeSuffixes (xs :> x) y = stripChangeSuffix x y >>= stripChangeSuffixes xs
 stripChangeSuffixes _ y = Right y
 
@@ -408,3 +347,4 @@ stripChangeSuffixes _ y = Right y
 composeChange :: Change -> Change -> Maybe Change
 composeChange xs ys = censor (changeChange xs ys)
 
+-}
