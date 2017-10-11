@@ -174,11 +174,10 @@ editText (Edit n f t) s = do
 -- 2) all edits have one of the finger-trees non-empty
 data Change
   = Change !(FingerTree Edit) !Delta
-  deriving (Eq,Ord) -- ,Show)
+  deriving (Eq,Ord,Show)
 
-instance Show Change where
-  show e = case ppChange e of
-    (x,y,z) -> x ++ "\n" ++ y ++ "\n" ++ z
+--instance Show Change where
+--  show e = case ppChange e of (x,y,z) -> x ++ "\n" ++ y ++ "\n" ++ z
 
 instance Relative Change where
   rel d (Change (e :< es) d') = Change (rel d e :< es) d'
@@ -288,25 +287,25 @@ pp e = traverseOf_ each putStrLn (ppChange e)
 -- everything from here down is probably broken!
 --------------------------------------------------------------------------------
 
-{-
+-- the middle result is an under-determined 'del' that can be slid freely between the two changes
+--
+-- @c = case splitChange d c of (l, m, r) -> l <> maybe mempty (foldMap del) m <> r@
+splitChange :: Delta -> Change -> (Change, Maybe (FingerTree Text), Change)
+splitChange i c@(Change xs d) = case search (\m _ -> i <= delta m) xs of
+  Nowhere -> error "splitChange: Nowhere"
+  OnLeft -> (mempty, Nothing, c)
+  OnRight | i' <- i - delta xs -> (Change xs i', Nothing, cpy (d-i))
+  Position l (Edit n f t) r 
+    | j < n -> (Change l j, Nothing, Change (Edit (n-j) f t <| r) d)
+    | otherwise -> case search (\m _ -> j <= delta m) f of
+      Nowhere -> error "splitChange: Nowhere(2)"
+      OnLeft -> (Change l n, Just t, Change (Edit 0 f mempty <| r) d) -- j == n
+      OnRight -> error "splitChange: OnRight(2)"
+      Position fl (splitDelta (j - delta fl) -> (fml, fmr)) fr ->
+        (Change (l :> Edit n (fl |> fml) mempty) 0, Just t, Change (Edit 0 (fmr <| fr) mempty :< r) d) 
+    where j = i - delta l
 
-splitEdits :: Delta -> FingerTree Edit -> Edit -> FingerTree Edit -> Delta -> (Change, Change)
-splitEdits i xs (Insert n as) ys d = (Change xs i, Change (Insert (n-i) as <| ys) d)
-splitEdits i xs (Delete n as) ys d
-  | i <= n = (Change xs i, Change (Delete (n-i) as <| ys) d)
-  | otherwise = case search (\m _ -> i < delta m) as of
-    Position l m r
-      | !j <- i - delta l
-      , (ml, mr) <- splitDelta j m 
-      -> ( Change (xs |> Delete n (snocText l ml)) 0, Change (Delete 0 (consText mr r) <| ys) d)
-    _ -> error "splitEdits: logic error"
- 
-splitChange :: Delta -> Change -> (Change, Change)
-splitChange i c@(Change xs d) = case search (\m _ -> i < delta m) xs of
-  Position l e r -> splitEdits (i - delta l) l e r d
-  OnLeft  -> (mempty, c)
-  OnRight | i' <- i - delta xs -> (Change xs i', cpy (d-i))
-  Nowhere -> error "splitChange: nowhere"
+{-
 
 takeChange, dropChange :: Delta -> Change -> Change
 takeChange d c = fst $ splitChange d c
