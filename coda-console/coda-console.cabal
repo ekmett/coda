@@ -1,0 +1,50 @@
+name:          coda-console
+category:      Language
+version:       0.0.1
+license:       BSD2
+cabal-version: >= 2
+license-file:  LICENSE.md
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/ekmett/coda/
+bug-reports:   http://github.com/ekmett/coda/issues
+copyright:     Copyright (C) 2017 Edward A. Kmett
+build-type:    Simple
+synopsis:      REPL for the coda compiler
+description:   REPL for the coda compiler
+
+extra-source-files:
+  .hlint.yaml
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/coda.git
+
+library
+  default-language: Haskell2010
+  hs-source-dirs: src
+  ghc-options: -Wall
+  exposed-modules:
+    Coda.Console
+    Coda.Console.Command
+    Coda.Console.Completion
+    Coda.Console.Options
+    Coda.Console.Unicode
+    Coda.Util.Pretty
+
+  build-depends:
+    ansi-wl-pprint       >= 0.6      && < 0.7,
+    base,
+    coda-lsp             == 0.0.1,
+    coda-syntax          == 0.0.1,
+    coda-version         == 0.0.1,
+    containers,
+    data-default,
+    exceptions           >= 0.8.2.1  && < 0.9,
+    haskeline            >= 0.7.4    && < 0.8,
+    hyphenation          >= 0.7      && < 0.8,
+    lens,
+    mtl,
+    optparse-applicative >= 0.13     && < 0.15,
+    split                >= 0.2      && < 0.3

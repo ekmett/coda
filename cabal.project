@@ -1,1 +1,8 @@
-packages: .
+packages:
+  coda
+  coda-algebra
+  coda-console
+  coda-lsp
+  coda-syntax
+  coda-version
+  coda-server

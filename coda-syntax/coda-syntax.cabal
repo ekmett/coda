@@ -1,0 +1,68 @@
+name:          coda-syntax
+category:      Language
+version:       0.0.1
+license:       BSD2
+cabal-version: >= 2
+license-file:  LICENSE.md
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/ekmett/coda/
+bug-reports:   http://github.com/ekmett/coda/issues
+copyright:     Copyright (C) 2017 Edward A. Kmett
+build-type:    Simple
+synopsis:      Syntax for the coda compiler
+description:   Syntax for the coda compiler
+
+extra-source-files:
+  .hlint.yaml
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/coda.git
+
+library
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src
+  exposed-modules:
+    Coda.Syntax.Change
+    Coda.Syntax.Document
+    Coda.Syntax.Dyck
+    Coda.Syntax.Keywords
+    Coda.Syntax.Name
+    Coda.Syntax.Prefix
+    Coda.Syntax.Rich
+    Coda.Syntax.Rope
+
+    Coda.Util.Alex
+    Coda.Syntax.Lexer
+
+  build-depends:
+    aeson,
+    array                >= 0.5.1    && < 0.6,
+    base,
+    base-orphans         >= 0.5      && < 1,
+    bifunctors,
+    bytestring,
+    Cabal,
+    coda-algebra         == 0.0.1,
+    coda-lsp             == 0.0.1,
+    comonad,
+    containers           >= 0.5.7.1  && < 0.6,
+    data-default,
+    deriving-compat      >= 0.3.6    && < 0.4,
+    ghc-prim,
+    hashable,
+    kan-extensions       >= 5.0.2    && < 6,
+    lens,
+    lens-aeson,
+    mtl,
+    profunctors,
+    unordered-containers,
+    template-haskell,
+    text,
+    transformers         >= 0.5      && < 0.6,
+    transformers-base    >= 0.4.4    && < 0.5
+
+  build-tools: alex

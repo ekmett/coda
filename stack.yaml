@@ -1,5 +1,11 @@
 resolver: lts-9.2
 flags: {}
 packages:
- - '.'
+ - coda
+ - coda-algebra
+ - coda-console
+ - coda-lsp
+ - coda-syntax
+ - coda-version
+ - coda-server
 extra-deps: []

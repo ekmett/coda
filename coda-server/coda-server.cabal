@@ -1,0 +1,43 @@
+name:          coda
+category:      Language
+version:       0.0.1
+license:       BSD2
+cabal-version: >= 2
+license-file:  LICENSE.md
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/ekmett/coda/
+bug-reports:   http://github.com/ekmett/coda/issues
+copyright:     Copyright (C) 2017 Edward A. Kmett
+build-type:    Simple
+synopsis:      The coda language server
+description:   The coda language server
+
+extra-source-files:
+  .hlint.yaml
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/coda.git
+
+library
+  default-language: Haskell2010
+  hs-source-dirs: src
+  ghc-options: -Wall
+  exposed-modules:
+    Coda.Server
+    Coda.Server.Options
+  build-depends:
+    aeson,
+    base,
+    bytestring,
+    coda-algebra == 0.0.1,
+    coda-lsp == 0.0.1,
+    coda-syntax == 0.0.1,
+    data-default,
+    lens,
+    mtl,
+    optparse-applicative >= 0.13     && < 0.15,
+    text,
+    unordered-containers
