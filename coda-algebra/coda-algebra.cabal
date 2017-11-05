@@ -121,7 +121,7 @@ test-suite tasty
   if !flag(test-tasty)
     buildable: False
   else
-    build-tools: tasty-discover
+    tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
     build-depends:
       aeson,
       base,
