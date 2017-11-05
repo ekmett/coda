@@ -3,6 +3,7 @@
 .DS_Store
 .hsenv
 .stack-work
+.tags
 .vscode-test
 *.coda
 *.o
@@ -23,7 +24,6 @@ node_modules
 old
 out
 tags
-.tags
 TODO.txt
 wiki
 wip
