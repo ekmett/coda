@@ -75,7 +75,7 @@ library coda-lsp
     unordered-containers >= 0.2      && < 0.3,
     uri-encode           >= 1.5.0.5  && < 1.6
 
--- 'relative' monoids and algebraic structures
+-- 'relative' monoids and pure algebraic structures
 library coda-algebra
   default-language: Haskell2010
   hs-source-dirs: src/algebra
@@ -83,6 +83,7 @@ library coda-algebra
 
   exposed-modules:
     Coda.Algebra.Zero
+    Coda.FingerTree
     Coda.Relative.Absolute
     Coda.Relative.Cat
     Coda.Relative.Class
@@ -109,22 +110,19 @@ library coda-algebra
     profunctors          >= 5.2      && < 5.3,
     text                 >= 1.2      && < 1.3
 
-library
+library coda-version
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: src/library
+  hs-source-dirs: src/version
+  exposed-modules: Coda.Version
+  other-modules: Paths_coda
+  build-depends: base >= 4.10 && < 5
+
+library coda-syntax
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/syntax
   exposed-modules:
-    Coda.Console
-    Coda.Console.Command
-    Coda.Console.Completion
-    Coda.Console.Options
-    Coda.Console.Unicode
-
-    Coda.FingerTree
-
-    Coda.Server
-    Coda.Server.Options
-
     Coda.Syntax.Change
     Coda.Syntax.Document
     Coda.Syntax.Dyck
@@ -136,16 +134,9 @@ library
     Coda.Syntax.Rope
 
     Coda.Util.Alex
-    Coda.Util.Pretty
-
-    Coda.Version
-
-  other-modules:
-    Paths_coda
 
   build-depends:
     aeson,
-    ansi-wl-pprint       >= 0.6      && < 0.7,
     array                >= 0.5.1    && < 0.6,
     base,
     base-orphans         >= 0.5      && < 1,
@@ -158,20 +149,14 @@ library
     containers           >= 0.5.7.1  && < 0.6,
     data-default,
     deriving-compat      >= 0.3.6    && < 0.4,
-    exceptions           >= 0.8.2.1  && < 0.9,
     ghc-prim,
-    haskeline            >= 0.7.4    && < 0.8,
     hashable,
-    hyphenation          >= 0.7      && < 0.8,
     kan-extensions       >= 5.0.2    && < 6,
     lens,
     lens-aeson,
     mtl,
-    optparse-applicative >= 0.13     && < 0.15,
     profunctors,
     unordered-containers,
-    split                >= 0.2      && < 0.3,
-    stm                  >= 2.4      && < 2.5,
     template-haskell,
     text,
     transformers         >= 0.5      && < 0.6,
@@ -181,14 +166,65 @@ library
 
   build-tools: alex
 
+library coda-console
+  default-language: Haskell2010
+  hs-source-dirs: src/console
+  ghc-options: -Wall
+  exposed-modules:
+    Coda.Console
+    Coda.Console.Command
+    Coda.Console.Completion
+    Coda.Console.Options
+    Coda.Console.Unicode
+    Coda.Util.Pretty
+
+  build-depends:
+    ansi-wl-pprint       >= 0.6      && < 0.7,
+    base,
+    coda-lsp,
+    coda-syntax,
+    coda-version,
+    containers,
+    data-default,
+    exceptions           >= 0.8.2.1  && < 0.9,
+    haskeline            >= 0.7.4    && < 0.8,
+    hyphenation          >= 0.7      && < 0.8,
+    lens,
+    mtl,
+    optparse-applicative >= 0.13     && < 0.15,
+    split                >= 0.2      && < 0.3
+  
+library coda-server
+  default-language: Haskell2010
+  hs-source-dirs: src/server
+  ghc-options: -Wall
+  exposed-modules:
+    Coda.Server
+    Coda.Server.Options
+  build-depends:
+    aeson,
+    base,
+    bytestring,
+    coda-algebra,
+    coda-lsp,
+    coda-syntax,
+    data-default,
+    lens,
+    mtl,
+    optparse-applicative >= 0.13     && < 0.15,
+    text,
+    unordered-containers
+
 executable coda
   default-language: Haskell2010
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   main-is: Main.hs
   build-depends:
     base,
-    coda,
-    lens,
+    coda-syntax,
+    coda-console,
+    coda-server,
+    coda-version,
     optparse-applicative
 
 test-suite doctest

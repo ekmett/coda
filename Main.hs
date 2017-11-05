@@ -15,15 +15,14 @@ import Coda.Console.Options
 import Coda.Server
 import Coda.Server.Options
 import Coda.Version
-import Control.Lens ((<&>))
 import Control.Monad (join)
 import Data.Foldable
 import Data.Monoid
 import Options.Applicative
 
 serverCommand, consoleCommand, commands :: Parser (IO ())
-serverCommand = parseServerOptions <&> server
-consoleCommand = parseConsoleOptions <&> console
+serverCommand = server <$> parseServerOptions
+consoleCommand = console <$> parseConsoleOptions
 
 commands = subparser $ fold
   [ command "repl"    $ info (helper <*> consoleCommand) $
