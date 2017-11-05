@@ -134,7 +134,7 @@ test-suite tasty
       tagged,
       tasty          >= 0.11 && < 0.12,
       tasty-quickcheck,
-      tasty-discover >= 3.0 && < 3.1,
+      tasty-discover >= 3.0  && < 4.2,
       tasty-golden   >= 2.3  && < 2.4,
       tasty-hunit    >= 0.9  && < 0.10,
       text
@@ -157,11 +157,5 @@ test-suite once
       bytestring,
       filepath,
       lens,
-      QuickCheck,
       tagged,
-      tasty          >= 0.11 && < 0.12,
-      tasty-quickcheck,
-      tasty-discover >= 3.0 && < 3.1,
-      tasty-golden   >= 2.3  && < 2.4,
-      tasty-hunit    >= 0.9  && < 0.10,
       text
