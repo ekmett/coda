@@ -16,16 +16,17 @@
 --
 ---------------------------------------------------------------------------------
 
-module Coda.Relative.Absolute 
+module Group.Absolute 
   ( Absolute(..)
   ) where
 
-import Coda.Relative.Delta
-import Coda.Relative.Class
 import Control.Lens
 import Data.Data
 import Data.Hashable
 import GHC.Generics
+
+import Group
+import Relative
 
 -- | Make anything "Relative" trivially.
 --
@@ -45,8 +46,6 @@ instance Monoid a => RelativeMonoid (Absolute a)
 instance Ord a => StrictRelativeOrder (Absolute a)
 instance Hashable a => Hashable (Absolute a)
 
-instance HasDelta a => HasDelta (Absolute a) where
-  delta (Absolute a) = delta a
-
-instance HasMonoidalDelta a => HasMonoidalDelta (Absolute a)
-instance HasOrderedDelta a => HasOrderedDelta (Absolute a)
+-- instance HasDelta a => HasDelta (Absolute a) where delta (Absolute a) = delta a
+-- instance HasMonoidalDelta a => HasMonoidalDelta (Absolute a)
+-- instance HasOrderedDelta a => HasOrderedDelta (Absolute a)

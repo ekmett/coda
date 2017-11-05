@@ -1,0 +1,32 @@
+---------------------------------------------------------------------------------
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+---------------------------------------------------------------------------------
+
+signature Delta
+  ( Delta(..)
+  ) where
+
+import Data.Data
+import Data.Default
+import Data.Hashable
+import Data.Semigroup
+import GHC.Generics
+
+data Delta
+instance Eq Delta
+instance Ord Delta
+instance Data Delta
+instance Generic Delta
+instance Num Delta -- hackishly used with (+) (-) as a group for now
+instance Show Delta
+instance Read Delta
+instance Hashable Delta
+instance Default Delta
+instance Semigroup Delta
+instance Monoid Delta

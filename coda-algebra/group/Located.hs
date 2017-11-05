@@ -14,12 +14,10 @@
 ---
 ---------------------------------------------------------------------------------
 
-module Coda.Relative.Located
+module Located
   ( Located(..)
   ) where
 
-import Coda.Relative.Class
-import Coda.Relative.Delta
 import Control.Applicative
 import Control.Comonad
 import Control.Monad (ap)
@@ -30,6 +28,9 @@ import Data.Hashable
 import Data.Hashable.Lifted
 import Data.Semigroup
 import GHC.Generics
+
+import Group
+import Relative
 
 -- | Place a non-relative data type at a given position
 --
@@ -54,9 +55,6 @@ instance Comonad Located where
   extract (Located _ a) = a
   extend f w@(Located d _) = Located d (f w)
 
-instance HasDelta (Located a) where
-  delta (Located d _) = d
-
 instance Monoid a => Monoid (Located a) where
   mempty = pure mempty
   mappend = liftA2 mappend
@@ -69,12 +67,14 @@ instance MonadWriter Delta Located where
 instance Relative (Located a) where
   rel d (Located d' a) = Located (d <> d') a
 
-instance Ord a => HasOrderedDelta (Located a)
-instance Monoid a => HasMonoidalDelta (Located a)
-instance HasRelativeDelta (Located a)
 instance Ord a => RelativeOrder (Located a)
 instance Ord a => StrictRelativeOrder (Located a)
 instance OrderedMonoid a => OrderedMonoid (Located a)
 
 instance Default a => Default (Located a) where
   def = Located mempty def
+
+-- instance HasDelta (Located a) where delta (Located d _) = d
+-- instance Ord a => HasOrderedDelta (Located a)
+-- instance Monoid a => HasMonoidalDelta (Located a)
+-- instance HasRelativeDelta (Located a)

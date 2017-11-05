@@ -23,9 +23,6 @@ module Coda.Relative.Cat
   ) where
 
 import Control.Lens
-import Coda.Relative.Class
-import Coda.Relative.Queue hiding (null)
-import qualified Coda.Relative.Queue as Q
 import Data.Default
 import Data.Function (on)
 import Data.List (unfoldr)
@@ -33,6 +30,10 @@ import Data.Semigroup
 import GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (null)
+
+import Class
+import Queue hiding (null)
+import qualified Queue as Q
 
 -- invariant, all recursive cat's are non-empty
 data Cat a = E | C a (Queue (Cat a))

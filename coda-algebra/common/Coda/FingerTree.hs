@@ -72,10 +72,8 @@ instance Measured a => Monoid (FingerTree a) where
 instance Default (FingerTree a) where
   def = EmptyTree
 
-instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where
-  delta = delta . measure
-
-instance (Measured a, HasMonoidalDelta (Measure a)) => HasMonoidalDelta (FingerTree a)
+-- instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where delta = delta . measure
+-- instance (Measured a, HasMonoidalDelta (Measure a)) => HasMonoidalDelta (FingerTree a)
 
 instance Measured Delta where
   type Measure Delta = Delta

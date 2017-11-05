@@ -16,14 +16,12 @@
 ---
 ---------------------------------------------------------------------------------
 
-module Coda.Relative.List
+module List
   ( List(..)
   , pattern Cons
   , reverse
   ) where
 
-import Coda.Relative.Class
-import Coda.Relative.Delta
 import Control.Lens (AsEmpty(..), prism, Cons(..))
 import Data.Default
 import Data.Function (on)
@@ -32,6 +30,9 @@ import GHC.Exts as Exts
 import qualified Prelude
 import Prelude hiding (reverse)
 import Text.Read
+
+import Group
+import Relative
 
 -- | A list with an /O(1)/ 'rel', 'cons' and 'uncons', but /O(n)/ ('<>')
 data List a = List !Delta [a]

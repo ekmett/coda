@@ -10,7 +10,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Coda.Util.BitQueue
+module Map.BitQueue
     ( BitQueue
     , BitQueueB
     , emptyQB
@@ -20,7 +20,7 @@ module Coda.Util.BitQueue
     , toListQ
     ) where
 
-import Coda.Util.Bits (shiftLL, shiftRL, wordSize)
+import Map.Bits (shiftLL, shiftRL, wordSize)
 import Data.Bits ((.|.), (.&.), testBit, countTrailingZeros)
 
 -- A bit queue builder. We represent a double word using two words

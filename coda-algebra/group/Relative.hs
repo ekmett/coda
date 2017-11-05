@@ -32,7 +32,7 @@
 -- @
 ---------------------------------------------------------------------------------
 
-module Coda.Relative.Class
+module Relative
   (
   -- * Data types with relative positions
     Relative(..)
@@ -55,7 +55,6 @@ module Coda.Relative.Class
   , HasRelativeDelta
   ) where
 
-import Coda.Relative.Delta
 import Data.Bifunctor
 import Data.Coerce
 import Data.Functor.Identity
@@ -65,6 +64,8 @@ import Data.Profunctor.Unsafe
 import Data.Proxy
 import Data.Void
 import GHC.Generics
+
+import Group
 
 --------------------------------------------------------------------------------
 -- Relative
@@ -229,7 +230,7 @@ instance StrictRelativeOrder a => StrictRelativeOrder (NonEmpty a)
 -- An <https://en.wikipedia.org/wiki/Ordered_semigroup ordered monoid>.
 --
 -- @x '<=' y@ implies @z '<>' x '<=' z '<>' y@ and @x '<>' z '<=' y' <>' z@
-class (Ord t, Monoid t) => OrderedMonoid t where
+class (Ord t, Monoid t) => OrderedMonoid t
 
 instance OrderedMonoid Delta
 instance OrderedMonoid Any
@@ -257,5 +258,5 @@ instance (OrderedMonoid a, OrderedMonoid b) => OrderedMonoid (a, b)
 -- @
 -- 'delta' ('rel' d p) = d <> 'delta' p
 -- @
-class (Relative t, HasDelta t) => HasRelativeDelta t where
+class (Relative t, HasDelta t) => HasRelativeDelta t
 instance HasRelativeDelta Delta
