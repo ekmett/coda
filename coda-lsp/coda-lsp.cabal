@@ -14,9 +14,11 @@ build-type:    Custom
 synopsis:      Language Server Protocol
 description:   This package provides an implementation of Microsoft's Language Server Protocol
 
+data-files:
+  test/data/message/*.golden
+
 extra-source-files:
   .hlint.yaml
-  test/data/message/*.golden
 
 source-repository head
   type: git
@@ -107,6 +109,8 @@ test-suite tasty
   if !flag(test-tasty)
     buildable: False
   else
+    other-modules: Paths_coda_lsp
+    autogen-modules: Paths_coda_lsp
     build-depends:
       aeson,
       base,

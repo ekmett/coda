@@ -28,6 +28,7 @@ import Test.Tasty
 import Test.Tasty.Golden
 import Test.Tasty.HUnit
 import Test.Tasty.Providers as Tasty
+import Paths_coda_lsp (getDataDir)
 
 goldenFile :: TestName -> FilePath
 goldenFile name = "test" </> "data" </> "message" </> name <.> "golden"
@@ -43,8 +44,9 @@ golden name content
   = testGroup name
   [ goldenVsString "encoding" (goldenFile name) $
       pure $ toLazyByteString $ buildMessage content
-  , singleTest "parser" $ ParseTest $
-      withFile (goldenFile name) ReadMode $ \handle ->
+  , singleTest "parser" $ ParseTest $ do
+      dd <- getDataDir
+      withFile (dd </> goldenFile name) ReadMode $ \handle ->
         parse eitherDecodeMessage' handle >>= \case
           Left e         -> pure $ testFailed $ "bad JSON-RPC frame: " ++ e
           Right (Left e) -> pure $ testFailed $ "bad JSON message: " ++ e
