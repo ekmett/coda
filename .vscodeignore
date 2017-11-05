@@ -1,4 +1,6 @@
 *#
+**/.tags
+**/*.coda
 **/*.hs
 **/*.map
 **/*.swp
@@ -6,6 +8,7 @@
 *.log
 *~
 .appveyor.yml
+.coda_history
 .gitattributes
 .gitignore
 .hlint.yaml
@@ -34,8 +37,11 @@ dist/**
 docs/**
 gpg.conf
 out/test/**
+old/**
+ref/**
 src/**
 stack*.yaml
 test/**
+wip/**
 tsconfig.json
 tslint.json

@@ -63,15 +63,12 @@ Directories
 
 | Directory     | Usage |
 | ------------- | ----- |
-| .vscode       | Visual Studio Code configuration for the current workspace |
-| bin           | Executable scripts |
-| code          | The typescript source for the extension |
-| images        | The logo, etc. |
-| src           | coda library source code |
-| test/code     | typescript code for Visual Studio Code |
-| test/data     | data files used by the test suite |
-| test/shim     | shims to work around doctest limitations |
-| test/src      | tasty tests |
+| `.vscode`     | Visual Studio Code configuration for the current workspace |
+| `bin`         | Executable scripts |
+| `coda*`       | Haskell code for the language |
+| `code`        | Typescript code for the extension |
+| `images`      | The logo, etc. |
+| `test/code`   | Typescript code for testing |
 
 License
 =======
