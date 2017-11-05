@@ -17,6 +17,7 @@ coda_before_install() {
 coda_install() {
   set -x
   cabal --version
+  cabal update
   set +x
 }
 
