@@ -31,6 +31,6 @@ if ($phase -eq "install") {
   if ($LASTEXITCODE -ne 0) {exit 1}
   $env:APPVEYOR_SAVE_CACHE_ON_ERROR = "true"
   "> stack build"
-  cmd /c 'echo | bin\stack --no-terminal build --ghc-options=-rtsopts 2>&1'
+  cmd /c 'echo | bin\stack --no-terminal build --test --ghc-options=-rtsopts 2>&1'
   if ($LASTEXITCODE -ne 0) {exit 1}
 }
