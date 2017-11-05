@@ -28,7 +28,7 @@ source-repository head
   location: git://github.com/ekmett/coda.git
 
 flag test-doctest
-  default: True
+  default: False
   manual: True
 
 flag test-hlint
@@ -272,7 +272,8 @@ test-suite tasty
     build-depends:
       aeson,
       base,
-      coda,
+      coda-lsp,
+      coda-algebra,
       containers,
       bifunctors,
       bytestring,
@@ -299,7 +300,7 @@ test-suite once
     build-depends:
       aeson,
       base,
-      coda,
+      coda-algebra,
       containers,
       bifunctors,
       bytestring,
