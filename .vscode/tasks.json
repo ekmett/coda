@@ -38,12 +38,13 @@
       "problemMatcher": "$tsc-watch"
     },
     {
-      "taskName": "cabal install",
+      "taskName": "cabal new-build",
       "type": "shell",
       "command": "cabal",
       "isBackground": false,
       "args": [
-        "install",
+        "new-build",
+        "exe:coda",
         "-j4"
       ],
       "presentation": {
@@ -104,7 +105,7 @@
       "taskName": "build",
       "dependsOn": [
         "npm build",
-        "cabal install"
+        "cabal new-build"
       ],
       "problemMatcher": []
     },
