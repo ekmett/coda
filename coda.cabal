@@ -21,6 +21,63 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
+library version
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/version
+  exposed-modules: Coda.Version
+  other-modules: Paths_coda
+  build-depends: base >= 4.10 && < 5
+
+library console
+  default-language: Haskell2010
+  hs-source-dirs: src/console
+  ghc-options: -Wall
+  exposed-modules:
+    Coda.Console
+    Coda.Console.Command
+    Coda.Console.Completion
+    Coda.Console.Options
+    Coda.Console.Unicode
+    Coda.Util.Pretty
+
+  build-depends:
+    ansi-wl-pprint       >= 0.6      && < 0.7,
+    base,
+    coda-lsp             == 0.0.1,
+    coda-syntax          == 0.0.1,
+    version,
+    containers,
+    data-default,
+    exceptions           >= 0.8.2.1  && < 0.9,
+    haskeline            >= 0.7.4    && < 0.8,
+    hyphenation          >= 0.7      && < 0.8,
+    lens,
+    mtl,
+    optparse-applicative >= 0.13     && < 0.15,
+    split                >= 0.2      && < 0.3
+
+library server
+  default-language: Haskell2010
+  hs-source-dirs: src/server
+  ghc-options: -Wall
+  exposed-modules:
+    Coda.Server
+    Coda.Server.Options
+  build-depends:
+    aeson,
+    base,
+    bytestring,
+    coda-algebra == 0.0.1,
+    coda-lsp == 0.0.1,
+    coda-syntax == 0.0.1,
+    data-default,
+    lens,
+    mtl,
+    optparse-applicative >= 0.13     && < 0.15,
+    text,
+    unordered-containers
+
 executable coda
   default-language: Haskell2010
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
@@ -28,7 +85,7 @@ executable coda
   build-depends:
     base,
     coda-syntax == 0.0.1,
-    coda-console == 0.0.1,
-    coda-server == 0.0.1,
-    coda-version == 0.0.1,
+    console,
+    server,
+    version,
     optparse-applicative

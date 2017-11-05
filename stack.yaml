@@ -3,9 +3,6 @@ flags: {}
 packages:
  - '.'
  - coda-algebra
- - coda-console
  - coda-lsp
  - coda-syntax
- - coda-version
- - coda-server
 extra-deps: []
