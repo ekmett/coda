@@ -52,7 +52,8 @@ instance (SemigroupWithZero a, Monoid a) => MonoidWithZero a
 -- adjoin a zero element to a semigroup
 newtype WithZero a = WithZero { runWithZero :: Maybe a }
   deriving (Eq,Ord,Data,Generic,Generic1,Functor,Foldable,Traversable,Applicative,Alternative,Monad,MonadPlus,MonadZip)
-{-# complete_patterns WithZero | (Zero, NonZero) #-}
+
+{-# complete Zero, NonZero #-}
 
 pattern Zero :: WithZero a
 pattern Zero = WithZero Nothing

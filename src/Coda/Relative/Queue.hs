@@ -35,7 +35,6 @@ import Prelude hiding (null)
 
 -- @Q d f r s@ maintains @length s = length f - length r@
 data Queue a = Q {-# unpack #-} !Delta [a] [a] [a]
-{-# complete_patterns ((:<),Empty) | Q #-}
 
 instance Relative (Queue a) where
   rel 0 q = q

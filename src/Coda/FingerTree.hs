@@ -9,6 +9,7 @@
 {-# language TypeFamilies #-}
 {-# language LambdaCase #-}
 {-# language ExplicitNamespaces #-}
+{-# options_ghc -Wno-incomplete-patterns #-} -- https://ghc.haskell.org/trac/ghc/ticket/14326
 
 -----------------------------------------------------------------------------
 -- |
@@ -148,7 +149,8 @@ data FingerTree a
   | Deep !(Measure a) !(Digit a) (FingerTree (Node a)) !(Digit a)
 --  deriving Show
 
-{-# complete_patterns (Empty|EmptyTree),((:<)|(:>)|(Singleton,Deep)) #-}
+-- {-# complete EmptyTree, (:<) #-}
+-- {-# complete EmptyTree, (:>) #-}
 
 deep :: Measured a => Digit a -> FingerTree (Node a) -> Digit a -> FingerTree a
 deep pr m sf = Deep ((measure pr `mappend` measure m) `mappend` measure sf) pr m sf
@@ -433,9 +435,6 @@ rotL :: Measured a => FingerTree (Node a) -> Digit a -> FingerTree a
 rotL m sf = case m of
   EmptyTree -> digitToFingerTree sf
   a :< m' -> Deep (measure m `mappend` measure sf) (nodeToDigit a) m' sf
-#if __GLASGOW_HASKELL__ < 802
-  _ -> illegal_argument "rotL"
-#endif
 
 lheadDigit :: Digit a -> a
 lheadDigit (One a) = a
@@ -453,9 +452,6 @@ rotR :: Measured a => Digit a -> FingerTree (Node a) -> FingerTree a
 rotR pr m = case m of
   EmptyTree -> digitToFingerTree pr
   m' :> a -> Deep (measure pr `mappend` measure m) pr m' (nodeToDigit a)
-#if __GLASGOW_HASKELL__ < 802
-  _ -> illegal_argument "rotL"
-#endif
 
 rheadDigit :: Digit a -> a
 rheadDigit (One a) = a

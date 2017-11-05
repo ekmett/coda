@@ -36,7 +36,8 @@ import Prelude hiding (null)
 
 -- invariant, all recursive cat's are non-empty
 data Cat a = E | C a (Queue (Cat a))
-{-# complete_patterns ((:<)|C),(Empty|E) #-}
+
+-- {-# complete E, (:<) #-}
 
 instance Default (Cat a) where
   def = E

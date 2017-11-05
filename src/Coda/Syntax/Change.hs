@@ -11,6 +11,7 @@
 {-# language ScopedTypeVariables #-}
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language UndecidableSuperClasses #-}
+{-# options_ghc -Wno-incomplete-patterns #-}
 
 module Coda.Syntax.Change where
 
@@ -403,7 +404,9 @@ cpy n = fromEdit (Edit n 0 0)
 --
 -- Changes are simplicial morphisms, monotone functions between finite sets of integers that start at 0
 data Change = Change !(FingerTree Edit) !Delta deriving (Eq,Ord,Show)
-{-# complete_patterns (C0,CN)|Change #-}
+
+{-# complete C0, CN #-}
+{-# complete Change #-}
 
 changePattern :: Change -> (FingerTree Edit, Delta)
 changePattern (C0 d)      = (mempty, d)
@@ -414,6 +417,7 @@ pattern C0 d = Change EmptyTree d
 
 pattern CN :: Edit -> FingerTree Edit -> Delta -> Change
 pattern CN x xs d = Change (x :< xs) d
+
 
 instance Relative Change where
   rel d (C0 d')      = C0 (d+d')

@@ -24,8 +24,7 @@ data Name
   = Qualified   { _operator :: !Bool, _constructor :: !Bool, _qualifier :: !Text, _ident :: !Text }
   | Unqualified { _operator :: !Bool, _constructor :: !Bool, _ident :: !Text }
   deriving (Eq,Ord,Data,Generic)
-{-# complete_patterns (Qualified | (QConId, QVarId, QConOp, QVarOp))
-                    , (Unqualified | (ConId, VarId, ConOp, VarOp)) #-}
+{-# complete QConId, QVarId, QConOp, QVarOp, ConId, VarId, ConOp, VarOp #-}
 
 pattern QVarId :: Text -> Text -> Name
 pattern QVarId q i = Qualified True False q i
@@ -60,9 +59,6 @@ instance Show Name where
   showsPrec d (ConId n)    = showParen (d > 10) $ showString "ConId " . showsPrec 11 n
   showsPrec d (VarOp n)    = showParen (d > 10) $ showString "VarOp " . showsPrec 11 n
   showsPrec d (ConOp n)    = showParen (d > 10) $ showString "ConOp " . showsPrec 11 n
-#if __GLASGOW_HAKELL__ <= 802
-  showsPrec _ _ = undefined
-#endif
 
 instance Read Name where
   readPrec = parens 
