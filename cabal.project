@@ -1,8 +1,8 @@
 packages:
-  coda
-  coda-algebra
-  coda-console
-  coda-lsp
-  coda-syntax
-  coda-version
-  coda-server
+  coda-algebra/coda-algebra.cabal
+  coda-console/coda-console.cabal
+  coda-lsp/coda-lsp.cabal
+  coda-syntax/coda-syntax.cabal
+  coda-version/coda-version.cabal
+  coda-server/coda-server.cabal
+  coda.cabal

@@ -113,7 +113,11 @@ listen = liftIO (parse parseMessage stdin) >>= \case
     Left s -> do
       putError Nothing ParseError (Text.pack s)
       listen
-    Right e ->
+    Right e -> do
+      liftIO $ do
+        Lazy.hPutStr stderr $ encode e
+        hPutChar stderr '\n'
+        hFlush stderr
       return e
 
 --------------------------------------------------------------------------------
