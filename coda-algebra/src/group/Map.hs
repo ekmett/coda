@@ -30,13 +30,13 @@ module Map
   , irfoldr
   ) where
 
+import Coda.Internal.Map.BitQueue
 import Control.Lens
 import Data.Default
 import Data.Hashable
 import Data.Function (on)
 import Data.Monoid
 import GHC.Exts
-import Map.BitQueue
 import Prelude hiding (lookup)
 
 import Delta
