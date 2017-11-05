@@ -6,3 +6,6 @@ packages:
   coda-version/coda-version.cabal
   coda-server/coda-server.cabal
   coda.cabal
+
+package coda-lsp
+  optimization: 0
