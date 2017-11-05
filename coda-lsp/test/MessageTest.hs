@@ -31,7 +31,7 @@ import Test.Tasty.Providers as Tasty
 import Paths_coda_lsp (getDataDir)
 
 goldenFile :: TestName -> FilePath
-goldenFile name = "test" </> "data" </> "message" </> name <.> "golden"
+goldenFile name = "data" </> name <.> "golden"
 
 newtype ParseTest = ParseTest (IO Tasty.Result)
 instance IsTest ParseTest where

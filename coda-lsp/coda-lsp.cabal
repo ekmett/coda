@@ -15,7 +15,7 @@ synopsis:      Language Server Protocol
 description:   This package provides an implementation of Microsoft's Language Server Protocol
 
 data-files:
-  test/data/message/*.golden
+  data/*.golden
 
 extra-source-files:
   .hlint.yaml
@@ -72,7 +72,7 @@ test-suite doctest
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: doctest.hs
-  hs-source-dirs: test/src
+  hs-source-dirs: test
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   if !flag(test-doctest)
     buildable: False
@@ -88,7 +88,7 @@ test-suite hlint
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: hlint.hs
-  hs-source-dirs: test/src
+  hs-source-dirs: test
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   if !flag(test-hlint)
     buildable: False
@@ -103,7 +103,7 @@ test-suite tasty
   type: exitcode-stdio-1.0
   default-language: Haskell2010
   main-is: tasty.hs
-  hs-source-dirs: test/src
+  hs-source-dirs: test
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   other-modules: MessageTest
   if !flag(test-tasty)
