@@ -109,7 +109,7 @@ test-suite tasty
   if !flag(test-tasty)
     buildable: False
   else
-    tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
+    build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
     other-modules: Paths_coda_lsp
     autogen-modules: Paths_coda_lsp
     build-depends:

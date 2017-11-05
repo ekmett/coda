@@ -46,6 +46,7 @@ type Size = Int
 data Map k a
   = Bin {-# unpack #-} !Size {-# unpack #-} !Delta !k !a !(Map k a) !(Map k a)
   | Tip
+  deriving Show
 
 type role Map nominal nominal
 
@@ -70,8 +71,8 @@ instance (StrictRelativeOrder k, Relative a, Ord a) => Ord (Map k a) where compa
 instance (StrictRelativeOrder k, RelativeOrder a) => RelativeOrder (Map k a)
 instance (StrictRelativeOrder k, StrictRelativeOrder a) => StrictRelativeOrder (Map k a)
 
-instance (StrictRelativeOrder k, Show k, Relative a, Show a) => Show (Map k a) where
-  showsPrec d m = showParen (d > 10) $ showString "fromList " . showsPrec 11 (toAscList m)
+--instance (StrictRelativeOrder k, Show k, Relative a, Show a) => Show (Map k a) where
+--  showsPrec d m = showParen (d > 10) $ showString "fromList " . showsPrec 11 (toAscList m)
 
 instance (StrictRelativeOrder k, Hashable k, Relative a, Hashable a) => Hashable (Map k a) where
   hashWithSalt d = hashWithSalt d . toAscList
