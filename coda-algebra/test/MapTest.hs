@@ -71,5 +71,11 @@ prop_map_2 = prop_map $ Insert 1 4 (Rel 1 (Insert 0 1 Empty))
 prop_map_3 :: Property
 prop_map_3 = prop_map $ Insert 1 0 (Rel 1 (Insert 1 0 (Insert 0 0 Empty)))
 
+prop_map_3' :: Property
+prop_map_3' = prop_map $ Rel 1 (Insert 1 0 (Insert 0 0 Empty))
+
+prop_map_3'' :: Property
+prop_map_3'' = prop_map $ Insert 1 0 (Insert 0 0 Empty)
+
 prop_map_4 :: Property
 prop_map_4 = prop_map $ Union (Insert 0 0 (Insert 1 0 Empty)) (Rel 1 (Insert 1 0 (Insert 0 0 Empty)))

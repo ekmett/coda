@@ -141,8 +141,7 @@ insertD d kx x t@(Bin sz dy ky y l r) | !d'' <- d+dy = case compare kx (rel d'' 
   GT | ptrEq r' r -> t
      | otherwise -> balanceR dy ky y l r'
      where !r' = insertD d'' kx x r
-  EQ | ptrEq x y -> t
-     | otherwise -> Bin sz (negate d) kx x (rel d'' l) (rel d'' r)
+  EQ -> Bin sz (negate d) kx x (rel d'' l) (rel d'' r)
 {-# inlinable insert #-}
 
 insertRD :: (Ord k, Relative k) => Delta -> k -> a -> Map k a -> Map k a
