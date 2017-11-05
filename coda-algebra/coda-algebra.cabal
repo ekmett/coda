@@ -121,6 +121,7 @@ test-suite tasty
   if !flag(test-tasty)
     buildable: False
   else
+    build-tools: tasty-discover
     build-depends:
       aeson,
       base,
@@ -138,6 +139,7 @@ test-suite tasty
       tasty-golden   >= 2.3  && < 2.4,
       tasty-hunit    >= 0.9  && < 0.10,
       text
+
 
 test-suite once
   type: exitcode-stdio-1.0

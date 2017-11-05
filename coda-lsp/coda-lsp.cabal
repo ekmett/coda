@@ -109,6 +109,7 @@ test-suite tasty
   if !flag(test-tasty)
     buildable: False
   else
+    build-tools: tasty-discover
     other-modules: Paths_coda_lsp
     autogen-modules: Paths_coda_lsp
     build-depends:
