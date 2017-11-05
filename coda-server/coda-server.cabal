@@ -41,3 +41,12 @@ library
     optparse-applicative >= 0.13     && < 0.15,
     text,
     unordered-containers
+
+executable coda-server
+  default-language: Haskell2010
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  main-is: Main.hs
+  build-depends:
+    base,
+    coda-server,
+    optparse-applicative
