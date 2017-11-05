@@ -4,6 +4,7 @@
 .hsenv
 .stack-work
 .vscode-test
+*.coda
 *.o
 *.hi
 *.log
