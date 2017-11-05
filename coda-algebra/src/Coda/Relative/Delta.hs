@@ -23,8 +23,12 @@ module Coda.Relative.Delta
   , units
   , HasMonoidalDelta
   , HasOrderedDelta
+  , HasRelativeDelta
   ) where
 
+import Coda.FingerTree
+import Coda.Relative.Absolute
+import Coda.Relative.Class
 import Coda.Relative.Delta.Type
 import Data.Data
 import Data.Default
@@ -54,6 +58,12 @@ instance HasDelta Delta where
 instance HasDelta Text where
   delta = Delta . lengthWord16
 
+instance HasDelta a => HasDelta (Absolute a) where
+  delta (Absolute a) = delta a
+
+instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where
+  delta = delta . measure
+
 --------------------------------------------------------------------------------
 -- Monoidal deltas
 --------------------------------------------------------------------------------
@@ -68,6 +78,8 @@ instance HasDelta Text where
 class (Monoid t, HasDelta t) => HasMonoidalDelta t where
 instance HasMonoidalDelta Delta
 instance HasMonoidalDelta Text
+instance HasMonoidalDelta a => HasMonoidalDelta (Absolute a)
+instance (Measured a, HasMonoidalDelta (Measure a)) => HasMonoidalDelta (FingerTree a)
 
 --------------------------------------------------------------------------------
 -- Monotone deltas
@@ -79,5 +91,19 @@ instance HasMonoidalDelta Text
 -- @m <= n@ implies @'delta' m <= 'delta' n@
 class (Ord t, HasDelta t) => HasOrderedDelta t
 instance HasOrderedDelta Delta
+instance HasOrderedDelta a => HasOrderedDelta (Absolute a)
 
 -- TODO: supply old instances for all Coda.Relative.*
+
+--------------------------------------------------------------------------------
+-- Relative deltas
+--------------------------------------------------------------------------------
+
+-- |
+-- 'delta' and 'rel'
+--
+-- @
+-- 'delta' ('rel' d p) = d <> 'delta' p
+-- @
+class (Relative t, HasDelta t) => HasRelativeDelta t
+instance HasRelativeDelta Delta

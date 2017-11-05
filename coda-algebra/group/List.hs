@@ -31,7 +31,7 @@ import qualified Prelude
 import Prelude hiding (reverse)
 import Text.Read
 
-import Group
+import Delta
 import Relative
 
 -- | A list with an /O(1)/ 'rel', 'cons' and 'uncons', but /O(n)/ ('<>')

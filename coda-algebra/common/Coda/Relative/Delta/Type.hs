@@ -25,8 +25,6 @@ import Data.Data
 import Data.Default
 import Data.Hashable
 import Data.Semigroup
-import Data.Text
-import Data.Text.Unsafe
 import GHC.Generics
 import Text.Read
 

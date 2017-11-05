@@ -36,7 +36,7 @@ import Coda.Syntax.Rich
 import Coda.Syntax.Rope
 import Coda.Relative.Cat as Cat
 import Coda.Relative.Class
-import Coda.Relative.Rev
+import Coda.Rev
 import Data.Default
 import Data.Semigroup
 import Data.String

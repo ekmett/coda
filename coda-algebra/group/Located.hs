@@ -18,6 +18,7 @@ module Located
   ( Located(..)
   ) where
 
+import Coda.Algebra.Ordered
 import Control.Applicative
 import Control.Comonad
 import Control.Monad (ap)
@@ -29,7 +30,7 @@ import Data.Hashable.Lifted
 import Data.Semigroup
 import GHC.Generics
 
-import Group
+import Delta
 import Relative
 
 -- | Place a non-relative data type at a given position

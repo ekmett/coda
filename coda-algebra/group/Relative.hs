@@ -47,12 +47,6 @@ module Relative
   -- * Relative orderings
   , RelativeOrder
   , StrictRelativeOrder
-
-  -- * ordered monoids
-  , OrderedMonoid
-
-  -- * Relative deltas
-  , HasRelativeDelta
   ) where
 
 import Data.Bifunctor
@@ -65,7 +59,7 @@ import Data.Proxy
 import Data.Void
 import GHC.Generics
 
-import Group
+import Delta
 
 --------------------------------------------------------------------------------
 -- Relative
@@ -221,42 +215,3 @@ instance (StrictRelativeOrder a, StrictRelativeOrder b) => StrictRelativeOrder (
 instance (StrictRelativeOrder a, StrictRelativeOrder b) => StrictRelativeOrder (Either a b)
 instance StrictRelativeOrder a => StrictRelativeOrder [a]
 instance StrictRelativeOrder a => StrictRelativeOrder (NonEmpty a)
-
---------------------------------------------------------------------------------
--- Ordered monoids
---------------------------------------------------------------------------------
-
--- |
--- An <https://en.wikipedia.org/wiki/Ordered_semigroup ordered monoid>.
---
--- @x '<=' y@ implies @z '<>' x '<=' z '<>' y@ and @x '<>' z '<=' y' <>' z@
-class (Ord t, Monoid t) => OrderedMonoid t
-
-instance OrderedMonoid Delta
-instance OrderedMonoid Any
-instance OrderedMonoid All
-instance OrderedMonoid a => OrderedMonoid (Dual a)
-instance Ord a => OrderedMonoid [a]
-instance Ord a => OrderedMonoid (First a)
-instance Ord a => OrderedMonoid (Last a)
-instance OrderedMonoid a => OrderedMonoid (Maybe a)
-instance OrderedMonoid ()
-instance (OrderedMonoid a, OrderedMonoid b) => OrderedMonoid (a, b)
-
--- TODO:
--- instance (Ord a, Bounded a) => OrderedMonoid (Min a)
--- instance (Ord a, Bounded a) => OrderedMonoid (Max a)
--- instance Ord a => OrderedSemigroup (NonEmpty a)
-
---------------------------------------------------------------------------------
--- Relative deltas
---------------------------------------------------------------------------------
-
--- |
--- 'delta' and 'rel'
---
--- @
--- 'delta' ('rel' d p) = d <> 'delta' p
--- @
-class (Relative t, HasDelta t) => HasRelativeDelta t
-instance HasRelativeDelta Delta

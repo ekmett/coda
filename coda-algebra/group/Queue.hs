@@ -31,7 +31,7 @@ import GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (null)
 
-import Group
+import Delta
 import Relative
 
 -- @Q d f r s@ maintains @length s = length f - length r@

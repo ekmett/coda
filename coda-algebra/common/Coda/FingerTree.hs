@@ -51,7 +51,7 @@ module Coda.FingerTree
   , unsafeTraverse
   ) where
 
-import Coda.Relative.Delta
+import Coda.Relative.Delta.Type
 import Control.Lens hiding (deep)
 import Data.Default
 import Data.Semigroup
@@ -71,9 +71,6 @@ instance Measured a => Monoid (FingerTree a) where
 
 instance Default (FingerTree a) where
   def = EmptyTree
-
--- instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where delta = delta . measure
--- instance (Measured a, HasMonoidalDelta (Measure a)) => HasMonoidalDelta (FingerTree a)
 
 instance Measured Delta where
   type Measure Delta = Delta

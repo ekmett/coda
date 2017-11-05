@@ -15,7 +15,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Coda.Relative.Cat
+module Cat
   ( Cat
   , snocCat
   , singleton
@@ -31,7 +31,7 @@ import GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (null)
 
-import Class
+import Relative
 import Queue hiding (null)
 import qualified Queue as Q
 

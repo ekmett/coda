@@ -50,5 +50,6 @@ instance Monoid (f a) => Monoid (Rev f a) where
   mempty = Rev mempty
   mappend (Rev a) (Rev b) = Rev (mappend b a)
 
--- instance Relative (f a) => Relative (Rev f a) where rel d (Rev m) = Rev (rel d m)
--- instance RelativeMonoid (f a) => RelativeMonoid (Rev f a)
+instance Relative (f a) => Relative (Rev f a) where rel d (Rev m) = Rev (rel d m)
+
+instance RelativeMonoid (f a) => RelativeMonoid (Rev f a)

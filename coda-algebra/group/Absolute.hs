@@ -16,7 +16,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Group.Absolute 
+module Absolute
   ( Absolute(..)
   ) where
 
@@ -25,7 +25,6 @@ import Data.Data
 import Data.Hashable
 import GHC.Generics
 
-import Group
 import Relative
 
 -- | Make anything "Relative" trivially.
