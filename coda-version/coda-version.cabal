@@ -11,8 +11,11 @@ homepage:      http://github.com/ekmett/coda/
 bug-reports:   http://github.com/ekmett/coda/issues
 copyright:     Copyright (C) 2017 Edward A. Kmett
 build-type:    Simple
-synopsis:      A helper package for showing the coda version
-description:   A helper package for showing the coda version
+synopsis:      The semantic version of the coda compiler
+description:
+  This package supplies the version number of the coda compiler in a semantic versioning compatible manner.
+  .
+  This code was shared across both console and server, so it is factored out here.
 
 extra-source-files:
   .hlint.yaml
