@@ -1,4 +1,5 @@
 {-# language CPP #-}
+{-# language LambdaCase #-}
 {-# language TypeFamilies #-}
 {-# language PatternSynonyms #-}
 {-# language FlexibleContexts #-}
@@ -76,6 +77,11 @@ linkAll q = case uncons q of
     | otherwise -> link a t (linkAll q')
   Just (E, q') -> linkAll q' -- recursive case
   Nothing -> E
+
+instance AsEmpty (Cat a) where
+  _Empty = prism (const E) $ \case
+    E -> Right ()
+    xs -> Left xs
 
 instance (Relative a, Relative b) => Cons (Cat a) (Cat b) a b where
   _Cons = prism kons unkons where

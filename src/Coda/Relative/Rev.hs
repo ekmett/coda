@@ -31,6 +31,9 @@ newtype Rev f a
 makePrisms ''Rev
 makeWrapped ''Rev
 
+instance AsEmpty (f a) => AsEmpty (Rev f a) where
+  _Empty = _Wrapped._Empty
+
 instance Snoc (f a) (f b) a b => Cons (Rev f a) (Rev f b) a b where
   _Cons = _Wrapped._Snoc.swapped.mapping (from _Wrapped)
 

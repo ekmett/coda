@@ -1,5 +1,6 @@
 {
 
+{-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
 {-# language LambdaCase #-}
 {-# language OverloadedStrings #-}
@@ -26,7 +27,6 @@ import Coda.Relative.Delta
 import Coda.Relative.Located
 import Coda.Syntax.Dyck
 import Coda.Syntax.Keywords
-import Coda.Syntax.Mode
 import Coda.Syntax.Name
 import Coda.Syntax.Rich
 import Coda.Syntax.Rope
@@ -97,10 +97,10 @@ haskell :-
 <0> $special { tok }
 <0> $closing { closing }
 <0> $opening { opening }
-<0> do { layoutKeyword 1 }
-<0> let { layoutKeyword 2 }
-<0> of { layoutKeyword 3 }
-<0> where { layoutKeyword 4 }
+<0> do { layoutKeyword LDo }
+<0> let { layoutKeyword LLet }
+<0> of { layoutKeyword LOf }
+<0> where { layoutKeyword LWhere }
 <0> @keyid { keyword }
 <0> (@conid \.)+ @varid { qualified False False }
 <0> (@conid \.)+ @conid { qualified False True }
@@ -150,6 +150,17 @@ instance AsRich Token Token where
 data instance Pair Token = Brace | Bracket | Paren
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Generic)
 
+data instance LayoutMode Token
+  = LNone
+  | LDo
+  | LLet
+  | LOf
+  | LWhere
+  deriving (Eq,Ord,Show,Read)
+
+instance Default (LayoutMode Token) where
+  def = LNone
+
 pair :: Char -> Pair Token
 pair '(' = Paren
 pair ')' = Paren
@@ -186,7 +197,7 @@ keyword xs d t l = token xs $ case readEither $ 'K' : cap (Text.unpack $ trim d 
   Right kw -> TokenKeyword (Delta d) kw
   Left e -> Rich $ LexicalError (Delta d) e
 
-layoutKeyword :: Mode -> Action
+layoutKeyword :: LayoutMode Token -> Action
 layoutKeyword i xs d t l = layoutToken xs i $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
   Right kw -> TokenKeyword (Delta d) kw
   Left e -> Rich $ LexicalError (Delta d) e

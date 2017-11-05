@@ -25,7 +25,9 @@
 ---------------------------------------------------------------------------------
 
 module Coda.Syntax.Rich
-  ( Pair, LocatedPair
+  ( Pair
+  , LocatedPair
+  , LayoutMode
   -- Tokens
   , MismatchError(..)
   , Rich(..)
@@ -45,6 +47,8 @@ import GHC.Generics
 --------------------------------------------------------------------------------
 -- Rich Tokens
 --------------------------------------------------------------------------------
+
+data family LayoutMode (a :: *) :: *
 
 data family Pair (a :: *) :: *
 type LocatedPair a = Located (Pair a)
