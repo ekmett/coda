@@ -13,8 +13,7 @@ git:
 
 cache:
   directories:
-    - $HOME/.cabsnap
-    - $HOME/.cabal/packages
+    - dist-newstyle
 
 matrix:
  include:
