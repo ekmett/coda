@@ -19,6 +19,13 @@ bin/**
 !bin/coda.sh
 cabal.project
 cabal.project.local
+coda/**
+coda-algebra/**
+coda-console/**
+coda-lsp/**
+coda-server/**
+coda-syntax/**
+coda-version/**
 code/**
 circle.yml
 coda.cabal
