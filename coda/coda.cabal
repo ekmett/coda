@@ -2,7 +2,7 @@ name:          coda
 category:      Language
 version:       0.0.1
 license:       BSD2
-cabal-version: >= 2
+cabal-version: >= 1.10
 license-file:  LICENSE.md
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -16,8 +16,6 @@ description:   This package provides Coda, a Visual Studio Code language experim
 
 extra-source-files:
   .hlint.yaml
-  CHANGELOG.md
-  README.md
 
 source-repository head
   type: git
