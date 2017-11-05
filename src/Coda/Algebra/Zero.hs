@@ -1,4 +1,3 @@
-{-# language CPP #-}
 {-# language DeriveDataTypeable #-}
 {-# language PatternSynonyms #-}
 {-# language DeriveGeneric #-}
@@ -53,10 +52,7 @@ instance (SemigroupWithZero a, Monoid a) => MonoidWithZero a
 -- adjoin a zero element to a semigroup
 newtype WithZero a = WithZero { runWithZero :: Maybe a }
   deriving (Eq,Ord,Data,Generic,Generic1,Functor,Foldable,Traversable,Applicative,Alternative,Monad,MonadPlus,MonadZip)
-
-#if __GLASGOW_HASKELL__ >= 802
 {-# complete_patterns WithZero | (Zero, NonZero) #-}
-#endif
 
 pattern Zero :: WithZero a
 pattern Zero = WithZero Nothing

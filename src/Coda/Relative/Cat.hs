@@ -1,4 +1,3 @@
-{-# language CPP #-}
 {-# language LambdaCase #-}
 {-# language TypeFamilies #-}
 {-# language PatternSynonyms #-}
@@ -37,9 +36,7 @@ import Prelude hiding (null)
 
 -- invariant, all recursive cat's are non-empty
 data Cat a = E | C a (Queue (Cat a))
-#if __GLASGOW_HASKELL__ >= 802
 {-# complete_patterns ((:<)|C),(Empty|E) #-}
-#endif
 
 instance Default (Cat a) where
   def = E

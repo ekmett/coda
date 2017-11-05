@@ -1,4 +1,3 @@
-{-# language CPP #-}
 {-# language DeriveDataTypeable #-}
 {-# language DeriveGeneric #-}
 {-# language TemplateHaskell #-}
@@ -25,11 +24,8 @@ data Name
   = Qualified   { _operator :: !Bool, _constructor :: !Bool, _qualifier :: !Text, _ident :: !Text }
   | Unqualified { _operator :: !Bool, _constructor :: !Bool, _ident :: !Text }
   deriving (Eq,Ord,Data,Generic)
-  
-#if __GLASGOW_HASKELL__ >= 802
 {-# complete_patterns (Qualified | (QConId, QVarId, QConOp, QVarOp))
                     , (Unqualified | (ConId, VarId, ConOp, VarOp)) #-}
-#endif
 
 pattern QVarId :: Text -> Text -> Name
 pattern QVarId q i = Qualified True False q i

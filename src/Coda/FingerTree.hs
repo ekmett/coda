@@ -1,4 +1,3 @@
-{-# language CPP #-}
 {-# language MultiParamTypeClasses #-}
 {-# language FlexibleInstances #-}
 {-# language UndecidableInstances #-}
@@ -149,9 +148,7 @@ data FingerTree a
   | Deep !(Measure a) !(Digit a) (FingerTree (Node a)) !(Digit a)
 --  deriving Show
 
-#if __GLASGOW_HASKELL__ >= 802
 {-# complete_patterns (Empty|EmptyTree),((:<)|(:>)|(Singleton,Deep)) #-}
-#endif
 
 deep :: Measured a => Digit a -> FingerTree (Node a) -> Digit a -> FingerTree a
 deep pr m sf = Deep ((measure pr `mappend` measure m) `mappend` measure sf) pr m sf

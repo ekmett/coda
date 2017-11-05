@@ -1,4 +1,3 @@
-{-# language CPP #-}
 {-# language EmptyCase #-}
 {-# language BangPatterns #-}
 {-# language TypeFamilies #-}
@@ -12,10 +11,6 @@
 {-# language ScopedTypeVariables #-}
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language UndecidableSuperClasses #-}
-
-#if __GLASGOW_HASKELL__ < 802
-{-# options_ghc -Wno-incomplete-patterns #-}
-#endif
 
 module Coda.Syntax.Change where
 
@@ -407,13 +402,8 @@ cpy n = fromEdit (Edit n 0 0)
 -- 2) all edits have at least one of the finger-trees non-empty
 --
 -- Changes are simplicial morphisms, monotone functions between finite sets of integers that start at 0
-data Change = Change !(FingerTree Edit) !Delta
-  deriving (Eq,Ord,Show)
-  -- = Change !(FingerTree Edit) !Delta
-
-#if __GLASGOW_HASKELL__ >= 802
+data Change = Change !(FingerTree Edit) !Delta deriving (Eq,Ord,Show)
 {-# complete_patterns (C0,CN)|Change #-}
-#endif
 
 changePattern :: Change -> (FingerTree Edit, Delta)
 changePattern (C0 d)      = (mempty, d)

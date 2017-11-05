@@ -1,4 +1,3 @@
-{-# language CPP #-}
 {-# language LambdaCase #-}
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
@@ -36,9 +35,7 @@ import Prelude hiding (null)
 
 -- @Q d f r s@ maintains @length s = length f - length r@
 data Queue a = Q {-# unpack #-} !Delta [a] [a] [a]
-#if __GLASGOW_HASKELL__ >= 802
-{-# complete_patterns ((:<),Empty) #-}
-#endif
+{-# complete_patterns ((:<),Empty) | Q #-}
 
 instance Relative (Queue a) where
   rel 0 q = q
