@@ -18,7 +18,6 @@ coda_install() {
   set -x
   cabal --version
   cabal update
-  cabal install tasty-discover
   set +x
 }
 
