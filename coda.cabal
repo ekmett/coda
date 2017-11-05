@@ -52,7 +52,7 @@ custom-setup
 -- The language server protocol
 library coda-lsp
   default-language: Haskell2010
-  hs-source-dirs: lsp
+  hs-source-dirs: src/lsp
   exposed-modules:
     Language.Server.Builder
     Language.Server.Protocol
@@ -75,13 +75,45 @@ library coda-lsp
     unordered-containers >= 0.2      && < 0.3,
     uri-encode           >= 1.5.0.5  && < 1.6
 
+-- 'relative' monoids and algebraic structures
+library coda-algebra
+  default-language: Haskell2010
+  hs-source-dirs: src/algebra
+  ghc-options: -Wall
+
+  exposed-modules:
+    Coda.Algebra.Zero
+    Coda.Relative.Absolute
+    Coda.Relative.Cat
+    Coda.Relative.Class
+    Coda.Relative.Delta
+    Coda.Relative.List
+    Coda.Relative.Located
+    Coda.Relative.Map
+    Coda.Relative.Queue
+    Coda.Relative.Rev
+
+  other-modules:
+    Coda.Util.BitQueue
+    Coda.Util.Bits
+
+  build-depends:
+    base                 >= 4.10     && < 5,
+    bifunctors           >= 5        && < 6,
+    comonad              >= 5        && < 6,
+    data-default         >= 0.7.1.1  && < 0.8,
+    ghc-prim,
+    hashable             >= 1.2.6    && < 1.3,
+    lens                 >= 4.15     && < 5,
+    mtl                  >= 2.2.1    && < 2.3,
+    profunctors          >= 5.2      && < 5.3,
+    text                 >= 1.2      && < 1.3
+
 library
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: src
+  hs-source-dirs: src/library
   exposed-modules:
-    Coda.Algebra.Zero
-
     Coda.Console
     Coda.Console.Command
     Coda.Console.Completion
@@ -89,15 +121,6 @@ library
     Coda.Console.Unicode
 
     Coda.FingerTree
-
-    Coda.Relative.Absolute
-    Coda.Relative.Cat
-    Coda.Relative.Class
-    Coda.Relative.Delta
-    Coda.Relative.List
-    Coda.Relative.Located
-    Coda.Relative.Queue
-    Coda.Relative.Rev
 
     Coda.Server
     Coda.Server.Options
@@ -113,13 +136,9 @@ library
     Coda.Syntax.Rope
 
     Coda.Util.Alex
-    Coda.Util.BitQueue
-    Coda.Util.Bits
     Coda.Util.Pretty
 
     Coda.Version
-
-    Coda.Relative.Map
 
   other-modules:
     Paths_coda
@@ -130,11 +149,12 @@ library
     array                >= 0.5.1    && < 0.6,
     base,
     base-orphans         >= 0.5      && < 1,
-    bifunctors           >= 5        && < 6,
+    bifunctors,
     bytestring,
     Cabal,
+    coda-algebra,
     coda-lsp,
-    comonad              >= 5        && < 6,
+    comonad,
     containers           >= 0.5.7.1  && < 0.6,
     data-default,
     deriving-compat      >= 0.3.6    && < 0.4,
@@ -146,9 +166,9 @@ library
     kan-extensions       >= 5.0.2    && < 6,
     lens,
     lens-aeson,
-    mtl                  >= 2.2.1    && < 2.3,
+    mtl,
     optparse-applicative >= 0.13     && < 0.15,
-    profunctors          >= 5.2      && < 5.3,
+    profunctors,
     unordered-containers,
     split                >= 0.2      && < 0.3,
     stm                  >= 2.4      && < 2.5,
