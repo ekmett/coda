@@ -20,14 +20,156 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
+flag test-tasty
+  default: True
+  manual: True
+
+flag test-once
+  default: True
+  manual: True
+
+library
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src
+
+  -- version
+  exposed-modules:
+    Coda.Version
+
+  other-modules:
+    Paths_coda
+
+  -- algebra
+  exposed-modules:
+    Coda.Algebra.Ordered
+    Coda.Algebra.Zero
+    Coda.FingerTree
+    Coda.Relative.Delta
+    Coda.Relative.Delta.Type
+    Coda.Relative.Absolute
+    Coda.Relative.Cat
+    Coda.Relative.List
+    Coda.Relative.Located
+    Coda.Relative.Map
+    Coda.Relative.Queue
+    Coda.Relative.Class
+    Coda.Rev
+  other-modules:
+    Coda.Internal.Map.Bits
+    Coda.Internal.Map.BitQueue
+
+  -- console
+  exposed-modules:
+    Coda.Console
+    Coda.Console.Command
+    Coda.Console.Completion
+    Coda.Console.Options
+    Coda.Console.Pretty
+    Coda.Console.Unicode
+
+  -- server
+  exposed-modules:
+    Coda.Server
+    Coda.Server.Options
+
+  -- syntax
+  exposed-modules:
+    Coda.Syntax.Alex,
+    Coda.Syntax.Change,
+    Coda.Syntax.Dyck,
+    Coda.Syntax.Document,
+    Coda.Syntax.FromText,
+    Coda.Syntax.Lexer,
+    Coda.Syntax.Name,
+    Coda.Syntax.Prefix,
+    Coda.Syntax.Rope,
+    Coda.Syntax.Summary,
+    Coda.Syntax.Token
+
+  build-depends:
+    aeson,
+    ansi-wl-pprint       >= 0.6      && < 0.7,
+    array,
+    base                 >= 4.10     && < 5,
+    base,
+    bifunctors           >= 5        && < 6,
+    bytestring,
+    coda-lsp,
+    comonad              >= 5        && < 6,
+    containers,
+    data-default         >= 0.7.1.1  && < 0.8,
+    exceptions           >= 0.8.2.1  && < 0.9,
+    ghc-prim,
+    hashable             >= 1.2.6    && < 1.3,
+    haskeline            >= 0.7.4    && < 0.8,
+    hyphenation          >= 0.7      && < 0.8,
+    lens                 >= 4.15     && < 5,
+    mtl                  >= 2.2.1    && < 2.3,
+    optparse-applicative >= 0.13     && < 0.15,
+    profunctors          >= 5.2      && < 5.3,
+    split                >= 0.2      && < 0.3,
+    text                 >= 1.2      && < 1.3,
+    unordered-containers
+
 executable coda
   default-language: Haskell2010
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   main-is: Main.hs
   build-depends:
     base,
-    coda-syntax,
-    coda-console,
-    coda-server,
-    coda-version,
+    coda,
     optparse-applicative
+
+test-suite tasty
+  type: exitcode-stdio-1.0
+  default-language: Haskell2010
+  main-is: tasty.hs
+  hs-source-dirs: test/src
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  other-modules:
+    ListTest
+    MapTest
+  if !flag(test-tasty)
+    buildable: False
+  else
+    build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
+    build-depends:
+      aeson,
+      base,
+      coda,
+      containers,
+      bifunctors,
+      bytestring,
+      filepath,
+      lens,
+      QuickCheck,
+      tagged,
+      tasty          >= 0.11 && < 0.12,
+      tasty-quickcheck,
+      tasty-discover >= 3.0  && < 4.2,
+      tasty-golden   >= 2.3  && < 2.4,
+      tasty-hunit    >= 0.9  && < 0.10,
+      text
+
+test-suite once
+  type: exitcode-stdio-1.0
+  default-language: Haskell2010
+  main-is: once.hs
+  hs-source-dirs: test/src
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  if !flag(test-once)
+    buildable: False
+  else
+    build-depends:
+      aeson,
+      base,
+      coda,
+      containers,
+      bifunctors,
+      bytestring,
+      filepath,
+      lens,
+      tagged,
+      text
+

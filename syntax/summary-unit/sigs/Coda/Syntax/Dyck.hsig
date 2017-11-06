@@ -1,5 +1,0 @@
-signature Coda.Syntax.Dyck
-  ( Dyck
-  ) where
- 
-data Dyck

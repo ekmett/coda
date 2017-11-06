@@ -1,11 +1,6 @@
 packages:
-  algebra/coda-algebra.cabal
   coda.cabal
-  console/coda-console.cabal
   lsp/coda-lsp.cabal
-  server/coda-server.cabal
-  syntax/coda-syntax.cabal
-  version/coda-version.cabal
 
 package coda-lsp
   optimization: 0
