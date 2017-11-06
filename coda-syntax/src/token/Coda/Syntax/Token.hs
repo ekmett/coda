@@ -18,7 +18,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Token
+module Coda.Syntax.Token
   ( Token(..)
   , Pair(..)
   , LayoutMode(..)

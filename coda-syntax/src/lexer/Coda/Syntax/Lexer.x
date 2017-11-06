@@ -17,7 +17,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Lexer
+module Coda.Syntax.Lexer
   ( lex
   ) where
 
@@ -33,10 +33,11 @@ import Prelude hiding (lex)
 import Text.Read (readEither)
 
 import Alex
-import Dyck
 import FromText
 import Name
-import Token
+
+import Coda.Syntax.Token
+import Coda.Syntax.Dyck
 
 }
 

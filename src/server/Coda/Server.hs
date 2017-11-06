@@ -64,33 +64,15 @@ putError i c t = -- do
 -- State
 --------------------------------------------------------------------------------
 
-
-data Stub = Stub deriving (Eq,Ord,Show,Read,Data,Generic)
-instance Default Stub where def = Stub
-instance Semigroup Stub where
-  Stub <> Stub = Stub
-instance Monoid Stub where
-  mempty = Stub
-  mappend = (<>)
-instance Measured Stub where
-  type Measure Stub = Stub
-  measure = id
-instance FromText Stub where fromText _ = Stub
-instance Relative Stub where rel _ Stub = Stub
-instance RelativeMonoid Stub
-
-type Doc = Document Stub
-type Docs = HashMap DocumentUri Doc
-
 data ServerState = ServerState
   { _shutdownRequested :: Bool
-  , _documents :: HashMap DocumentUri Doc
+  , _documents :: Documents
   } deriving Show
 
 makeFieldsNoPrefix ''ServerState
 
-class (HasShutdownRequested t Bool, HasDocuments t Docs) => HasServerState t
-instance (HasShutdownRequested t Bool, HasDocuments t Docs) => HasServerState t
+class (HasShutdownRequested t Bool, HasDocuments t Documents) => HasServerState t
+instance (HasShutdownRequested t Bool, HasDocuments t Documents) => HasServerState t
 
 --------------------------------------------------------------------------------
 -- Listening

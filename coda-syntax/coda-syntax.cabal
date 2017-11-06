@@ -42,7 +42,7 @@ library rope-mixin
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: src/rope-mixin
-  signatures: Lexer Summary
+  signatures: Dyck Lexer Summary
   exposed-modules: Document Rope
   build-depends:
     base,
@@ -50,7 +50,6 @@ library rope-mixin
     coda-lsp,
     common,
     comonad,
-    dyck-mixin,
     data-default,
     hashable,
     lens,
@@ -64,7 +63,7 @@ library token
   default-language: Haskell2010
   hs-source-dirs: src/token
   ghc-options: -Wall
-  exposed-modules: Token
+  exposed-modules: Coda.Syntax.Token
   build-depends:
     base,
     coda-algebra,
@@ -74,21 +73,16 @@ library token
     lens,
     text
 
--- a trivial summary that ignores its inputs
-library summary-unit
-  default-language: Haskell2010
-  hs-source-dirs: src/summary-unit
-  ghc-options: -Wall
-  exposed-modules: Summary
-  build-depends: base, coda-algebra, dyck-mixin, text
-
 -- a simple haskell-like lexer
 library lexer
   default-language: Haskell2010
   hs-source-dirs: src/lexer
   ghc-options: -Wall
   build-tools: alex
-  exposed-modules: Lexer
+  exposed-modules: Coda.Syntax.Lexer
+  mixins: dyck-mixin (Dyck as Coda.Syntax.Dyck) requires (Token as Coda.Syntax.Token)
+  reexported-modules: Coda.Syntax.Token, Coda.Syntax.Dyck
+
   build-depends:
     array,
     base,
@@ -100,26 +94,40 @@ library lexer
     text,
     token
 
+-- a trivial summary that ignores its inputs
+library summary-unit
+  default-language: Haskell2010
+  hs-source-dirs: src/summary-unit
+  ghc-options: -Wall
+  signatures: Dyck
+  exposed-modules: Summary
+  build-depends: base, coda-algebra, text
+
 library
   default-language: Haskell2010
   ghc-options: -Wall
+
   mixins:
-    dyck-mixin (Dyck as Coda.Syntax.Dyck),
+    summary-unit (Summary as Coda.Syntax.Summary) requires (Dyck as Coda.Syntax.Dyck),
     rope-mixin (Rope as Coda.Syntax.Rope, Document as Coda.Syntax.Document)
+      requires (Lexer as Coda.Syntax.Lexer, Summary as Coda.Syntax.Summary, Dyck as Coda.Syntax.Dyck)
+
   reexported-modules:
     Alex as Coda.Syntax.Alex,
     Change as Coda.Syntax.Change,
+    Coda.Syntax.Dyck,
+    Coda.Syntax.Document,
     FromText as Coda.Syntax.FromText,
-    Lexer as Coda.Syntax.Lexer,
+    Coda.Syntax.Lexer,
     Name as Coda.Syntax.Name,
     Prefix as Coda.Syntax.Prefix,
-    Token as Coda.Syntax.Token,
-    Summary as Coda.Syntax.Summary
+    Coda.Syntax.Token,
+    Coda.Syntax.Rope,
+    Coda.Syntax.Summary
+
   build-depends:
     base,
     common,
-    dyck-mixin,
     lexer,
     rope-mixin,
-    summary-unit,
-    token
+    summary-unit

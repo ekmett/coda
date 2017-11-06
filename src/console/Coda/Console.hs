@@ -49,5 +49,5 @@ loop = do
       loop
     Just ""      -> loop
     Just input   -> do
-      outputStrLn $ show $ spine (fromString input :: Dyck Token)
+      outputStrLn $ show $ spine (fromString input :: Dyck)
       loop
