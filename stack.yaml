@@ -2,10 +2,5 @@ resolver: nightly-2017-11-04
 flags: {}
 packages:
  - '.'
- - algebra
  - lsp
- - server
- - syntax
- - console
- - version
 extra-deps: []
