@@ -13,6 +13,16 @@
 {-# language UndecidableSuperClasses #-}
 {-# options_ghc -Wno-incomplete-patterns #-}
 
+---------------------------------------------------------------------------------
+-- |
+-- Copyright :  (c) Edward Kmett 2017
+-- License   :  BSD2
+-- Maintainer:  Edward Kmett <ekmett@gmail.com>
+-- Stability :  experimental
+-- Portability: non-portable
+--
+---------------------------------------------------------------------------------
+
 module Coda.Syntax.Change where
 
 import Coda.Algebra.Zero
