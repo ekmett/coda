@@ -50,7 +50,6 @@ library
     Language.Server.Builder
     Language.Server.Protocol
     Language.Server.Parser
-    Coda.Util.Aeson
 
   other-modules:
     Language.Server.TH

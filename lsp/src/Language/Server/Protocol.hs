@@ -10,6 +10,7 @@
 {-# language FlexibleInstances #-}
 {-# language OverloadedStrings #-}
 {-# language DeriveDataTypeable #-}
+{-# language ExplicitNamespaces #-}
 {-# language TypeSynonymInstances #-}
 {-# language DuplicateRecordFields #-}
 {-# language MultiParamTypeClasses #-}
@@ -31,8 +32,9 @@
 
 module Language.Server.Protocol
   (
+    pattern JSON
     -- * JSON-RPC 2.0
-    Id(..)
+  , Id(..)
 
     -- ** Requests
   , Request(..)
@@ -200,13 +202,14 @@ module Language.Server.Protocol
   , HasWorkspace(..)
   ) where
 
-import Coda.Util.Aeson
 import Control.Applicative
+import Control.Lens (preview, (#))
 import Control.Lens.TH
 import Control.Monad
 import Data.Aeson hiding (Error)
 import Data.Aeson.Encoding
 import Data.Aeson.Internal
+import Data.Aeson.Lens
 import Data.Data
 import Data.Default
 import Data.Foldable
@@ -221,6 +224,11 @@ import GHC.Generics
 import Language.Server.TH
 import Network.URI.Encode as URI
 import Text.Read as Read hiding (Number, String)
+
+-- | Match anything we know how to parse from JSON
+pattern JSON :: (FromJSON a, ToJSON a, AsJSON t) => () => a -> t
+pattern JSON a <- (preview _JSON -> Just a) where
+  JSON a = _JSON # a
 
 --------------------------------------------------------------------------------
 -- JSON-RPC 2.0
