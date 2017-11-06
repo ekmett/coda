@@ -1,6 +1,3 @@
-{-# language DeriveGeneric #-}
-{-# language DeriveDataTypeable #-}
-{-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
 {-# language TypeFamilies #-}
 {-# language FlexibleContexts #-}

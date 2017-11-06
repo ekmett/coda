@@ -1,10 +1,8 @@
-{-# language BangPatterns #-}
 {-# language MultiParamTypeClasses #-}
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 {-# language DeriveGeneric #-}
 {-# language TypeFamilies #-}
-{-# language StandaloneDeriving #-}
 {-# language UndecidableInstances #-}
 
 ---------------------------------------------------------------------------------
@@ -43,8 +41,6 @@ import Control.Lens
 import Data.Default
 import Data.Semigroup
 import GHC.Generics
-import Prelude hiding (lex)
-
 
 --------------------------------------------------------------------------------
 -- Dyck Language

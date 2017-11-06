@@ -1,0 +1,4 @@
+- ignore: {name: "Reduce duplication"}
+- ignore: {name: "Use infix"}
+- ignore: {name: "Move brackets to avoid $"}
+- ignore: {name: "Use camelCase"}

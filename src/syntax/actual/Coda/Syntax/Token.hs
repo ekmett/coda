@@ -1,11 +1,9 @@
 {-# language DeriveDataTypeable #-}
 {-# language DeriveGeneric #-}
 {-# language FlexibleInstances #-}
-{-# language LambdaCase #-}
 {-# language MultiParamTypeClasses #-}
 {-# language OverloadedLists #-}
 {-# language OverloadedStrings #-}
-{-# language TemplateHaskell #-}
 {-# language TypeFamilies #-}
 
 ---------------------------------------------------------------------------------
