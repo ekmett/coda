@@ -143,17 +143,20 @@ library server
 library syntax
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: src/syntax
+  hs-source-dirs: src/syntax/mixin
   exposed-modules:
     Coda.Syntax.Alex,
     Coda.Syntax.Change,
     Coda.Syntax.Dyck,
     Coda.Syntax.Document,
     Coda.Syntax.FromText,
-    Coda.Syntax.Lexer,
     Coda.Syntax.Name,
     Coda.Syntax.Prefix,
-    Coda.Syntax.Rope,
+    Coda.Syntax.Rope
+
+  hs-source-dirs: src/syntax/actual
+  exposed-modules:
+    Coda.Syntax.Lexer,
     Coda.Syntax.Summary,
     Coda.Syntax.Token
 
