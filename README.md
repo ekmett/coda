@@ -21,7 +21,9 @@ The application is designed as a plugin for Visual Studio Code.
 Installation
 ============
 
-To install the `coda` executable run `cabal install` or `stack install` as usual with a Haskell project.
+To install the `coda` executable, you'll need to run `cabal new-build`, then fish through `dist-newstyle` for the executable and put it somewhere in your path.
+
+Once `cabal new-install` works, this will become a lot easier.
 
 To work on the extension, you'll need to:
 
@@ -30,6 +32,8 @@ To work on the extension, you'll need to:
 2. Run `code .` from root of that repository
 
 3. Start debugging to launch the extension-host following the instructions in [Running and Debugging Your Extension][debugging-extensions].
+
+Alternately you can link the directory directly into your `~/.vscode/extensions` folder, which may be useful if you're working on the typescript bits.
 
 Autocompletion
 ==============
@@ -45,7 +49,7 @@ You can add this to your `.profile` or `.bashrc`
 Requirements
 ============
 
-Currently, the build process is being tested on GHC 8.0, but I'm not actively doing anything to shut off older GHCs or newer ones.
+Currently, the build process is being tested on GHC 8.2, but I'm not actively doing anything to shut off older GHCs or newer ones.
 
 Patches that help increase portability are welcome.
 
