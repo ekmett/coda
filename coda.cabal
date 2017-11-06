@@ -146,7 +146,6 @@ library syntax
   hs-source-dirs: src/syntax/mixin
   exposed-modules:
     Coda.Syntax.Alex,
-    Coda.Syntax.Change,
     Coda.Syntax.Dyck,
     Coda.Syntax.Document,
     Coda.Syntax.FromText,
@@ -174,6 +173,21 @@ library syntax
     profunctors,
     text,
     unordered-containers
+
+library change
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/change
+  exposed-modules:
+    Coda.Syntax.Change
+
+  build-tools: alex
+  build-depends: algebra, lsp
+  build-depends:
+    base,
+    data-default,
+    lens,
+    text
 
 executable coda
   default-language: Haskell2010
