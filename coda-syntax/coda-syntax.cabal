@@ -30,23 +30,21 @@ library
       requires (Lexer as Coda.Syntax.Lexer, Summary as Coda.Syntax.Summary, Dyck as Coda.Syntax.Dyck)
 
   reexported-modules:
-    Alex as Coda.Syntax.Alex,
-    Change as Coda.Syntax.Change,
+    Coda.Syntax.Alex,
+    Coda.Syntax.Change,
     Coda.Syntax.Dyck,
     Coda.Syntax.Document,
-    FromText as Coda.Syntax.FromText,
+    Coda.Syntax.FromText,
     Coda.Syntax.Lexer,
-    Name as Coda.Syntax.Name,
-    Prefix as Coda.Syntax.Prefix,
+    Coda.Syntax.Name,
+    Coda.Syntax.Prefix,
     Coda.Syntax.Rope,
-    Coda.Syntax.Summary
-
---    Coda.Syntax.Token,
+    Coda.Syntax.Summary,
+    Coda.Syntax.Token
 
   build-depends:
     base,
     coda-syntax-common,
     coda-syntax-lexer,
     coda-syntax-rope-mixin,
-    coda-syntax-summary-unit,
-    coda-syntax-token
+    coda-syntax-summary-unit

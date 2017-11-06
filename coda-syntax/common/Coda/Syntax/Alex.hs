@@ -14,7 +14,7 @@
 -- A simple input adapter that allows @alex@ to work with 'Text'
 ---------------------------------------------------------------------------------
 
-module Alex
+module Coda.Syntax.Alex
   ( AlexInput(..)
   , AlexInputState(..)
   , alexGetByte
@@ -31,7 +31,7 @@ import Data.Text.Unsafe as Text
 import Data.Word (Word8)
 import GHC.Generics
 
-import FromText
+import Coda.Syntax.FromText
 
 -- $setup
 -- >>> :set -XOverloadedStrings -XOverloadedLists

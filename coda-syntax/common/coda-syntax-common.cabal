@@ -24,5 +24,17 @@ source-repository head
 library
   default-language: Haskell2010
   ghc-options: -Wall
-  exposed-modules: Alex Change FromText Name Prefix
-  build-depends: base, coda-algebra, data-default, hashable, lens, profunctors, text
+  exposed-modules:
+    Coda.Syntax.Alex
+    Coda.Syntax.Change
+    Coda.Syntax.FromText
+    Coda.Syntax.Name
+    Coda.Syntax.Prefix
+  build-depends:
+    base,
+    coda-algebra,
+    data-default,
+    hashable,
+    lens,
+    profunctors,
+    text

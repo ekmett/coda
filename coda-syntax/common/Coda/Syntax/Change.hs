@@ -13,7 +13,7 @@
 {-# language UndecidableSuperClasses #-}
 {-# options_ghc -Wno-incomplete-patterns #-}
 
-module Change where
+module Coda.Syntax.Change where
 
 import Coda.Algebra.Zero
 import Coda.FingerTree as FingerTree

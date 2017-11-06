@@ -26,4 +26,11 @@ library
   ghc-options: -Wall
   signatures: Token
   exposed-modules: Dyck
-  build-depends: base, coda-algebra, comonad, data-default, hashable, lens, text
+  build-depends:
+    base,
+    coda-algebra,
+    comonad,
+    data-default,
+    hashable,
+    lens,
+    text

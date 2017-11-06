@@ -37,14 +37,13 @@ import Coda.Relative.Cat
 import Coda.Relative.Class
 import Coda.Relative.Delta
 import Coda.Relative.Located
+import Coda.Syntax.Name
 import Data.Data
 import Data.Default
 import Data.Ix
 import Data.Set as Set
 import Data.Text (Text)
 import GHC.Generics
-
-import Name
 
 -- | these are keywords that are only valid at the start of a top level statement
 startingKeywords :: Set String

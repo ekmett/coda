@@ -41,6 +41,7 @@ module Rope
   ) where
 
 import Coda.Relative.Delta
+import Coda.Syntax.FromText
 import Control.Lens
 import Data.Data
 import Data.Default
@@ -59,7 +60,6 @@ import Language.Server.Protocol hiding (error)
 import Prelude hiding (lex)
 
 import Dyck
-import FromText
 import Lexer
 import Summary
 

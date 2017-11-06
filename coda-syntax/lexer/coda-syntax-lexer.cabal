@@ -25,9 +25,15 @@ library
   default-language: Haskell2010
   ghc-options: -Wall
   build-tools: alex
-  exposed-modules: Coda.Syntax.Lexer
+
   mixins: coda-syntax-dyck-mixin (Dyck as Coda.Syntax.Dyck) requires (Token as Coda.Syntax.Token)
-  reexported-modules: Coda.Syntax.Dyck
+
+  reexported-modules:
+    Coda.Syntax.Dyck,
+    Coda.Syntax.Token
+
+  exposed-modules:
+    Coda.Syntax.Lexer
 
   build-depends:
     array,

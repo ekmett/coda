@@ -1,4 +1,4 @@
-module FromText
+module Coda.Syntax.FromText
   ( FromText(..)
   ) where
 

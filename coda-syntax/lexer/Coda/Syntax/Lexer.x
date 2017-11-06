@@ -23,6 +23,11 @@ module Coda.Syntax.Lexer
 
 import Coda.Relative.Delta
 import Coda.Relative.Located
+import Coda.Syntax.Alex
+import Coda.Syntax.FromText
+import Coda.Syntax.Name
+import Coda.Syntax.Token
+import Coda.Syntax.Dyck -- mixin
 import Data.Char
 import Data.Default
 import Data.Text (Text)
@@ -31,13 +36,6 @@ import qualified Data.Text.Read as Read
 import Data.Text.Unsafe as Text
 import Prelude hiding (lex)
 import Text.Read (readEither)
-
-import Alex
-import FromText
-import Name
-
-import Coda.Syntax.Token
-import Coda.Syntax.Dyck
 
 }
 
