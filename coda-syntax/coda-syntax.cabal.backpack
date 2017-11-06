@@ -1,4 +1,4 @@
-name:          coda-syntax-dyck
+name:          coda-syntax
 category:      Language
 version:       0.0.1
 license:       BSD2
@@ -20,18 +20,28 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
--- build a dyck language monoid for a given token type
 library
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: sigs .
-  signatures: Coda.Syntax.Token
-  exposed-modules: Coda.Syntax.Dyck
+
+  reexported-modules:
+    Coda.Syntax.Alex,
+    Coda.Syntax.Change,
+    Coda.Syntax.Dyck,
+    Coda.Syntax.Document,
+    Coda.Syntax.FromText,
+    Coda.Syntax.Lexer,
+    Coda.Syntax.Name,
+    Coda.Syntax.Prefix,
+    Coda.Syntax.Rope,
+    Coda.Syntax.Summary,
+    Coda.Syntax.Token
+
   build-depends:
     base,
-    coda-algebra,
-    comonad,
-    data-default,
-    hashable,
-    lens,
-    text
+    coda-syntax-token,
+    coda-syntax-dyck,
+    coda-syntax-common,
+    coda-syntax-lexer,
+    coda-syntax-rope,
+    coda-syntax-summary-unit
