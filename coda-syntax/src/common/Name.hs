@@ -6,7 +6,7 @@
 {-# language FunctionalDependencies #-}
 {-# language OverloadedStrings #-}
 
-module Coda.Syntax.Name
+module Name
   ( Name(Qualified, Unqualified, QVarId, QConId, QVarOp, QConOp, VarId, ConId, VarOp, ConOp)
   , HasOperator(..)
   , HasConstructor(..)

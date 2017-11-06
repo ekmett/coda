@@ -6,7 +6,6 @@
 {-# language OverloadedStrings #-}
 {-# language TypeFamilies #-}
 {-# language TemplateHaskell #-}
-{-# language DeriveGeneric #-}
 
 ---------------------------------------------------------------------------------
 -- |
@@ -18,28 +17,26 @@
 --
 ---------------------------------------------------------------------------------
 
-module Coda.Syntax.Lexer
-  ( Token(..), Pair(..)
+module Lexer
+  ( lex
   ) where
 
-import Coda.Relative.Class
 import Coda.Relative.Delta
 import Coda.Relative.Located
-import Coda.Syntax.Dyck
-import Coda.Syntax.Keywords
-import Coda.Syntax.Name
-import Coda.Syntax.Rich
-import Coda.Syntax.Rope
-import Coda.Util.Alex
-import Control.Lens
 import Data.Char
 import Data.Default
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Read as Read
 import Data.Text.Unsafe as Text
-import GHC.Generics
+import Prelude hiding (lex)
 import Text.Read (readEither)
+
+import Alex
+import Dyck
+import FromText
+import Name
+import Token
 
 }
 
@@ -121,47 +118,7 @@ haskell :-
 
 {
 
-data Token
-  = Token        {-# unpack #-} !Delta {-# unpack #-} !Text -- as yet uninterpreted lexemes
-  | TokenName    {-# unpack #-} !Delta !Name
-  | TokenKeyword {-# unpack #-} !Delta !Keyword
-  | TokenInteger {-# unpack #-} !Delta !Integer
-  | TokenDouble  {-# unpack #-} !Delta {-# unpack #-} !Double
-  | TokenString  {-# unpack #-} !Delta !Text
-  | TokenChar    {-# unpack #-} !Delta {-# unpack #-} !Char
-  | TokenRich    !(Rich Token)
-  deriving (Eq,Ord,Show,Read)
-
-instance Relative Token where
-  rel d (Token d' t) = Token (d+d') t
-  rel d (TokenName d' n) = TokenName (d+d') n
-  rel d (TokenKeyword d' k) = TokenKeyword (d+d') k
-  rel d (TokenInteger d' i) = TokenInteger (d+d') i
-  rel d (TokenDouble d' f) = TokenDouble (d+d') f
-  rel d (TokenString d' l) = TokenString (d+d') l
-  rel d (TokenChar d' l) = TokenChar (d+d') l
-  rel d (TokenRich r) = TokenRich (rel d r)
-
-instance AsRich Token Token where
-  _Rich = prism TokenRich $ \case
-    TokenRich r -> Right r
-    xs -> Left xs
-
-data instance Pair Token = Brace | Bracket | Paren
-  deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Generic)
-
-data instance LayoutMode Token
-  = LNone
-  | LDo
-  | LLet
-  | LOf
-  | LWhere
-  deriving (Eq,Ord,Show,Read)
-
-instance Default (LayoutMode Token) where
-  def = LNone
-
-pair :: Char -> Pair Token
+pair :: Char -> Pair
 pair '(' = Paren
 pair ')' = Paren
 pair '[' = Bracket
@@ -177,7 +134,7 @@ cap :: String -> String
 cap (x:xs) = toUpper x : xs
 cap [] = []
 
-type Action = Dyck Token -> Int -> Text -> Int -> Dyck Token
+type Action = Dyck -> Int -> Text -> Int -> Dyck
 
 skip :: Action
 skip xs _ _ _ = xs
@@ -195,12 +152,12 @@ tok xs d t len = token xs $ Token (Delta d) $ Text.takeWord16 len $ Text.dropWor
 keyword :: Action
 keyword xs d t l = token xs $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
   Right kw -> TokenKeyword (Delta d) kw
-  Left e -> Rich $ LexicalError (Delta d) e
+  Left e -> lexicalError (Delta d) e
 
-layoutKeyword :: LayoutMode Token -> Action
+layoutKeyword :: LayoutMode -> Action
 layoutKeyword i xs d t l = layoutToken xs i $ case readEither $ 'K' : cap (Text.unpack $ trim d t l) of
   Right kw -> TokenKeyword (Delta d) kw
-  Left e -> Rich $ LexicalError (Delta d) e
+  Left e -> lexicalError (Delta d) e
 
 opening :: Action
 opening xs d t _ = open xs $ Located (Delta d) $ case Text.iter t d of Text.Iter c _ -> pair c
@@ -210,23 +167,23 @@ closing xs d t _ = close xs $ Located (Delta d) $ case Text.iter t d of Text.Ite
 
 literal :: Read a => (Delta -> a -> Token) -> Action
 literal f xs d t l = token xs $ case readEither $ Text.unpack $ trim d t l of
-  Left e  -> Rich $ LexicalError (Delta d) e
+  Left e  -> lexicalError (Delta d) e
   Right a -> f (Delta d) a
 
 reader :: Int -> (Delta -> a -> Token) -> Read.Reader a -> Action
 reader o f p xs d t l = token xs $ case p $ trim (d+o) t (l-o) of
-  Left e       -> Rich $ LexicalError (Delta d) e
+  Left e       -> lexicalError (Delta d) e
   Right (a, _) -> f (Delta d) a
 
 octal :: Action
 octal = reader 2 TokenInteger $ \ txt -> Right (Text.foldl' (\n d -> n*8 + fromIntegral (digitToInt d)) 0 txt, "")
 
-instance Lexer Token where
-  lex t0 = go t0 (fromText t0) def where
-    go t inp xs = case alexScan inp 0 of
-      AlexEOF              -> xs
-      AlexError inp'       -> go t inp' $ token xs $ Rich $ LexicalError (Delta $ alexInputDelta inp) "lexical error"
-      AlexSkip inp' _      -> go t inp' xs
-      AlexToken inp' l act -> go t inp' $ act xs (alexInputDelta inp) t l
+lex :: Text -> Dyck
+lex t0 = go t0 (fromText t0) def where
+  go t inp xs = case alexScan inp 0 of
+    AlexEOF              -> xs
+    AlexError inp'       -> go t inp' $ token xs $ lexicalError (Delta $ alexInputDelta inp) "lexical error"
+    AlexSkip inp' _      -> go t inp' xs
+    AlexToken inp' l act -> go t inp' $ act xs (alexInputDelta inp) t l
 
 }

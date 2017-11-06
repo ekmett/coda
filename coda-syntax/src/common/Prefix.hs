@@ -2,13 +2,12 @@
 {-# language DeriveGeneric #-}
 {-# language OverloadedStrings #-}
 
-module Coda.Syntax.Prefix
+module Prefix
   ( Prefix(..)
   , joinAndCompare
   ) where
 
 import Coda.Algebra.Zero
-import Coda.Syntax.Rope
 import Data.Char (isSpace)
 import Data.Data hiding (Prefix)
 import Data.Semigroup
@@ -16,6 +15,8 @@ import Data.String
 import Data.Text as Text
 import GHC.Generics hiding (Prefix)
 import Prelude
+
+import FromText
 
 -- | line prefixes form a semigroup with a zero
 newtype Prefix = Prefix Text deriving (Eq,Show,Generic,Data)

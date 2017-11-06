@@ -22,7 +22,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Coda.Syntax.Rope
+module Rope
   ( Rope(..)
   , splitAtPosition
   , splitAtDelta
@@ -40,9 +40,7 @@ module Coda.Syntax.Rope
   , HasLineMeasure(..)
   ) where
 
-import Coda.Relative.Class
 import Coda.Relative.Delta
-import Control.Comonad
 import Control.Lens
 import Data.Data
 import Data.Default
@@ -58,30 +56,32 @@ import Data.Text.Internal (Text(..))
 import Data.Text.Unsafe as Text
 import GHC.Generics
 import Language.Server.Protocol hiding (error)
+import Prelude hiding (lex)
 
-class FromText a where
-  fromText :: Text -> a
+import Dyck
+import FromText
+import Lexer
+import Summary
 
--- | Invariants
---
--- * The only occurrences of '\n', '\r' or "\r\n" are at the end of the Text
-data Line a = Line { runLine :: !Text, content :: a }
-  deriving (Eq, Ord, Show, Read, Hashable, Generic, Functor, Foldable, Traversable, Generic1)
+data Line = Line { runLine :: {-# unpack #-} !Text, content :: {-# unpack #-} !Dyck }
+  deriving (Eq, Ord, Show, Read)
 
-instance Comonad Line where
-  extract (Line _ a) = a
-  duplicate w@(Line t _) = Line t w
+instance Hashable Line where
+  hashWithSalt e = hashWithSalt e . runLine
+  {-# inline hashWithSalt #-}
+  hash = hash . runLine
+  {-# inline hash #-}
 
-instance FromText a => FromText (Line a) where
-  fromText t = Line t (fromText t)
+instance FromText Line where
+  fromText t = Line t (lex t)
 
-instance FromText a => IsString (Line a) where
+instance IsString Line where
   fromString = fromText . fromString
 
-instance HasDelta (Line a) where
+instance HasDelta Line where
   delta = Delta #. Text.lengthWord16 . runLine
 
-instance FromText a => Default (Line a) where
+instance Default Line where
   def = fromText ""
 
 cr, lf, crlf :: Text
@@ -109,6 +109,7 @@ foldLines f z0 (Text a0 o0 l0) = go o0 o0 (o0+l0) a0 z0 where
     | s < e = f z $ Text a s (e-s)
     | otherwise = z
 
+
 --------------------------------------------------------------------------------
 -- LineMeasure
 --------------------------------------------------------------------------------
@@ -123,44 +124,40 @@ foldLines f z0 (Text a0 o0 l0) = go o0 o0 (o0+l0) a0 z0 where
 -- letting us use the compact single-integer Abelian group 'Delta' representation
 -- internally for almost all positioning.
 --
-data LineMeasure v = LineMeasure !Int !Delta v
-  deriving (Eq, Ord, Show, Read, Data, Generic, Generic1, Functor, Foldable, Traversable)
+data LineMeasure = LineMeasure {-# unpack #-} !Int {-# unpack #-} !Delta {-# unpack #-} !Summary
+  deriving (Eq, Ord, Show, Read, Data, Generic)
 
-instance Comonad LineMeasure where
-  extract (LineMeasure _ _ v) = v
-  duplicate w@(LineMeasure l d _) = LineMeasure l d w
-
-instance HasDelta (LineMeasure v) where
+instance HasDelta LineMeasure where
   delta (LineMeasure _ d _) = d
 
-instance Hashable v => Hashable (LineMeasure v)
+instance Hashable LineMeasure
 
-instance RelativeMonoid v => Semigroup (LineMeasure v) where
-  LineMeasure l d v <> LineMeasure l' d' v' = LineMeasure (l + l') (d + d') (mappend v (rel d v'))
+instance Semigroup LineMeasure where
+  LineMeasure l d v <> LineMeasure l' d' v' = LineMeasure (l + l') (d + d') (mergeSummary l d v l' d' v')
 
-instance RelativeMonoid v => Monoid (LineMeasure v) where
-  mempty = LineMeasure 0 0 mempty
-  mappend (LineMeasure l d v) (LineMeasure l' d' v') = LineMeasure (l + l') (d + d') (mappend v (rel d v'))
+instance Monoid LineMeasure where
+  mempty = LineMeasure 0 0 def
+  mappend = (<>)
 
 -- Measured a is somewhat the wrong constraint here
-instance (RelativeMonoid (Measure a), Measured a) => Measured (Line a) where
-  type Measure (Line a) = LineMeasure (Measure a)
-  measure (Line l a) = LineMeasure 1 (Delta $ Text.lengthWord16 l) (measure a)
+instance Measured Line where
+  type Measure Line = LineMeasure
+  measure (Line l a) = LineMeasure 1 (Delta $ Text.lengthWord16 l) (summarize l a)
 
-instance Default v => Default (LineMeasure v) where
+instance Default LineMeasure where
   def = LineMeasure 0 0 def
 
 --------------------------------------------------------------------------------
 -- HasLineMeasure
 --------------------------------------------------------------------------------
 
-class HasDelta t => HasLineMeasure t v | t -> v where
-  lineMeasure :: t -> LineMeasure v
+class HasDelta t => HasLineMeasure t where
+  lineMeasure :: t -> LineMeasure
 
   lineCount :: t -> Int
   lineCount = lineCount . lineMeasure
 
-instance HasLineMeasure (LineMeasure v) v where
+instance HasLineMeasure LineMeasure where
   lineCount (LineMeasure l _ _) = l
   lineMeasure = id
 
@@ -171,12 +168,10 @@ instance HasLineMeasure (LineMeasure v) v where
 -- Ropes
 --------------------------------------------------------------------------------
 
-newtype Rope a = Rope (FingerTree (Line a))
+newtype Rope = Rope (FingerTree Line)
   deriving Show
 
-type role Rope nominal
-
-instance (RelativeMonoid (Measure a), Measured a, FromText a) => Semigroup (Rope a) where
+instance Semigroup Rope where
   Rope l <> Rope r = Rope $ case l of
     ll :> Line m _
       | Text.lengthWord16 m > 0 -> case Text.last m of
@@ -190,22 +185,22 @@ instance (RelativeMonoid (Measure a), Measured a, FromText a) => Semigroup (Rope
      | otherwise -> ll <> r
     _ -> r
 
-instance (RelativeMonoid (Measure a), Measured a, FromText a) => Monoid (Rope a) where
+instance Monoid Rope where
   mempty = Rope mempty
   mappend = (<>)
 
-instance (RelativeMonoid (Measure a), Measured a) => Measured (Rope a) where
-  type Measure (Rope a) = LineMeasure (Measure a)
+instance Measured Rope where
+  type Measure Rope = LineMeasure
   measure (Rope r) = measure r
 
-instance (RelativeMonoid (Measure a), Measured a, FromText a) => FromText (Rope a) where
+instance FromText Rope where
   fromText = foldLines step (Rope mempty) where
     step (Rope xs) x = Rope (xs |> fromText x)
 
-instance (RelativeMonoid (Measure a), Measured a, FromText a) => IsString (Rope a) where
+instance IsString Rope where
  fromString = fromText . pack
 
-splitAtPosition :: (RelativeMonoid (Measure a), Measured a, FromText a) => Position -> Rope a -> (Rope a, Rope a)
+splitAtPosition :: Position -> Rope -> (Rope, Rope)
 splitAtPosition (Position lno cno) (Rope xs) = case search (\x _ -> lineCount x >= lno) xs of
   F.Position l lm@(Line m _) r
     | cno < Text.lengthWord16 m ->
@@ -215,7 +210,7 @@ splitAtPosition (Position lno cno) (Rope xs) = case search (\x _ -> lineCount x 
   F.OnRight -> (mempty, Rope xs)
   F.Nowhere -> error "splitAtPosition: nowhere"
 
-splitAtDelta :: (RelativeMonoid (Measure a), Measured a, FromText a) => Delta -> Rope a -> (Rope a, Rope a)
+splitAtDelta :: Delta -> Rope -> (Rope, Rope)
 splitAtDelta d (Rope xs) = case search (\x _ -> delta x >= d) xs of
   F.Position l (Line m _) r
       | !cno <- units d - units (measure l) ->
@@ -224,28 +219,28 @@ splitAtDelta d (Rope xs) = case search (\x _ -> delta x >= d) xs of
   F.OnRight -> (mempty, Rope xs)
   F.Nowhere -> error "splitAtDelta: nowhere"
 
-insertAt :: (RelativeMonoid (Measure a), Measured a, FromText a) => Position -> Text -> Rope a -> Rope a
+insertAt :: Position -> Text -> Rope -> Rope
 insertAt p t rope = case splitAtPosition p rope of
   (l, r) -> l <> fromText t <> r
 
-deleteRange :: (RelativeMonoid (Measure a), Measured a, FromText a) => Range -> Rope a -> Rope a
+deleteRange :: Range -> Rope -> Rope
 deleteRange (Range lo hi) doc = case splitAtPosition hi doc of
   (m, r) -> fst (splitAtPosition lo m) <> r
 
-replaceRange :: (RelativeMonoid (Measure a), Measured a, FromText a) => Range -> Text -> Rope a -> Rope a
+replaceRange :: Range -> Text -> Rope -> Rope
 replaceRange (Range lo hi) t doc = case splitAtPosition hi doc of
   (m, r) -> fst (splitAtPosition lo m) <> fromText t <> r
 
 -- | Compute an Language Server Protocol 'Position' from a 'Delta' given the associated text
 --
 -- Takes /O(log l)/ where l is the number of lines
-deltaToPosition :: (RelativeMonoid (Measure a), Measured a) => Rope a -> Delta -> Position
+deltaToPosition :: Rope -> Delta -> Position
 deltaToPosition (Rope t) (Delta d) = case split (\x -> units x >= d) t of
   (l, _) | ml <- measure l -> Position (lineCount ml) (d - units ml)
 
 -- | Convert from a Language Server Protocol 'Position' to a 'Delta' given the associated text.
 --
 -- /O(log l)/ where l is the number of lines
-positionToDelta :: (RelativeMonoid (Measure a), Measured a) => Rope a -> Position -> Delta
+positionToDelta :: Rope -> Position -> Delta
 positionToDelta (Rope t) (Position nl c16) = case split (\x -> lineCount x >= nl) t of
   (l, _) -> Delta $ units (measure l) + c16

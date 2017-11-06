@@ -14,14 +14,13 @@
 -- A simple input adapter that allows @alex@ to work with 'Text'
 ---------------------------------------------------------------------------------
 
-module Coda.Util.Alex
+module Alex
   ( AlexInput(..)
   , AlexInputState(..)
   , alexGetByte
   ) where
 
 import Coda.Relative.Delta
-import Coda.Syntax.Rope
 import Data.Bits
 import Data.Data
 import Data.Hashable
@@ -31,6 +30,8 @@ import Data.Text
 import Data.Text.Unsafe as Text
 import Data.Word (Word8)
 import GHC.Generics
+
+import FromText
 
 -- $setup
 -- >>> :set -XOverloadedStrings -XOverloadedLists

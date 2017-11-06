@@ -1,0 +1,9 @@
+signature Lexer
+  ( lex
+  ) where
+
+import Data.Text
+import Dyck
+import Prelude hiding (lex)
+
+lex :: Text -> Dyck
