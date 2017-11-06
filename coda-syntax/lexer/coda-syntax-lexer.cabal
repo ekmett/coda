@@ -26,11 +26,7 @@ library
   ghc-options: -Wall
   build-tools: alex
 
-  mixins: coda-syntax-dyck-mixin (Dyck as Coda.Syntax.Dyck) requires (Token as Coda.Syntax.Token)
-
-  reexported-modules:
-    Coda.Syntax.Dyck,
-    Coda.Syntax.Token
+  mixins: coda-syntax-dyck (Dyck as Coda.Syntax.Dyck) requires (Token as Coda.Syntax.Token)
 
   exposed-modules:
     Coda.Syntax.Lexer
@@ -40,7 +36,7 @@ library
     base,
     coda-algebra,
     coda-syntax-common,
-    coda-syntax-dyck-mixin,
+    coda-syntax-dyck,
     coda-syntax-token,
     data-default,
     lens,

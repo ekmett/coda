@@ -26,9 +26,11 @@ library
 
   mixins:
     coda-syntax-summary-unit (Summary as Coda.Syntax.Summary) requires (Dyck as Coda.Syntax.Dyck),
-    coda-syntax-rope-mixin (Rope as Coda.Syntax.Rope, Document as Coda.Syntax.Document)
+    coda-syntax-dyck (Dyck as Coda.Syntax.Dyck) requires (Token as Coda.Syntax.Token),
+    coda-syntax-rope (Rope as Coda.Syntax.Rope, Document as Coda.Syntax.Document)
       requires (Lexer as Coda.Syntax.Lexer, Summary as Coda.Syntax.Summary, Dyck as Coda.Syntax.Dyck)
 
+  -- smash the API flat for public consumption
   reexported-modules:
     Coda.Syntax.Alex,
     Coda.Syntax.Change,
@@ -44,7 +46,9 @@ library
 
   build-depends:
     base,
+    coda-syntax-token,
+    coda-syntax-dyck,
     coda-syntax-common,
     coda-syntax-lexer,
-    coda-syntax-rope-mixin,
+    coda-syntax-rope,
     coda-syntax-summary-unit
