@@ -29,55 +29,6 @@ flag test-once
   default: True
   manual: True
 
-library coda-algebra-common
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: common
-
-  exposed-modules:
-    Coda.Algebra.Ordered
-    Coda.Algebra.Zero
-    Coda.FingerTree
-    Coda.Internal.Map.Bits
-    Coda.Internal.Map.BitQueue
-    Coda.Relative.Delta.Type
-
-  build-depends:
-    base                 >= 4.10     && < 5,
-    data-default         >= 0.7.1.1  && < 0.8,
-    ghc-prim,
-    hashable             >= 1.2.6    && < 1.3,
-    lens                 >= 4.15     && < 5,
-    text                 >= 1.2      && < 1.3
-
-library coda-algebra-group
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: group
-  exposed-modules:
-    Absolute
-    Cat
-    List
-    Located
-    Map
-    Relative
-    Queue
-
-  signatures: Delta
-
-  build-depends:
-    base                 >= 4.10     && < 5,
-    bifunctors           >= 5        && < 6,
-    coda-algebra-common,
-    comonad              >= 5        && < 6,
-    data-default         >= 0.7.1.1  && < 0.8,
-    ghc-prim,
-    hashable             >= 1.2.6    && < 1.3,
-    lens                 >= 4.15     && < 5,
-    mtl                  >= 2.2.1    && < 2.3,
-    profunctors          >= 5.2      && < 5.3,
-    text                 >= 1.2      && < 1.3
-
 library
   default-language: Haskell2010
   hs-source-dirs: src

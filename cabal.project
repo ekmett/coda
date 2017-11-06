@@ -1,7 +1,5 @@
 packages:
   algebra/coda-algebra.cabal
-  algebra/common/coda-algebra-common.cabal
-  algebra/group/coda-algebra-group.cabal
   coda.cabal
   lsp/coda-lsp.cabal
   syntax/coda-syntax.cabal
