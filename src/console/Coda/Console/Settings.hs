@@ -18,7 +18,7 @@ import Data.List
 import Data.Set as Set
 import Data.Set.Lens
 import Data.Monoid
-import Coda.Syntax.Keywords
+import Coda.Syntax.Token
 import Coda.Console.Command
 import Coda.Console.State
 import System.Console.Haskeline

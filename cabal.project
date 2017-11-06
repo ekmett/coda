@@ -2,6 +2,7 @@ packages:
   coda-algebra/coda-algebra.cabal
   coda-lsp/coda-lsp.cabal
   coda-syntax/coda-syntax.cabal
+  coda-syntax/*/*.cabal
   coda.cabal
 
 package coda-lsp

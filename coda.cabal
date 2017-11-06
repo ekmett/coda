@@ -46,6 +46,7 @@ library console
     base,
     coda-lsp             == 0.0.1,
     coda-syntax          == 0.0.1,
+    coda-syntax-token    == 0.0.1,
     version,
     containers,
     data-default,

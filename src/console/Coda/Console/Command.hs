@@ -28,7 +28,6 @@ module Coda.Console.Command
 import Coda.Util.Pretty
 import Coda.Version
 import Coda.Syntax.Dyck
-import Coda.Syntax.Lexer
 import Control.Lens as Lens
 import Control.Monad.IO.Class
 import Data.Char

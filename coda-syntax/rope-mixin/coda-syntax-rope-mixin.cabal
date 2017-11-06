@@ -1,0 +1,41 @@
+name:          coda-syntax-rope-mixin
+category:      Language
+version:       0.0.1
+license:       BSD2
+cabal-version: >= 2
+license-file:  LICENSE.md
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/ekmett/coda/
+bug-reports:   http://github.com/ekmett/coda/issues
+copyright:     Copyright (C) 2017 Edward A. Kmett
+build-type:    Simple
+synopsis:      Syntax for the coda compiler
+description:   Syntax for the coda compiler
+
+extra-source-files: .hlint.yaml
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/coda.git
+
+-- build a rope and document store for a given lexer and summary type
+library
+  default-language: Haskell2010
+  ghc-options: -Wall
+  signatures: Dyck Lexer Summary
+  exposed-modules: Document Rope
+  build-depends:
+    base,
+    coda-algebra,
+    coda-lsp,
+    coda-syntax-common,
+    comonad,
+    data-default,
+    hashable,
+    lens,
+    mtl,
+    profunctors,
+    text,
+    unordered-containers
