@@ -2,7 +2,7 @@
   "name": "coda",
   "version": "0.1.0",
   "description": "Coda language",
-  "icon": "images/logo.png",
+  "icon": "data/images/logo.png",
   "categories": [
     "Languages"
   ],
@@ -59,7 +59,7 @@
         "aliases": [
           "Coda"
         ],
-        "configuration": "./language.json"
+        "configuration": "data/coda.json"
       }
     ]
   }
