@@ -1,12 +1,12 @@
-module Summary
+module Coda.Syntax.Summary
   ( Summary
   , summarize
   , mergeSummary
   ) where
 
 import Coda.Relative.Delta.Type
+import Coda.Syntax.Dyck
 import Data.Text
-import Dyck
 
 type Summary = ()
 

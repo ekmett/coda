@@ -17,7 +17,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Document
+module Coda.Syntax.Document
   ( Document(..)
   , Documents
   , HasDocuments(..)
@@ -41,7 +41,7 @@ import Data.List (sortBy)
 import Data.Text as Text hiding (foldr)
 import Language.Server.Protocol
 
-import Rope
+import Coda.Syntax.Rope
 
 data Document = Document
   { _languageId :: !Text

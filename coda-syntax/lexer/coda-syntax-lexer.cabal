@@ -26,8 +26,6 @@ library
   ghc-options: -Wall
   build-tools: alex
 
-  mixins: coda-syntax-dyck (Dyck as Coda.Syntax.Dyck) requires (Token as Coda.Syntax.Token)
-
   exposed-modules:
     Coda.Syntax.Lexer
 

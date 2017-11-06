@@ -24,8 +24,8 @@ source-repository head
 library
   default-language: Haskell2010
   ghc-options: -Wall
-  signatures: Token
-  exposed-modules: Dyck
+  signatures: Coda.Syntax.Token
+  exposed-modules: Coda.Syntax.Dyck
   build-depends:
     base,
     coda-algebra,

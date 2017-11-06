@@ -1,4 +1,4 @@
-signature Token
+signature Coda.Syntax.Token
   ( Token
   , Pair
   , LayoutMode

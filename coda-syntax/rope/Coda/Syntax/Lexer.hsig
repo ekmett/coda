@@ -1,9 +1,9 @@
-signature Lexer
+signature Coda.Syntax.Lexer
   ( lex
   ) where
 
 import Data.Text
-import Dyck
+import Coda.Syntax.Dyck
 import Prelude hiding (lex)
 
 lex :: Text -> Dyck

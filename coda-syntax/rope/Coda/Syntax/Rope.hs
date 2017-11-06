@@ -22,7 +22,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Rope
+module Coda.Syntax.Rope
   ( Rope(..)
   , splitAtPosition
   , splitAtDelta
@@ -41,7 +41,10 @@ module Rope
   ) where
 
 import Coda.Relative.Delta
+import Coda.Syntax.Dyck
 import Coda.Syntax.FromText
+import Coda.Syntax.Lexer
+import Coda.Syntax.Summary
 import Control.Lens
 import Data.Data
 import Data.Default
@@ -59,9 +62,6 @@ import GHC.Generics
 import Language.Server.Protocol hiding (error)
 import Prelude hiding (lex)
 
-import Dyck
-import Lexer
-import Summary
 
 data Line = Line { runLine :: {-# unpack #-} !Text, content :: {-# unpack #-} !Dyck }
   deriving (Eq, Ord, Show, Read)

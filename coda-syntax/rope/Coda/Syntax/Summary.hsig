@@ -1,15 +1,15 @@
-signature Summary
+signature Coda.Syntax.Summary
   ( Summary
   , summarize
   , mergeSummary
   ) where
 
 import Coda.Relative.Delta
+import Coda.Syntax.Dyck
 import Data.Data
 import Data.Default
 import Data.Hashable
 import Data.Text
-import Dyck
 
 data Summary
 instance Data Summary

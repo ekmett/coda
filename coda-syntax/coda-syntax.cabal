@@ -24,13 +24,6 @@ library
   default-language: Haskell2010
   ghc-options: -Wall
 
-  mixins:
-    coda-syntax-summary-unit (Summary as Coda.Syntax.Summary) requires (Dyck as Coda.Syntax.Dyck),
-    coda-syntax-dyck (Dyck as Coda.Syntax.Dyck) requires (Token as Coda.Syntax.Token),
-    coda-syntax-rope (Rope as Coda.Syntax.Rope, Document as Coda.Syntax.Document)
-      requires (Lexer as Coda.Syntax.Lexer, Summary as Coda.Syntax.Summary, Dyck as Coda.Syntax.Dyck)
-
-  -- smash the API flat for public consumption
   reexported-modules:
     Coda.Syntax.Alex,
     Coda.Syntax.Change,

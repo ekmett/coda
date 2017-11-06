@@ -17,7 +17,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Dyck
+module Coda.Syntax.Dyck
   (
   -- Dyck language monoid
     Dyck(..)
@@ -36,6 +36,7 @@ import Coda.Relative.Cat as Cat
 import Coda.Relative.Class
 import Coda.Relative.Located
 import Coda.Rev
+import Coda.Syntax.Token
 import Control.Comonad
 import Control.Exception
 import Control.Lens
@@ -44,7 +45,6 @@ import Data.Semigroup
 import GHC.Generics
 import Prelude hiding (lex)
 
-import Token
 
 --------------------------------------------------------------------------------
 -- Dyck Language
