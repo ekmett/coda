@@ -14,11 +14,8 @@ build-type:    Custom
 synopsis:      Language Server Protocol
 description:   This package provides an implementation of Microsoft's Language Server Protocol
 
-data-files:
-  data/*.golden
-
-extra-source-files:
-  .hlint.yaml
+data-files: data/*.golden
+extra-source-files: .hlint.yaml
 
 source-repository head
   type: git
