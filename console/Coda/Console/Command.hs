@@ -25,7 +25,7 @@ module Coda.Console.Command
   , executeCommand
   ) where
 
-import Coda.Util.Pretty
+import Coda.Console.Pretty
 import Coda.Version
 import Coda.Syntax.Dyck
 import Coda.Syntax.Lexer

@@ -11,7 +11,7 @@
 -- General-purpose utilities for pretty printing.
 --------------------------------------------------------------------
 
-module Coda.Util.Pretty
+module Coda.Console.Pretty
   ( names
   , parensIf
   , hyph

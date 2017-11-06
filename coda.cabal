@@ -38,8 +38,8 @@ library console
     Coda.Console.Command
     Coda.Console.Completion
     Coda.Console.Options
+    Coda.Console.Pretty
     Coda.Console.Unicode
-    Coda.Util.Pretty
 
   build-depends:
     ansi-wl-pprint       >= 0.6      && < 0.7,
