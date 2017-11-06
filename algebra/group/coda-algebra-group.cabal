@@ -1,0 +1,49 @@
+name:          coda-algebra-group
+category:      Language
+version:       0.0.1
+license:       BSD2
+cabal-version: >= 2
+license-file:  LICENSE.md
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/ekmett/coda/
+bug-reports:   http://github.com/ekmett/coda/issues
+copyright:     Copyright (C) 2017 Edward A. Kmett
+build-type:    Simple
+synopsis:      Relative containers
+description:   Relative containers used by the coda compiler.
+
+extra-source-files: .hlint.yaml
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/coda.git
+
+-- backpack indefinite module for 'relative' groups
+library
+  default-language: Haskell2010
+  ghc-options: -Wall
+  exposed-modules:
+    Absolute
+    Cat
+    List
+    Located
+    Map
+    Relative
+    Queue
+
+  signatures: Delta
+
+  build-depends:
+    base                 >= 4.10     && < 5,
+    bifunctors           >= 5        && < 6,
+    coda-algebra-common,
+    comonad              >= 5        && < 6,
+    data-default         >= 0.7.1.1  && < 0.8,
+    ghc-prim,
+    hashable             >= 1.2.6    && < 1.3,
+    lens                 >= 4.15     && < 5,
+    mtl                  >= 2.2.1    && < 2.3,
+    profunctors          >= 5.2      && < 5.3,
+    text                 >= 1.2      && < 1.3
