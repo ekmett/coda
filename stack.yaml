@@ -1,6 +1,0 @@
-resolver: nightly-2017-11-04
-flags: {}
-packages:
- - '.'
- - lsp
-extra-deps: []
