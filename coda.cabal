@@ -192,6 +192,7 @@ library change
 executable coda
   default-language: Haskell2010
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: src/coda
   main-is: Main.hs
   build-depends: console, server, version
   build-depends: base, optparse-applicative
