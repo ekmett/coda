@@ -14,8 +14,24 @@ build-type:    Simple
 synopsis:      The coda compiler
 description:   This package provides Coda, a Visual Studio Code language experiment.
 
-data-files: test/data/*.golden
-extra-source-files: .hlint.yaml
+data-files:
+  test/data/*.golden
+
+extra-source-files:
+  .hlint.yaml
+  CHANGELOG.md
+  CODE_OF_CONDUCT.md
+  CONTRIBUTING.md
+  README.md
+  bin/coda.sh
+  bin/coda.bat
+  code/*.ts
+  data/coda.json
+  data/images/*.png
+  package.json
+  package-lock.json
+  tsconfig.json
+  tslint.json
 
 source-repository head
   type: git
@@ -35,6 +51,7 @@ library version
   hs-source-dirs: src/version
   exposed-modules: Coda.Version
   other-modules: Paths_coda
+  autogen-modules: Paths_coda
   build-depends: base >= 4.10 && < 5
 
 library algebra
@@ -208,6 +225,7 @@ test-suite tasty
     MessageTest
     MapTest
     Paths_coda
+  autogen-modules: Paths_coda
   if !flag(test-tasty)
     buildable: False
   else
