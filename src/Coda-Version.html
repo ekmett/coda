@@ -7,22 +7,16 @@
 <link type='text/css' rel='stylesheet' href='hscolour.css' />
 </head>
 <body>
-<pre><a name="line-1"></a><span class='hs-comment'>{-# language CPP #-}</span>
-<a name="line-2"></a>
-<a name="line-3"></a><span class='hs-cpp'>#ifndef MIN_VERSION_Cabal</span>
-<a name="line-4"></a><span class='hs-cpp'>#define MIN_VERSION_Cabal(x,y,z) 1</span>
-<a name="line-5"></a><span class='hs-cpp'>#endif</span>
-<a name="line-6"></a>
-<a name="line-7"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Version</span>
-<a name="line-8"></a>  <span class='hs-layout'>(</span> <span class='hs-varid'>version</span>
-<a name="line-9"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-10"></a>
-<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>List</span> <span class='hs-layout'>(</span><span class='hs-varid'>intercalate</span><span class='hs-layout'>)</span>
-<a name="line-12"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Version</span>
-<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Paths_coda</span>
-<a name="line-14"></a>
-<a name="line-15"></a><a name="version"></a><span class='hs-comment'>-- | Grab the version number from this project.</span>
-<a name="line-16"></a><span class='hs-definition'>version</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>String</span>
-<a name="line-17"></a><span class='hs-definition'>version</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>intercalate</span> <span class='hs-str'>"."</span> <span class='hs-varop'>$</span> <span class='hs-varid'>show</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>tail</span> <span class='hs-layout'>(</span><span class='hs-varid'>versionBranch</span> <span class='hs-conid'>Paths_coda</span><span class='hs-varop'>.</span><span class='hs-varid'>version</span><span class='hs-layout'>)</span>
+<pre><a name="line-1"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Coda</span><span class='hs-varop'>.</span><span class='hs-conid'>Version</span>
+<a name="line-2"></a>  <span class='hs-layout'>(</span> <span class='hs-varid'>version</span>
+<a name="line-3"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-4"></a>
+<a name="line-5"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>List</span> <span class='hs-layout'>(</span><span class='hs-varid'>intercalate</span><span class='hs-layout'>)</span>
+<a name="line-6"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Version</span>
+<a name="line-7"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Paths_coda</span>
+<a name="line-8"></a>
+<a name="line-9"></a><a name="version"></a><span class='hs-comment'>-- | Grab the version number from this project.</span>
+<a name="line-10"></a><span class='hs-definition'>version</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>String</span>
+<a name="line-11"></a><span class='hs-definition'>version</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>intercalate</span> <span class='hs-str'>"."</span> <span class='hs-varop'>$</span> <span class='hs-varid'>show</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>tail</span> <span class='hs-layout'>(</span><span class='hs-varid'>versionBranch</span> <span class='hs-conid'>Paths_coda</span><span class='hs-varop'>.</span><span class='hs-varid'>version</span><span class='hs-layout'>)</span>
 </pre></body>
 </html>
