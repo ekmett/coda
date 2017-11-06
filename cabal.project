@@ -1,6 +1,1 @@
-packages:
-  coda.cabal
-  lsp/coda-lsp.cabal
-
-package coda-lsp
-  optimization: 0
+packages: coda.cabal

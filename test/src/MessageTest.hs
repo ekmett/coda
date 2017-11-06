@@ -28,10 +28,10 @@ import Test.Tasty
 import Test.Tasty.Golden
 import Test.Tasty.HUnit
 import Test.Tasty.Providers as Tasty
-import Paths_coda_lsp (getDataDir)
+import Paths_coda (getDataDir)
 
 goldenFile :: TestName -> FilePath
-goldenFile name = "data" </> name <.> "golden"
+goldenFile name = "test" </> "data" </> name <.> "golden"
 
 newtype ParseTest = ParseTest (IO Tasty.Result)
 instance IsTest ParseTest where
