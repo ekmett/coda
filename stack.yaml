@@ -2,7 +2,7 @@ resolver: nightly-2017-11-04
 flags: {}
 packages:
  - '.'
- - coda-algebra
- - coda-lsp
- - coda-syntax
+ - algebra
+ - lsp
+ - syntax
 extra-deps: []

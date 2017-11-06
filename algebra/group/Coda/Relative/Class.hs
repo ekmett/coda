@@ -32,7 +32,7 @@
 -- @
 ---------------------------------------------------------------------------------
 
-module Relative
+module Coda.Relative.Class
   (
   -- * Data types with relative positions
     Relative(..)
@@ -49,6 +49,7 @@ module Relative
   , StrictRelativeOrder
   ) where
 
+import Coda.Relative.Delta.Type
 import Data.Bifunctor
 import Data.Coerce
 import Data.Functor.Identity
@@ -59,7 +60,6 @@ import Data.Proxy
 import Data.Void
 import GHC.Generics
 
-import Delta
 
 --------------------------------------------------------------------------------
 -- Relative

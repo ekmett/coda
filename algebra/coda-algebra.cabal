@@ -53,17 +53,19 @@ library coda-algebra-common
 library coda-algebra-group
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: group
-  exposed-modules:
-    Absolute
-    Cat
-    List
-    Located
-    Map
-    Relative
-    Queue
+  hs-source-dirs: group group/sigs
 
-  signatures: Delta
+  exposed-modules:
+    Coda.Relative.Absolute
+    Coda.Relative.Cat
+    Coda.Relative.List
+    Coda.Relative.Located
+    Coda.Relative.Map
+    Coda.Relative.Queue
+    Coda.Relative.Class
+
+  signatures:
+    Coda.Relative.Delta.Type
 
   build-depends:
     base                 >= 4.10     && < 5,
@@ -102,18 +104,6 @@ library
     Coda.Relative.Located,
     Coda.Relative.Map,
     Coda.Relative.Queue
-
-  -- derpy spacing required
-  mixins:
-    coda-algebra-group
-     (Absolute as Coda.Relative.Absolute,
-      Cat as Coda.Relative.Cat,
-      List as Coda.Relative.List,
-      Located as Coda.Relative.Located,
-      Map as Coda.Relative.Map,
-      Queue as Coda.Relative.Queue,
-      Relative as Coda.Relative.Class)
-    requires (Delta as Coda.Relative.Delta.Type)
 
   exposed-modules:
     Coda.Relative.Delta

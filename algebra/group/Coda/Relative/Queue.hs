@@ -15,13 +15,15 @@
 --
 ---------------------------------------------------------------------------------
 
-module Queue
+module Coda.Relative.Queue
   ( Queue((:<),Empty)
   , snocQ
   , size
   , null
   ) where
 
+import Coda.Relative.Class
+import Coda.Relative.Delta.Type
 import Control.Lens
 import Data.Default
 import Data.Function (on)
@@ -30,9 +32,6 @@ import Data.Semigroup
 import GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (null)
-
-import Delta
-import Relative
 
 -- @Q d f r s@ maintains @length s = length f - length r@
 data Queue a = Q {-# unpack #-} !Delta [a] [a] [a]

@@ -14,11 +14,13 @@
 ---
 ---------------------------------------------------------------------------------
 
-module Located
+module Coda.Relative.Located
   ( Located(..)
   ) where
 
 import Coda.Algebra.Ordered
+import Coda.Relative.Class
+import Coda.Relative.Delta.Type
 import Control.Applicative
 import Control.Comonad
 import Control.Monad (ap)
@@ -30,8 +32,6 @@ import Data.Hashable.Lifted
 import Data.Semigroup
 import GHC.Generics
 
-import Delta
-import Relative
 
 -- | Place a non-relative data type at a given position
 --

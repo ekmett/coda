@@ -16,7 +16,7 @@
 ---
 ---------------------------------------------------------------------------------
 
-module List
+module Coda.Relative.List
   ( List(..)
   , pattern Cons
   , reverse
@@ -31,8 +31,8 @@ import qualified Prelude
 import Prelude hiding (reverse)
 import Text.Read
 
-import Delta
-import Relative
+import Coda.Relative.Delta.Type
+import Coda.Relative.Class
 
 -- | A list with an /O(1)/ 'rel', 'cons' and 'uncons', but /O(n)/ ('<>')
 data List a = List !Delta [a]

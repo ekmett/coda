@@ -15,7 +15,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Cat
+module Coda.Relative.Cat
   ( Cat
   , snocCat
   , singleton
@@ -31,9 +31,9 @@ import GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (null)
 
-import Relative
-import Queue hiding (null)
-import qualified Queue as Q
+import Coda.Relative.Class
+import Coda.Relative.Queue hiding (null)
+import qualified Coda.Relative.Queue as Q
 
 -- invariant, all recursive cat's are non-empty
 data Cat a = E | C a (Queue (Cat a))

@@ -8,7 +8,7 @@
 --
 ---------------------------------------------------------------------------------
 
-signature Delta
+signature Coda.Relative.Delta.Type
   ( Delta
   ) where
 

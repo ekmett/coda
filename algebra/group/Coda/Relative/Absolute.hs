@@ -16,16 +16,15 @@
 --
 ---------------------------------------------------------------------------------
 
-module Absolute
+module Coda.Relative.Absolute
   ( Absolute(..)
   ) where
 
 import Control.Lens
+import Coda.Relative.Class
 import Data.Data
 import Data.Hashable
 import GHC.Generics
-
-import Relative
 
 -- | Make anything "Relative" trivially.
 --
