@@ -30,14 +30,8 @@ import Coda.FingerTree
 import Coda.Relative.Absolute
 import Coda.Relative.Class
 import Coda.Relative.Delta.Type
-import Data.Data
-import Data.Default
-import Data.Hashable
-import Data.Semigroup
 import Data.Text
 import Data.Text.Unsafe
-import GHC.Generics
-import Text.Read
 
 --------------------------------------------------------------------------------
 -- Something that has a delta

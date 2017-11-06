@@ -2,7 +2,7 @@ name:          coda-algebra
 category:      Language
 version:       0.0.1
 license:       BSD2
-cabal-version: >= 1.24
+cabal-version: >= 2
 license-file:  LICENSE.md
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -29,19 +29,33 @@ flag test-once
   default: True
   manual: True
 
-library
+library coda-algebra-common
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: common group src
+  hs-source-dirs: common
 
   exposed-modules:
     Coda.Algebra.Ordered
     Coda.Algebra.Zero
-
     Coda.FingerTree
-
-    Coda.Relative.Delta
+    Coda.Internal.Map.Bits
+    Coda.Internal.Map.BitQueue
     Coda.Relative.Delta.Type
+
+  build-depends:
+    base                 >= 4.10     && < 5,
+    data-default         >= 0.7.1.1  && < 0.8,
+    ghc-prim,
+    hashable             >= 1.2.6    && < 1.3,
+    lens                 >= 4.15     && < 5,
+    text                 >= 1.2      && < 1.3
+
+library coda-algebra-group
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: group group/sigs
+
+  exposed-modules:
     Coda.Relative.Absolute
     Coda.Relative.Cat
     Coda.Relative.List
@@ -50,15 +64,13 @@ library
     Coda.Relative.Queue
     Coda.Relative.Class
 
-    Coda.Rev
-
-  other-modules:
-    Coda.Internal.Map.Bits
-    Coda.Internal.Map.BitQueue
+  signatures:
+    Coda.Relative.Delta.Type
 
   build-depends:
     base                 >= 4.10     && < 5,
     bifunctors           >= 5        && < 6,
+    coda-algebra-common,
     comonad              >= 5        && < 6,
     data-default         >= 0.7.1.1  && < 0.8,
     ghc-prim,
@@ -67,6 +79,35 @@ library
     mtl                  >= 2.2.1    && < 2.3,
     profunctors          >= 5.2      && < 5.3,
     text                 >= 1.2      && < 1.3
+
+library
+  default-language: Haskell2010
+  hs-source-dirs: src
+  build-depends:
+    base,
+    coda-algebra-common,
+    coda-algebra-group,
+    data-default,
+    hashable,
+    lens,
+    text
+
+  reexported-modules:
+    Coda.Algebra.Ordered,
+    Coda.Algebra.Zero,
+    Coda.FingerTree,
+    Coda.Relative.Absolute,
+    Coda.Relative.Cat,
+    Coda.Relative.Class,
+    Coda.Relative.Delta.Type,
+    Coda.Relative.List,
+    Coda.Relative.Located,
+    Coda.Relative.Map,
+    Coda.Relative.Queue
+
+  exposed-modules:
+    Coda.Relative.Delta
+    Coda.Rev
 
 test-suite tasty
   type: exitcode-stdio-1.0
