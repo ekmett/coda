@@ -4,5 +4,8 @@ packages:
  - '.'
  - algebra
  - lsp
+ - server
  - syntax
+ - console
+ - version
 extra-deps: []

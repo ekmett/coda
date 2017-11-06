@@ -1,4 +1,4 @@
-name:          coda
+name:          coda-console
 category:      Language
 version:       0.0.1
 license:       BSD2
@@ -20,7 +20,7 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
-library coda-console
+library
   default-language: Haskell2010
   ghc-options: -Wall
   exposed-modules:
