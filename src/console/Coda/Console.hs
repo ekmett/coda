@@ -27,8 +27,10 @@ import Control.Exception.Lens
 import Control.Lens
 import Control.Monad.State
 import Data.Char
+import Data.Text (pack)
 import System.Console.Haskeline
 import System.Exit.Lens
+import Prelude hiding (lex)
 
 heading :: String
 heading = "Coda, version " ++ version ++ ": http://github.com/ekmett/coda/  :? for help"
@@ -49,5 +51,5 @@ loop = do
       loop
     Just ""      -> loop
     Just input   -> do
-      outputStrLn $ show $ spine (fromString input :: Dyck)
+      outputStrLn $ show $ spine (lex (pack input))
       loop

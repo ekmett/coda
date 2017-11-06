@@ -28,6 +28,7 @@ module Coda.Console.Command
 import Coda.Util.Pretty
 import Coda.Version
 import Coda.Syntax.Dyck
+import Coda.Syntax.Lexer
 import Control.Lens as Lens
 import Control.Monad.IO.Class
 import Data.Char
@@ -35,9 +36,11 @@ import Data.List as List
 import Data.List.Split (splitOn)
 import Data.Monoid
 import Data.String
+import Data.Text (pack)
 import System.Console.Haskeline
 import System.Exit
 import Text.PrettyPrint.ANSI.Leijen hiding ((<$>), (<>))
+import Prelude hiding (lex)
 
 ------------------------------------------------------------------------------
 -- Command
@@ -87,7 +90,7 @@ commands =
   [ cmd "help" & desc .~ "show help" & alts .~ ["?"] & body .~ showHelp
   , cmd "quit" & desc .~ "quit" & body.mapped .~ const (liftIO exitSuccess)
   , cmd "dyck" & desc .~ "debug dyck language tokenization" & body.mapped .~ \input ->
-       liftIO $ print (fromString input :: Dyck)
+       liftIO $ print (lex (pack input) :: Dyck)
   , cmd "version"
       & desc .~ "show the compiler version number"
       & body .~ \_ _ -> liftIO $ putStrLn version
