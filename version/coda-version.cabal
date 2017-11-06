@@ -1,4 +1,4 @@
-name:          coda
+name:          coda-version
 category:      Language
 version:       0.0.1
 license:       BSD2
@@ -11,23 +11,19 @@ homepage:      http://github.com/ekmett/coda/
 bug-reports:   http://github.com/ekmett/coda/issues
 copyright:     Copyright (C) 2017 Edward A. Kmett
 build-type:    Simple
-synopsis:      The coda compiler
-description:   This package provides Coda, a Visual Studio Code language experiment.
+synopsis:      The coda compiler version
+description:   This package provides version info about Coda
 
-extra-source-files: .hlint.yaml
+extra-source-files:
+  .hlint.yaml
 
 source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
-executable coda
+library
   default-language: Haskell2010
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  main-is: Main.hs
-  build-depends:
-    base,
-    coda-syntax,
-    coda-console,
-    coda-server,
-    coda-version,
-    optparse-applicative
+  ghc-options: -Wall
+  exposed-modules: Coda.Version
+  other-modules: Paths_coda_version
+  build-depends: base >= 4.10 && < 5

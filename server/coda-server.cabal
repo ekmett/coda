@@ -14,20 +14,29 @@ build-type:    Simple
 synopsis:      The coda compiler
 description:   This package provides Coda, a Visual Studio Code language experiment.
 
-extra-source-files: .hlint.yaml
+extra-source-files:
+  .hlint.yaml
 
 source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
-executable coda
+library
   default-language: Haskell2010
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  main-is: Main.hs
+  ghc-options: -Wall
+  exposed-modules:
+    Coda.Server
+    Coda.Server.Options
   build-depends:
+    aeson,
     base,
+    bytestring,
+    coda-algebra,
+    coda-lsp,
     coda-syntax,
-    coda-console,
-    coda-server,
-    coda-version,
-    optparse-applicative
+    data-default,
+    lens,
+    mtl,
+    optparse-applicative >= 0.13     && < 0.15,
+    text,
+    unordered-containers
