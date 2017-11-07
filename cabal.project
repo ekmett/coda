@@ -1,1 +1,4 @@
-packages: coda.cabal
+packages:
+  coda.cabal
+  src/*/*.cabal
+  src/*/*/*.cabal

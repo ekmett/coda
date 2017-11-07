@@ -56,107 +56,6 @@ library version
   build-depends: base >= 4.10 && < 5
 
 --------------------------------------------------------------------------------
--- abstract algebra
---------------------------------------------------------------------------------
-
-library algebra-common
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/algebra/common
-  exposed-modules:
-    Coda.Algebra.Ordered
-    Coda.Algebra.Zero
-    Coda.FingerTree
-    Coda.Relative.Delta.Type
-    Coda.Util.Bits
-    Coda.Util.BitQueue
-  build-depends:
-    base                 >= 4.10     && < 5,
-    data-default         >= 0.7.1.1  && < 0.8,
-    ghc-prim,
-    hashable             >= 1.2.6    && < 1.3,
-    lens                 >= 4.15     && < 5,
-    text                 >= 1.2      && < 1.3
-
-library algebra-group
-  default-language: Haskell2010
-  hs-source-dirs: src/algebra/group
-  signatures: Delta
-  exposed-modules: Absolute Cat List Located Map Relative Queue
-  build-depends: algebra-common
-  build-depends:
-    base                 >= 4.10     && < 5,
-    bifunctors           >= 5        && < 6,
-    comonad              >= 5        && < 6,
-    data-default         >= 0.7.1.1  && < 0.8,
-    ghc-prim,
-    hashable             >= 1.2.6    && < 1.3,
-    lens                 >= 4.15     && < 5,
-    mtl                  >= 2.2.1    && < 2.3,
-    profunctors          >= 5.2      && < 5.3,
-    text                 >= 1.2      && < 1.3
-
-library algebra
-  default-language: Haskell2010
-  hs-source-dirs: src/algebra/library
-  mixins:
-    algebra-group
-     (Absolute as Coda.Relative.Absolute,
-      Cat as Coda.Relative.Cat,
-      List as Coda.Relative.List,
-      Located as Coda.Relative.Located,
-      Map as Coda.Relative.Map,
-      Queue as Coda.Relative.Queue,
-      Relative as Coda.Relative.Class)
-    requires (Delta as Coda.Relative.Delta.Type)
-  exposed-modules:
-    Coda.Relative.Delta
-    Coda.Rev
-  reexported-modules:
-    Coda.Algebra.Ordered,
-    Coda.Algebra.Zero,
-    Coda.FingerTree,
-    Coda.Relative.Absolute,
-    Coda.Relative.Cat,
-    Coda.Relative.Class,
-    Coda.Relative.Delta.Type,
-    Coda.Relative.List,
-    Coda.Relative.Located,
-    Coda.Relative.Map,
-    Coda.Relative.Queue
-  build-depends: algebra-common, algebra-group
-  build-depends: base, data-default, hashable, lens, text
-
---------------------------------------------------------------------------------
--- language server protocol
---------------------------------------------------------------------------------
-
-library lsp
-  default-language: Haskell2010
-  hs-source-dirs: src/lsp
-
-  exposed-modules:
-    Language.Server.Builder
-    Language.Server.Parser
-    Language.Server.Protocol
-
-  other-modules:
-    Language.Server.TH
-
-  build-depends:
-    aeson                >= 1.1      && < 1.3,
-    base                 >= 4.10     && < 5,
-    bytestring           >= 0.10.8   && < 0.11,
-    data-default         >= 0.7.1.1  && < 0.8,
-    hashable             >= 1.2.6    && < 1.3,
-    lens                 >= 4.15     && < 5,
-    lens-aeson           >= 1.0.2    && < 1.1,
-    template-haskell     >= 2.12     && < 2.13,
-    text                 >= 1.2      && < 1.3,
-    unordered-containers >= 0.2      && < 0.3,
-    uri-encode           >= 1.5.0.5  && < 1.6
-
---------------------------------------------------------------------------------
 -- REPL
 --------------------------------------------------------------------------------
 
@@ -171,7 +70,7 @@ library console
     Coda.Console.Options
     Coda.Console.Pretty
     Coda.Console.Unicode
-  build-depends: lsp, syntax, version
+  build-depends: coda-lsp, syntax, version
   build-depends:
     ansi-wl-pprint       >= 0.6      && < 0.7,
     base,
@@ -198,7 +97,7 @@ library server
     Coda.Server
     Coda.Server.Options
 
-  build-depends: algebra, lsp, syntax
+  build-depends: coda-algebra, coda-lsp, syntax
   build-depends:
     aeson,
     base,
@@ -223,7 +122,7 @@ library syntax-common
     Coda.Syntax.FromText
     Coda.Syntax.Name
     Coda.Syntax.Prefix
-  build-depends: algebra
+  build-depends: coda-algebra
   build-depends: base, data-default, hashable, lens, profunctors, text
 
 -- dyck language mixin
@@ -233,7 +132,7 @@ library dyck
   hs-source-dirs: src/syntax/dyck
   signatures: Token
   exposed-modules: Dyck
-  build-depends: algebra
+  build-depends: coda-algebra
   build-depends: base, comonad, data-default, hashable, lens, text
 
 -- rope and document store mixin
@@ -243,7 +142,7 @@ library rope
   hs-source-dirs: src/syntax/rope
   signatures: Dyck Lexer Summary
   exposed-modules: Document Rope
-  build-depends: algebra, lsp, syntax-common
+  build-depends: coda-algebra, coda-lsp, syntax-common
   build-depends: base, comonad, data-default, hashable, lens, mtl, profunctors, text, unordered-containers
 
 -- actual token type, re-exported from coda-lexer
@@ -252,7 +151,7 @@ library coda-token
   ghc-options: -Wall
   hs-source-dirs: src/syntax/token
   exposed-modules: Coda.Syntax.Token
-  build-depends: algebra, syntax-common
+  build-depends: coda-algebra, syntax-common
   build-depends: base, containers, data-default, lens, text
 
 -- actual lexer
@@ -268,7 +167,7 @@ library coda-lexer
   reexported-modules:
     Coda.Syntax.Token,
     Coda.Syntax.Dyck
-  build-depends: algebra, syntax-common, dyck, coda-token
+  build-depends: coda-algebra, syntax-common, dyck, coda-token
   build-depends: array, base, data-default, lens, text
 
 -- trivial summary mixin
@@ -278,7 +177,7 @@ library summary-unit
   hs-source-dirs: src/syntax/summary-unit
   signatures: Dyck
   exposed-modules: Summary
-  build-depends: algebra-common
+  build-depends: coda-algebra-common
   build-depends: base, text
   
 library syntax
@@ -315,7 +214,7 @@ library change
   exposed-modules: Coda.Syntax.Change
 
   build-tools: alex
-  build-depends: algebra, lsp
+  build-depends: coda-algebra, coda-lsp
   build-depends: base, data-default, lens, text
 
 --------------------------------------------------------------------------------
@@ -350,7 +249,7 @@ test-suite tasty
     buildable: False
   else
     build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
-    build-depends: algebra, lsp, syntax
+    build-depends: coda-algebra, coda-lsp, syntax
     build-depends:
       aeson,
       base,
