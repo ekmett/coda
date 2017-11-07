@@ -21,7 +21,7 @@ The application is designed as a plugin for Visual Studio Code.
 Installation
 ============
 
-To install the `coda` executable, you'll need to run `cabal new-build`, then fish through `dist-newstyle` for the executable and put it somewhere in your path.
+To install the `coda` executable, you will need GHC 8.2.2 release candidate 1 or later, and you'll need to run `cabal new-build`, then fish through `dist-newstyle` for the executable and put it somewhere in your path.
 
 Once `cabal new-install` works, this will become a lot easier.
 
