@@ -32,6 +32,7 @@ extra-source-files:
   package-lock.json
   tsconfig.json
   tslint.json
+  test/code/*.ts
 
 source-repository head
   type: git
