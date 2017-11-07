@@ -213,17 +213,45 @@ library server
 -- syntax
 --------------------------------------------------------------------------------
 
+library syntax-common
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/syntax/common
+  exposed-modules:
+    Coda.Syntax.Alex
+    Coda.Syntax.FromText
+    Coda.Syntax.Name
+    Coda.Syntax.Prefix
+  build-depends: algebra
+  build-depends: base, data-default, hashable, lens, profunctors, text
+
+library syntax-dyck
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/syntax/dyck
+  signatures: Token
+  exposed-modules: Dyck
+  build-depends: algebra
+  build-depends: base, comonad, data-default, hashable, lens, text
+
+library syntax-rope
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/syntax/rope
+  signatures: Dyck Lexer Summary
+  exposed-modules: Document Rope
+  build-depends: algebra, lsp, syntax-common
+  build-depends: base, comonad, data-default, hashable, lens, mtl, profunctors, text, unordered-containers
+
 library syntax
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: src/syntax/mixin
+  build-depends: syntax-common
+
   exposed-modules:
-    Coda.Syntax.Alex,
     Coda.Syntax.Dyck,
     Coda.Syntax.Document,
-    Coda.Syntax.FromText,
-    Coda.Syntax.Name,
-    Coda.Syntax.Prefix,
     Coda.Syntax.Rope
 
   hs-source-dirs: src/syntax/actual
@@ -232,8 +260,14 @@ library syntax
     Coda.Syntax.Summary,
     Coda.Syntax.Token
 
+  reexported-modules:
+    Coda.Syntax.Alex,
+    Coda.Syntax.FromText,
+    Coda.Syntax.Name,
+    Coda.Syntax.Prefix
+
   build-tools: alex
-  build-depends: algebra, lsp
+  build-depends: algebra, lsp, syntax-common
   build-depends:
     array,
     base,

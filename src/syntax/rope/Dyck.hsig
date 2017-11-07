@@ -1,0 +1,9 @@
+signature Dyck
+  ( Dyck
+  ) where
+
+data Dyck
+instance Eq Dyck
+instance Ord Dyck
+instance Show Dyck
+instance Read Dyck
