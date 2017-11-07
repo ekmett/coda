@@ -99,15 +99,15 @@ library algebra
   default-language: Haskell2010
   hs-source-dirs: src/algebra/library
   mixins:
-    algebra-group 
+    algebra-group
      (Absolute as Coda.Relative.Absolute,
       Cat as Coda.Relative.Cat,
       List as Coda.Relative.List,
       Located as Coda.Relative.Located,
       Map as Coda.Relative.Map,
       Queue as Coda.Relative.Queue,
-      Relative as Coda.Relative.Class
-    ) requires (Delta as Coda.Relative.Delta.Type)
+      Relative as Coda.Relative.Class)
+    requires (Delta as Coda.Relative.Delta.Type)
   exposed-modules:
     Coda.Relative.Delta
     Coda.Rev
@@ -225,7 +225,8 @@ library syntax-common
   build-depends: algebra
   build-depends: base, data-default, hashable, lens, profunctors, text
 
-library syntax-dyck
+-- dyck language mixin
+library dyck
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: src/syntax/dyck
@@ -234,7 +235,8 @@ library syntax-dyck
   build-depends: algebra
   build-depends: base, comonad, data-default, hashable, lens, text
 
-library syntax-rope
+-- rope and document store mixin
+library rope
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: src/syntax/rope
@@ -243,43 +245,63 @@ library syntax-rope
   build-depends: algebra, lsp, syntax-common
   build-depends: base, comonad, data-default, hashable, lens, mtl, profunctors, text, unordered-containers
 
+-- actual token type, re-exported from coda-lexer
+library coda-token
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/syntax/token
+  exposed-modules: Coda.Syntax.Token
+  build-depends: algebra, syntax-common
+  build-depends: base, containers, data-default, lens, text
+
+-- actual lexer
+library coda-lexer
+  default-language: Haskell2010
+  ghc-options: -Wall
+  build-tools: alex
+  hs-source-dirs: src/syntax/lexer
+  exposed-modules: Coda.Syntax.Lexer
+  mixins:
+    dyck (Dyck as Coda.Syntax.Dyck)
+      requires (Token as Coda.Syntax.Token)
+  reexported-modules:
+    Coda.Syntax.Token,
+    Coda.Syntax.Dyck
+  build-depends: algebra, syntax-common, dyck, coda-token
+  build-depends: array, base, data-default, lens, text
+
+-- trivial summary mixin
+library summary-unit
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: src/syntax/summary-unit
+  signatures: Dyck
+  exposed-modules: Summary
+  build-depends: algebra-common
+  build-depends: base, text
+  
 library syntax
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: src/syntax/mixin
-  build-depends: syntax-common
+  build-depends: syntax-common, coda-lexer, rope, summary-unit
 
-  exposed-modules:
-    Coda.Syntax.Dyck,
-    Coda.Syntax.Document,
-    Coda.Syntax.Rope
-
-  hs-source-dirs: src/syntax/actual
-  exposed-modules:
-    Coda.Syntax.Lexer,
-    Coda.Syntax.Summary,
-    Coda.Syntax.Token
+  mixins:
+    summary-unit (Summary as Coda.Syntax.Summary)
+      requires (Dyck as Coda.Syntax.Dyck),
+    rope (Document as Coda.Syntax.Document, Rope as Coda.Syntax.Rope)
+      requires (Dyck as Coda.Syntax.Dyck, Lexer as Coda.Syntax.Lexer, Summary as Coda.Syntax.Summary)
 
   reexported-modules:
     Coda.Syntax.Alex,
+    Coda.Syntax.Document,
+    Coda.Syntax.Dyck,
+    Coda.Syntax.Lexer,
     Coda.Syntax.FromText,
     Coda.Syntax.Name,
-    Coda.Syntax.Prefix
-
-  build-tools: alex
-  build-depends: algebra, lsp, syntax-common
-  build-depends:
-    array,
-    base,
-    comonad,
-    containers,
-    data-default,
-    hashable,
-    lens,
-    mtl,
-    profunctors,
-    text,
-    unordered-containers
+    Coda.Syntax.Prefix,
+    Coda.Syntax.Rope,
+    Coda.Syntax.Summary,
+    Coda.Syntax.Token
 
 --------------------------------------------------------------------------------
 -- misc.

@@ -1,0 +1,4 @@
+signature Dyck
+  ( Dyck
+  ) where
+data Dyck
