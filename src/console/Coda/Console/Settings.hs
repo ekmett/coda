@@ -8,7 +8,7 @@
 --
 --------------------------------------------------------------------
 
-module Coda.Console.Completion
+module Coda.Console.Settings
   ( settings
   ) where
 
