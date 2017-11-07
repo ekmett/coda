@@ -103,8 +103,7 @@ library coda-server
 executable coda
   default-language: Haskell2010
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  hs-source-dirs: src/coda
-  main-is: Main.hs
+  main-is: main.hs
   build-depends: base, coda-common, coda-console, coda-server, optparse-applicative
 
 --------------------------------------------------------------------------------
