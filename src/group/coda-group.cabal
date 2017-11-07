@@ -1,4 +1,4 @@
-name:          coda-algebra-group
+name:          coda-group
 category:      Language
 version:       0.0.1
 license:       BSD2
@@ -24,7 +24,7 @@ library
   default-language: Haskell2010
   signatures: Delta
   exposed-modules: Absolute Cat List Located Map Relative Queue
-  build-depends: coda-algebra-common
+  build-depends: coda-common
   build-depends:
     base                 >= 4.10     && < 5,
     bifunctors           >= 5        && < 6,

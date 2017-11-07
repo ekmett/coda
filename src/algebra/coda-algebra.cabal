@@ -20,7 +20,7 @@ source-repository head
 library
   default-language: Haskell2010
   mixins:
-    coda-algebra-group
+    coda-group
      (Absolute as Coda.Relative.Absolute,
       Cat as Coda.Relative.Cat,
       List as Coda.Relative.List,
@@ -44,5 +44,5 @@ library
     Coda.Relative.Located,
     Coda.Relative.Map,
     Coda.Relative.Queue
-  build-depends: coda-algebra-common, coda-algebra-group
-  build-depends: base, data-default, hashable, lens, text
+  build-depends: coda-common, coda-group
+  build-depends: base, data-default, hashable, lens, profunctors, text

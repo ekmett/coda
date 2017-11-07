@@ -1,0 +1,24 @@
+name:          coda-change
+category:      Language
+version:       0.0.1
+license:       BSD2
+cabal-version: 2
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     experimental
+homepage:      http://github.com/ekmett/coda/
+bug-reports:   http://github.com/ekmett/coda/issues
+copyright:     Copyright (C) 2017 Edward A. Kmett
+build-type:    Simple
+synopsis:      An experiment in tracking changes between files.
+description:   See the main coda package for more details.
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/coda.git
+
+library change
+  default-language: Haskell2010
+  ghc-options: -Wall
+  exposed-modules: Coda.Syntax.Change
+  build-depends: base, coda-algebra, coda-common, coda-lsp, data-default, lens, text

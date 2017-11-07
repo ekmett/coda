@@ -43,19 +43,6 @@ flag test-tasty
   manual: True
 
 --------------------------------------------------------------------------------
--- version info
---------------------------------------------------------------------------------
-
-library version
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/version
-  exposed-modules: Coda.Version
-  other-modules: Paths_coda
-  autogen-modules: Paths_coda
-  build-depends: base >= 4.10 && < 5
-
---------------------------------------------------------------------------------
 -- REPL
 --------------------------------------------------------------------------------
 
@@ -70,7 +57,7 @@ library console
     Coda.Console.Options
     Coda.Console.Pretty
     Coda.Console.Unicode
-  build-depends: coda-lsp, syntax, version
+  build-depends: coda-common, coda-lsp, coda-syntax
   build-depends:
     ansi-wl-pprint       >= 0.6      && < 0.7,
     base,
@@ -97,7 +84,7 @@ library server
     Coda.Server
     Coda.Server.Options
 
-  build-depends: coda-algebra, coda-lsp, syntax
+  build-depends: coda-algebra, coda-lsp, coda-syntax
   build-depends:
     aeson,
     base,
@@ -110,114 +97,6 @@ library server
     unordered-containers
 
 --------------------------------------------------------------------------------
--- syntax
---------------------------------------------------------------------------------
-
-library syntax-common
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/syntax/common
-  exposed-modules:
-    Coda.Syntax.Alex
-    Coda.Syntax.FromText
-    Coda.Syntax.Name
-    Coda.Syntax.Prefix
-  build-depends: coda-algebra
-  build-depends: base, data-default, hashable, lens, profunctors, text
-
--- dyck language mixin
-library dyck
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/syntax/dyck
-  signatures: Token
-  exposed-modules: Dyck
-  build-depends: coda-algebra
-  build-depends: base, comonad, data-default, hashable, lens, text
-
--- rope and document store mixin
-library rope
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/syntax/rope
-  signatures: Dyck Lexer Summary
-  exposed-modules: Document Rope
-  build-depends: coda-algebra, coda-lsp, syntax-common
-  build-depends: base, comonad, data-default, hashable, lens, mtl, profunctors, text, unordered-containers
-
--- actual token type, re-exported from coda-lexer
-library coda-token
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/syntax/token
-  exposed-modules: Coda.Syntax.Token
-  build-depends: coda-algebra, syntax-common
-  build-depends: base, containers, data-default, lens, text
-
--- actual lexer
-library coda-lexer
-  default-language: Haskell2010
-  ghc-options: -Wall
-  build-tools: alex
-  hs-source-dirs: src/syntax/lexer
-  exposed-modules: Coda.Syntax.Lexer
-  mixins:
-    dyck (Dyck as Coda.Syntax.Dyck)
-      requires (Token as Coda.Syntax.Token)
-  reexported-modules:
-    Coda.Syntax.Token,
-    Coda.Syntax.Dyck
-  build-depends: coda-algebra, syntax-common, dyck, coda-token
-  build-depends: array, base, data-default, lens, text
-
--- trivial summary mixin
-library summary-unit
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/syntax/summary-unit
-  signatures: Dyck
-  exposed-modules: Summary
-  build-depends: coda-algebra-common
-  build-depends: base, text
-  
-library syntax
-  default-language: Haskell2010
-  ghc-options: -Wall
-  build-depends: syntax-common, coda-lexer, rope, summary-unit
-
-  mixins:
-    summary-unit (Summary as Coda.Syntax.Summary)
-      requires (Dyck as Coda.Syntax.Dyck),
-    rope (Document as Coda.Syntax.Document, Rope as Coda.Syntax.Rope)
-      requires (Dyck as Coda.Syntax.Dyck, Lexer as Coda.Syntax.Lexer, Summary as Coda.Syntax.Summary)
-
-  reexported-modules:
-    Coda.Syntax.Alex,
-    Coda.Syntax.Document,
-    Coda.Syntax.Dyck,
-    Coda.Syntax.Lexer,
-    Coda.Syntax.FromText,
-    Coda.Syntax.Name,
-    Coda.Syntax.Prefix,
-    Coda.Syntax.Rope,
-    Coda.Syntax.Summary,
-    Coda.Syntax.Token
-
---------------------------------------------------------------------------------
--- misc.
---------------------------------------------------------------------------------
-
-library change
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: src/change
-  exposed-modules: Coda.Syntax.Change
-
-  build-tools: alex
-  build-depends: coda-algebra, coda-lsp
-  build-depends: base, data-default, lens, text
-
---------------------------------------------------------------------------------
 -- executable
 --------------------------------------------------------------------------------
 
@@ -226,7 +105,7 @@ executable coda
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   hs-source-dirs: src/coda
   main-is: Main.hs
-  build-depends: console, server, version
+  build-depends: coda-common, console, server
   build-depends: base, optparse-applicative
 
 --------------------------------------------------------------------------------
@@ -249,7 +128,7 @@ test-suite tasty
     buildable: False
   else
     build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
-    build-depends: coda-algebra, coda-lsp, syntax
+    build-depends: coda-algebra, coda-lsp, coda-syntax
     build-depends:
       aeson,
       base,

@@ -20,11 +20,9 @@ module Coda.Syntax.Alex
   , alexGetByte
   ) where
 
-import Coda.Relative.Delta
 import Data.Bits
 import Data.Data
 import Data.Hashable
-import Data.Profunctor.Unsafe
 import Data.String
 import Data.Text
 import Data.Text.Unsafe as Text
@@ -57,9 +55,6 @@ data AlexInput = AlexInput
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
 instance Hashable AlexInput
-
-instance HasDelta AlexInput where
-  delta = Delta #. alexInputDelta
 
 instance IsString AlexInput where
   fromString = AlexInput S0 '\n' 0 . fromString

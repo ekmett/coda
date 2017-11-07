@@ -27,6 +27,8 @@ import Coda.FingerTree
 import Coda.Relative.Absolute
 import Coda.Relative.Class
 import Coda.Relative.Delta.Type
+import Coda.Syntax.Alex
+import Data.Profunctor.Unsafe
 import Data.Text
 import Data.Text.Unsafe
 
@@ -54,6 +56,9 @@ instance HasDelta a => HasDelta (Absolute a) where
 
 instance (Measured a, HasDelta (Measure a)) => HasDelta (FingerTree a) where
   delta = delta . measure
+
+instance HasDelta AlexInput where
+  delta = Delta #. alexInputDelta
 
 --------------------------------------------------------------------------------
 -- Monoidal deltas
