@@ -29,7 +29,8 @@ library
   ghc-options: -Wall
   build-depends: base, repr, template-haskell
   mixins: repr requires (Symantics as R)
-  mixins: repr requires (Symantics as L) 
-  mixins: repr requires (Symantics as Q) 
-  mixins: repr requires (Symantics as P) 
-  exposed-modules: P L R Q
+  mixins: repr requires (Symantics as L)
+  mixins: repr requires (Symantics as Q)
+  mixins: repr requires (Symantics as P)
+  mixins: repr requires (Symantics as RCN)
+  exposed-modules: P L R Q RCN
