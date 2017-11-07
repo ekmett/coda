@@ -221,9 +221,10 @@ import Data.Monoid ((<>))
 import Data.String
 import Data.Text as Text
 import GHC.Generics
-import Language.Server.TH
 import Network.URI.Encode as URI
 import Text.Read as Read hiding (Number, String)
+
+import Language.Server.TH
 
 -- | Match anything we know how to parse from JSON
 pattern JSON :: (FromJSON a, ToJSON a, AsJSON t) => () => a -> t

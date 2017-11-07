@@ -9,7 +9,7 @@
 -- Portability :  non-portable
 -----------------------------------------------------------------------------
 
-module Coda.Internal.Map.Bits
+module Coda.Util.Bits
   ( highestBitMask
   , shiftLL
   , shiftRL

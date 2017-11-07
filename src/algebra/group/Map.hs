@@ -19,7 +19,7 @@
 --
 --------------------------------------------------------------------------------
 
-module Coda.Relative.Map
+module Map
   ( Map
   , singleton
   , insert
@@ -30,9 +30,7 @@ module Coda.Relative.Map
   , irfoldr
   ) where
 
-import Coda.Internal.Map.BitQueue
-import Coda.Relative.Class
-import Coda.Relative.Delta.Type
+import Coda.Util.BitQueue
 import Control.Lens
 import Data.Default
 import Data.Hashable
@@ -40,6 +38,9 @@ import Data.Function (on)
 import Data.Monoid
 import GHC.Exts
 import Prelude hiding (lookup)
+
+import Relative
+import Delta
 
 type Size = Int
 

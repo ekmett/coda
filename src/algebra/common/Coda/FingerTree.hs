@@ -51,7 +51,6 @@ module Coda.FingerTree
   , unsafeTraverse
   ) where
 
-import Coda.Relative.Delta.Type
 import Control.Lens hiding (deep)
 import Data.Default
 import Data.Semigroup
@@ -60,6 +59,8 @@ import Data.Text.Unsafe
 import qualified Data.Foldable as Foldable
 import GHC.Exts
 import Prelude hiding (reverse)
+
+import Coda.Relative.Delta.Type
 
 -- | /O(log(min(n1,n2)))/. Concatenate two sequences.
 instance Measured a => Semigroup (FingerTree a) where

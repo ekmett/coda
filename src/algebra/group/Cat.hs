@@ -15,7 +15,7 @@
 --
 ---------------------------------------------------------------------------------
 
-module Coda.Relative.Cat
+module Cat
   ( Cat
   , snocCat
   , singleton
@@ -31,9 +31,9 @@ import GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (null)
 
-import Coda.Relative.Class
-import Coda.Relative.Queue hiding (null)
-import qualified Coda.Relative.Queue as Q
+import Relative
+import Queue (Queue, snocQ)
+import qualified Queue
 
 -- invariant, all recursive cat's are non-empty
 data Cat a = E | C a (Queue (Cat a))
@@ -72,7 +72,7 @@ link x q ys = C x (snocQ q ys)
 linkAll :: Relative a => Queue (Cat a) -> Cat a
 linkAll q = case uncons q of
   Just (cat@(C a t), q')
-    | Q.null q' -> cat
+    | Queue.null q' -> cat
     | otherwise -> link a t (linkAll q')
   Just (E, q') -> linkAll q' -- recursive case
   Nothing -> E
