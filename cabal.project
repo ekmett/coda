@@ -1,4 +1,3 @@
 packages:
   coda.cabal
   lib/*/*.cabal
-  ref/*/*.cabal
