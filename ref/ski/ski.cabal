@@ -35,3 +35,4 @@ library
   ghc-options: -Wall
   build-depends: base, direct, fun
   mixins: fun (Fun as Direct.Fun) requires (Term as Direct)
+  reexported-modules: Direct, Direct.Fun
