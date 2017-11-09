@@ -1,0 +1,7 @@
+signature Term where
+
+data Term
+app :: Term -> Term -> Term
+_S0 :: Term 
+_K0 :: Term
+_I0 :: Term
