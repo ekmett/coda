@@ -1,5 +1,11 @@
 {-# language TypeFamilies #-}
-module Fun where
+module Fun
+  ( module Term
+  , Fun(..)
+  , _S
+  , _K
+  , _I
+  ) where
 
 import Term
 
