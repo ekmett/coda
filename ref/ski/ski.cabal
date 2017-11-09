@@ -28,8 +28,6 @@ library direct
   default-language: Haskell2010
   ghc-options: -Wall
   build-depends: base
-  build-depends: term
-  mixins: term requires (Term as Direct)
   exposed-modules: Direct
 
 library
