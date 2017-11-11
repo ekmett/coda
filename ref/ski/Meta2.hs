@@ -1,4 +1,4 @@
-module Direct where
+module Meta2 where
 
 data Neutral = S0 | S1 !Term | S2 !Term !Term | K0 | K1 !Term | I0 deriving Show
 data Term = N Neutral | A Neutral !Term !Term
