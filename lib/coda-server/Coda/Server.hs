@@ -1,7 +1,6 @@
 {-# language LambdaCase #-}
 {-# language TemplateHaskell #-}
 {-# language OverloadedStrings #-}
-{-# language ScopedTypeVariables #-}
 {-# language MultiParamTypeClasses #-}
 {-# language FunctionalDependencies #-}
 {-# language FlexibleContexts #-}
