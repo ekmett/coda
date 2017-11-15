@@ -30,6 +30,7 @@ library
     Coda.Syntax.FromText
     Coda.Syntax.Name
     Coda.Syntax.Prefix
+    Coda.Syntax.Sharing
     Coda.Util.Bits
     Coda.Util.BitQueue
     Coda.Version
