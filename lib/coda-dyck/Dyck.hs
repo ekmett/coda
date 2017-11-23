@@ -1,9 +1,10 @@
 {-# language MultiParamTypeClasses #-}
+{-# language UndecidableInstances #-}
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 {-# language DeriveGeneric #-}
 {-# language TypeFamilies #-}
-{-# language UndecidableInstances #-}
+{-# language LambdaCase #-}
 
 ---------------------------------------------------------------------------------
 -- |
@@ -86,6 +87,11 @@ dyckLayoutMode f (Dyck l ms r s k e) = f k <&> \k' -> Dyck l ms r s k' e
 
 dyckMismatchErrors :: Lens' Dyck (Cat MismatchError)
 dyckMismatchErrors f (Dyck l ms r s k e) = Dyck l ms r s k <$> f e
+
+instance AsEmpty Dyck where
+  _Empty = prism (const def) $ \case
+    Dyck Empty Empty (Rev Empty) Empty _ Empty -> Right ()
+    x -> Left x
 
 instance Relative Opening where
   rel d (Opening p xs) = Opening (rel d p) (rel d xs)
