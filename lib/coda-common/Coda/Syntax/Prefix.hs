@@ -15,6 +15,7 @@
 module Coda.Syntax.Prefix
   ( Prefix(..)
   , joinAndCompare
+  , HasPrefix(..)
   ) where
 
 import Coda.Algebra.Zero
@@ -55,3 +56,9 @@ instance FromText Prefix where
 
 instance IsString Prefix where
   fromString = Prefix . pack . Prelude.takeWhile isSpace
+
+class HasPrefix t where
+  prefix :: t -> Prefix
+
+instance HasPrefix Prefix where
+  prefix = id

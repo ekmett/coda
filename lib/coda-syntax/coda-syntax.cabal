@@ -39,4 +39,3 @@ library
     Coda.Syntax.Rope,
     Coda.Syntax.Summary,
     Coda.Syntax.Token
-
