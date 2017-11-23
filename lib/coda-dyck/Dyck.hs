@@ -28,6 +28,8 @@ module Dyck
   , close
   , open
   , spine
+  , dyckLayoutMode
+  , dyckMismatchErrors
   ) where
 
 import Coda.Relative.Cat as Cat
@@ -78,6 +80,12 @@ data Dyck
     !LayoutMode
     !(Cat MismatchError) -- errors
   deriving (Generic, Show, Eq, Ord, Read)
+
+dyckLayoutMode :: Lens' Dyck LayoutMode
+dyckLayoutMode f (Dyck l ms r s k e) = f k <&> \k' -> Dyck l ms r s k' e
+
+dyckMismatchErrors :: Lens' Dyck (Cat MismatchError)
+dyckMismatchErrors f (Dyck l ms r s k e) = Dyck l ms r s k <$> f e
 
 instance Relative Opening where
   rel d (Opening p xs) = Opening (rel d p) (rel d xs)
