@@ -3,6 +3,7 @@
 {-# language FlexibleContexts #-}
 {-# language TypeApplications #-}
 {-# language DefaultSignatures #-}
+{-# language ScopedTypeVariables #-}
 
 ---------------------------------------------------------------------------------
 -- |
