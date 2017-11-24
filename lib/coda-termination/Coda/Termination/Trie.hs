@@ -9,7 +9,7 @@ module Coda.Termination.Trie
   ( Trie(..)
   , runTrie
   , finite
-  , ord
+  , finiteOrd
   , history
   ) where
 
