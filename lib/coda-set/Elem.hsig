@@ -1,0 +1,5 @@
+signature Elem where
+
+data Elem 
+instance Eq Elem
+instance Ord Elem
