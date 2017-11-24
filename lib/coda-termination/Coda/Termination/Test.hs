@@ -1,5 +1,6 @@
 {-# language ViewPatterns #-}
 {-# language GADTs #-}
+{-# language ParallelListComp #-}
 
 -- |
 --
@@ -10,6 +11,7 @@
 
 module Coda.Termination.Test where
 
+import Coda.Termination.History
 import Coda.Termination.Pair
 import Control.Arrow
 import Data.Functor.Contravariant
@@ -61,3 +63,11 @@ ord = Test id $ \x y -> ordBB $ compare x y
 -- @partial f@ requires f is a well-partial-order
 partial :: (a -> a -> Maybe Ordering) -> Test a
 partial f = Test id $ \x y -> pordBB $ f x y
+
+history :: Test a -> History a
+history (Test p f) = History step [] where
+  step xs x
+    | any bb1 ys = Nothing
+    | otherwise = Just $ z : [ x' | x' <- xs | False <- bb2 <$> ys ] where
+      z  = p x
+      ys = f z <$> xs

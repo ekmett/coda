@@ -10,7 +10,7 @@ module Coda.Termination.Trie
   , runTrie
   , finite
   , ord
-  , histrie
+  , history
   ) where
 
 import Coda.Termination.History
@@ -82,6 +82,6 @@ finite = Trie (const $ V []) $ \a d k (V xs) -> fini a xs $ step a d k xs where
 ord :: Ord a => Trie a
 ord = Trie (const mempty) $ \ a d k -> alterF (fmap Just . k . fromMaybe d) a
 
-histrie :: Trie a -> History a
-histrie (Trie p f) = History step (p False) where
+history :: Trie a -> History a
+history (Trie p f) = History step (p False) where
   step xs a = f a False seen xs
