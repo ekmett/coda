@@ -1,4 +1,4 @@
-signature Elem where
+signature Elem (Elem) where
 
 data Elem 
 instance Eq Elem

@@ -246,7 +246,7 @@ infixl 9 \\ --
 -- | A set of values @a@.
 
 -- See Note: Order of constructors
-data Set = Bin {-# UNPACK #-} !Size !Elem !Set !Set | Tip
+data Set = Bin {-# UNPACK #-} !Size {-# UNPACK #-} !Elem !Set !Set | Tip
 
 instance Default Set where
   def = Tip
