@@ -48,6 +48,7 @@ instance Semigroup (Test a) where
 
 instance Monoid (Test a) where
   mempty = conquer
+  mappend = (<>)
 
 -- side-condition: needs 'a' to be finitely enumerable
 finite :: Eq a => Test a
