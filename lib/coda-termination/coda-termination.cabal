@@ -22,9 +22,11 @@ library
   ghc-options: -Wall
   build-depends:
     base >= 4.10 && < 5,
-    contravariant >= 1.4 && < 2
+    contravariant >= 1.4 && < 2,
+    nats >= 1.1.1 && < 2
 
   exposed-modules:
+    Coda.Termination
     Coda.Termination.Class
     Coda.Termination.History
     Coda.Termination.Pair
