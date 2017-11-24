@@ -1,8 +1,6 @@
-{-# language ParallelListComp #-}
 {-# language DefaultSignatures #-}
-{-# language ViewPatterns #-}
-{-# language GADTs #-}
 {-# language FlexibleContexts #-}
+{-# language MonoLocalBinds #-}
 
 module Coda.Termination.Class
   ( Termination(..)
