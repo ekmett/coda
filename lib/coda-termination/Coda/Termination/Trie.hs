@@ -78,9 +78,9 @@ finite = Trie (const $ V []) $ \a d k (V xs) -> fini a xs $ step a d k xs where
       Nothing -> Left Nothing
       Just x' -> Right ((b,x'):xs)
 
--- side-condition: well-order -- log time
-ord :: Ord a => Trie a
-ord = Trie (const mempty) $ \ a d k -> alterF (fmap Just . k . fromMaybe d) a
+-- side-condition: needs 'a' to be finitely enumerable and have an 'Ord' instance -- log time
+finiteOrd :: Ord a => Trie a
+finiteOrd = Trie (const mempty) $ \ a d k -> alterF (fmap Just . k . fromMaybe d) a
 
 history :: Trie a -> History a
 history (Trie p f) = History step (p False) where
