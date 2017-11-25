@@ -3,8 +3,8 @@
 {-# language ViewPatterns #-}
 module Coda.Automata.NFA
   ( NFA(..)
-  , reverse
-  , complement
+  , reverse, reversed
+  , complement, complemented
   , union
   , intersection
   , concat
@@ -19,6 +19,7 @@ module Coda.Automata.NFA
 
 import Coda.Automata.Internal
 import qualified Coda.Set.Lazy as Set
+import Control.Lens hiding (reversed)
 import qualified Data.List as List
 import Prelude hiding (product, sum, reverse, concat)
 
@@ -30,6 +31,12 @@ reverse (NFA ss i f d) = NFA ss f i $ \ a t -> Set.filter (Set.member t . d a) s
 complement :: NFA a -> NFA a
 complement = dfa2nfa . go . nfa2dfa where
   go (DFA ss is fs d) = DFA ss is (Set.difference ss fs) d
+
+reversed :: Iso (NFA a) (NFA b) (NFA a) (NFA b)
+reversed = iso complement complement
+
+complemented :: Iso (NFA a) (NFA b) (NFA a) (NFA b)
+complemented = iso complement complement
 
 -- kleene star
 star :: NFA a -> NFA a
