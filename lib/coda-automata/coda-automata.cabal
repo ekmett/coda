@@ -26,5 +26,11 @@ library
     Coda.Automata.Internal
     Coda.Automata.NFA
     Coda.Automata.DFA
+    Coda.Set.Lazy
 
-  build-depends: base, coda-common, containers, contravariant, lens
+  build-depends:
+    base                 >= 4.10     && < 5, 
+    containers           >= 0.5.9.2  && < 0.6,
+    contravariant        >= 1.4      && < 2,
+    deepseq              >= 1.4.3    && < 1.5,
+    lens                 >= 4.15     && < 5
