@@ -9,6 +9,8 @@ module Coda.Automata.DFA
   , intersection
   , concat
   , star
+  , shrink
+  , size
   -- derivative parsing
   , prefix, prefixes
   , suffix, suffixes
@@ -38,6 +40,14 @@ union = liftN2 NFA.union
 
 intersection :: DFA a -> DFA a -> DFA a
 intersection = liftN2 NFA.intersection
+
+-- reduce the number of states using knowledge about all possible eventual inputs
+shrink :: (Foldable f, Eq a) => f a -> DFA a -> DFA a
+shrink as (DFA _ i fs d) = DFA ss' i (Set.intersection fs ss') d where
+  ss' = reachable (\a s -> Set.singleton (d a s)) as (Set.singleton i)
+
+size :: DFA a -> Int
+size (DFA ss _ _ _) = Set.size ss
 
 --------------------------------------------------------------------------------
 -- derivative parsing

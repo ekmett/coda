@@ -76,3 +76,12 @@ nondets f as z = foldr (nondet f) z as
 
 intersects :: Ord s => Set s -> Set s -> Bool
 intersects xs ys = not $ Set.null $ Set.intersection xs ys
+
+-- ambiguous glyphs
+reachable :: (Foldable f, Ord s) => (a -> s -> Set s) -> f a -> Set s -> Set s
+reachable d as = fixSet $ \ s -> foldMap (\t -> foldMap (`d` t) as) s `Set.union` s where
+  fixSet f a
+    | a == a'   = a
+    | otherwise = fixSet f a'
+    where a' = f a
+{-# inline reachable #-}

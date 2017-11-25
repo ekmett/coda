@@ -1,7 +1,7 @@
 {-# language GADTs #-}
 {-# language OverloadedLists #-}
 {-# language ViewPatterns #-}
-module Coda.Automata.NFA 
+module Coda.Automata.NFA
   ( NFA(..)
   , reverse
   , complement
@@ -9,6 +9,8 @@ module Coda.Automata.NFA
   , intersection
   , concat
   , star
+  , shrink
+  , size
   -- derivative parsing
   , prefix, prefixes
   , suffix, suffixes
@@ -42,22 +44,31 @@ concat (NFA ss is fs d)
        (NFA ss' (Set.mapMonotonic Right -> is') (Set.mapMonotonic Right -> fs') d')
   = NFA (Set.sum ss ss') (Set.mapMonotonic Left is) fs' $ \a s -> case s of
      Right s' -> Set.mapMonotonic Right (d' a s')
-     Left (d a -> r) | r' <- Set.mapMonotonic Left r -> 
-       if intersects r fs 
+     Left (d a -> r) | r' <- Set.mapMonotonic Left r ->
+       if intersects r fs
        then Set.union r' is'
        else r'
 
 -- nfa union
 union :: NFA a -> NFA a -> NFA a
-union (NFA ss is fs d) (NFA ss' is' fs' d') 
+union (NFA ss is fs d) (NFA ss' is' fs' d')
   = NFA (Set.sum ss ss') (Set.sum is is') (Set.sum fs fs') $ \a s -> case s of
     Left s' -> Set.mapMonotonic Left (d a s')
-    Right s' -> Set.mapMonotonic Right (d' a s') 
+    Right s' -> Set.mapMonotonic Right (d' a s')
 
 -- nfa intersection
 intersection :: NFA a -> NFA a -> NFA a
 intersection (NFA ss is fs d) (NFA ss' is' fs' d')
   = NFA (Set.product ss ss') (Set.product is is') (Set.product fs fs') $ \ a (s,s') -> Set.product (d a s) (d' a s')
+
+-- reduce the number of states using knowledge about all possible eventual inputs
+shrink :: (Foldable f, Eq a) => f a -> NFA a -> NFA a
+shrink as (NFA _ is fs d) = NFA ss' is (Set.intersection fs ss') d where
+  ss' = reachable d as is
+  -- TODO: filter d w/ as to avoid bogus states?
+
+size :: NFA a -> Int
+size (NFA ss _ _ _) = Set.size ss
 
 --------------------------------------------------------------------------------
 -- derivative parsing
@@ -83,3 +94,4 @@ suffixes (NFA ss is fs d) as = NFA ss is (nondets d' (List.reverse as) fs) d whe
 -- check to see if we accept the empty string
 accepts :: NFA a -> Bool
 accepts (NFA _ is fs _) = intersects is fs
+
