@@ -96,29 +96,29 @@ quantify = go 0 where
   go i (F:xs) b = forall i $ go (i+1) xs b
   go _ [] b = b
 
--- |
--- is there an largest natural?
+-- | is there an largest natural?
 --
 -- >>> check inf_exists
 -- False
 inf_exists :: NFA Vec
 inf_exists = quantify [E,F] $ cmp (>=) 0 1
 
--- |
--- is there an smallest natural?
+-- | is there an smallest natural?
 --
 -- >>> check zero_exists
 -- True
 zero_exists :: NFA Vec
 zero_exists = quantify [E,F] $ cmp (<=) 0 1
 
--- |
+-- | forall n. exists m. 2 * n == m
+--
 -- >>> check times2_exists
 -- True
 times2_exists :: NFA Vec
 times2_exists = quantify [F,E] $ add 0 0 1
 
--- |
+-- | forall n. exists m. 2 * m == n
+--
 -- >>> check div2_exists
 -- False
 div2_exists :: NFA Vec
