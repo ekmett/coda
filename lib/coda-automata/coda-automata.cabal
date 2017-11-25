@@ -22,8 +22,9 @@ library
   ghc-options: -Wall
 
   exposed-modules:
-    Coda.Automata.DFA
+    Coda.Automata.Presburger
     Coda.Automata.Internal
     Coda.Automata.NFA
+    Coda.Automata.DFA
 
-  build-depends: base, coda-common, contravariant, lens
+  build-depends: base, coda-common, containers, contravariant, lens

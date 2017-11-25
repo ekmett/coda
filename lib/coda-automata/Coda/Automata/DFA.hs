@@ -14,7 +14,7 @@ module Coda.Automata.DFA
   -- derivative parsing
   , prefix, prefixes
   , suffix, suffixes
-  , accepts
+  , check
   ) where
 
 import Coda.Automata.Internal
@@ -76,5 +76,5 @@ suffixes :: DFA a -> [a] -> DFA a
 suffixes m as = over nfa (`NFA.suffixes` as) m
 
 -- check to see if we accept the empty string
-accepts :: DFA a -> Bool
-accepts (DFA _ i fs _) = Set.member i fs
+check :: DFA a -> Bool
+check (DFA _ i fs _) = Set.member i fs

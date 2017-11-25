@@ -14,7 +14,7 @@ module Coda.Automata.NFA
   -- derivative parsing
   , prefix, prefixes
   , suffix, suffixes
-  , accepts
+  , check
   ) where
 
 import Coda.Automata.Internal
@@ -99,6 +99,5 @@ suffixes (NFA ss is fs d) as = NFA ss is (nondets d' (List.reverse as) fs) d whe
   d' a t = Set.filter (Set.member t . d a) ss
 
 -- check to see if we accept the empty string
-accepts :: NFA a -> Bool
-accepts (NFA _ is fs _) = intersects is fs
-
+check :: NFA a -> Bool
+check (NFA _ is fs _) = intersects is fs
