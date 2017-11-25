@@ -43,11 +43,11 @@ concat :: NFA a -> NFA a -> NFA a
 concat (NFA ss is fs d)
        (NFA ss' (Set.mapMonotonic Right -> is') (Set.mapMonotonic Right -> fs') d')
   = NFA (Set.sum ss ss') (Set.mapMonotonic Left is) fs' $ \a s -> case s of
-     Right s' -> Set.mapMonotonic Right (d' a s')
-     Left (d a -> r) | r' <- Set.mapMonotonic Left r ->
-       if intersects r fs
-       then Set.union r' is'
-       else r'
+    Right s' -> Set.mapMonotonic Right (d' a s')
+    Left (d a -> r) | r' <- Set.mapMonotonic Left r ->
+      if intersects r fs
+      then Set.union r' is'
+      else r'
 
 -- nfa union
 union :: NFA a -> NFA a -> NFA a
