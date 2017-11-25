@@ -59,6 +59,6 @@ suffix m a = over nfa (`NFA.suffix` a) m
 suffixes :: DFA a -> [a] -> DFA a
 suffixes m as = over nfa (`NFA.suffixes` as) m
 
--- check to see if we accepts the empty string
+-- check to see if we accept the empty string
 accepts :: DFA a -> Bool
 accepts (DFA _ i fs _) = Set.member i fs

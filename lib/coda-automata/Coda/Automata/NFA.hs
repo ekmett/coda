@@ -80,6 +80,6 @@ suffixes :: NFA a -> [a] -> NFA a
 suffixes (NFA ss is fs d) as = NFA ss is (nondets d' (List.reverse as) fs) d where
   d' a t = Set.filter (Set.member t . d a) ss
 
--- check to see if we accepts the empty string
+-- check to see if we accept the empty string
 accepts :: NFA a -> Bool
 accepts (NFA _ is fs _) = intersects is fs
