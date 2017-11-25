@@ -18,16 +18,16 @@ instance Contravariant NFA where
 
 -- divide computes the intersection of two NFAs
 instance Divisible NFA where
-  conquer = NFA [()] [()] [()] (\_ _ -> [()]) 
-  divide f (NFA ss is fs d) (NFA ss' is' fs' d') =
-    NFA (Set.product ss ss') (Set.product is is') (Set.product fs fs') $ \ a (s,s') -> case f a of
-      (b, c) -> Set.product (d b s) (d' c s')
+  conquer = NFA [()] [()] [()] (\_ _ -> [()])
+  divide f (NFA ss is fs d) (NFA ss' is' fs' d')
+    = NFA (Set.product ss ss') (Set.product is is') (Set.product fs fs') $ \ a (s,s') -> case f a of
+        (b, c) -> Set.product (d b s) (d' c s')
 
 -- decide computes an nfa disjoint union
 instance Decidable NFA where
   lose f = NFA ([] :: Set Void) [] [] (absurd . f)
-  choose f (NFA ss is fs d) (NFA ss' is' fs' d') = 
-    NFA (Set.sum ss ss') (Set.sum is is') (Set.sum fs fs') $ \a s -> case f a of
+  choose f (NFA ss is fs d) (NFA ss' is' fs' d')
+    = NFA (Set.sum ss ss') (Set.sum is is') (Set.sum fs fs') $ \a s -> case f a of
       Left b -> case s of
         Left s' -> Set.mapMonotonic Left (d b s')
         Right{} -> Set.empty
@@ -43,17 +43,20 @@ instance Contravariant DFA where
 
 instance Divisible DFA where
   conquer = DFA [()] () [()] $ \_ _ -> ()
-  divide f m n = nfa2dfa $ divide f (dfa2nfa m) (dfa2nfa n)
+  divide = liftN2 . divide
 
 instance Decidable DFA where
-  lose f = nfa2dfa $ lose f
-  choose f m n = nfa2dfa $ choose f (dfa2nfa m) (dfa2nfa n)
+  lose = nfa2dfa . lose
+  choose = liftN2 . choose
 
 dfa :: Iso (NFA a) (NFA b) (DFA a) (DFA b)
 dfa = iso nfa2dfa dfa2nfa
 
 nfa :: Iso (DFA a) (DFA b) (NFA a) (NFA b)
 nfa = iso dfa2nfa nfa2dfa
+
+liftN2 :: (NFA a -> NFA b -> NFA c) -> DFA a -> DFA b -> DFA c
+liftN2 f = over nfa . f . dfa2nfa
 
 nfa2dfa :: NFA a -> DFA a
 nfa2dfa (NFA ss is fs d) = DFA ss' is (Set.filter (intersects fs) ss') d' where

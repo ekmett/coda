@@ -31,13 +31,13 @@ star :: DFA a -> DFA a
 star = over nfa NFA.star
 
 concat :: DFA a -> DFA a -> DFA a
-concat m = over nfa (NFA.concat $ dfa2nfa m)
+concat = liftN2 NFA.concat
 
 union :: DFA a -> DFA a -> DFA a
-union m = over nfa (NFA.union $ dfa2nfa m)
+union = liftN2 NFA.union
 
 intersection :: DFA a -> DFA a -> DFA a
-intersection m = over nfa (NFA.intersection $ dfa2nfa m)
+intersection = liftN2 NFA.intersection
 
 --------------------------------------------------------------------------------
 -- derivative parsing
