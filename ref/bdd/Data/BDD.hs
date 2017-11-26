@@ -1,16 +1,17 @@
-{-# language DeriveGeneric #-}
-{-# language DeriveDataTypeable #-}
+{-# language ConstraintKinds #-}
 {-# language DeriveAnyClass #-}
-{-# language RoleAnnotations #-}
-{-# language RankNTypes #-}
-{-# language ViewPatterns #-}
-{-# language PatternSynonyms #-}
-{-# language LambdaCase #-}
+{-# language DeriveDataTypeable #-}
+{-# language DeriveGeneric #-}
 {-# language FlexibleContexts #-}
+{-# language LambdaCase #-}
 {-# language PatternGuards #-}
-{-# language TypeApplications #-}
+{-# language PatternSynonyms #-}
+{-# language RankNTypes #-}
+{-# language RoleAnnotations #-}
 {-# language ScopedTypeVariables #-}
 {-# language StrictData #-}
+{-# language TypeApplications #-}
+{-# language ViewPatterns #-}
 {-# options_ghc -funbox-strict-fields #-}
 
 module Data.BDD
@@ -29,7 +30,7 @@ module Data.BDD
   , Fun(..)
   , fun, table
     -- * memo management
-  , reifyCache
+  , reifyCache, Cache, Cached
   , copy_     -- copy
   , copy      -- relabel and copy
   , copy'     -- relabel and copy (in the same cache)
@@ -45,6 +46,7 @@ module Data.BDD
   , Data.BDD.size
   , node
   , Node(..)
+  , vars
   ) where
 
 import Control.Monad.Trans.State.Strict
@@ -112,10 +114,12 @@ data Cache = Cache
   , getMemo :: IORef Memo
   } deriving Eq
 
-modifyCache :: forall s r proxy. Reifies s Cache => proxy s -> (DAG -> (DAG, r)) -> IO r
+type Cached s = Reifies s Cache
+
+modifyCache :: forall s r proxy. Cached s => proxy s -> (DAG -> (DAG, r)) -> IO r
 modifyCache _ = atomicModifyIORef $ getCache $ reflect (Proxy :: Proxy s)
 
-modifyMemo :: forall s r proxy. Reifies s Cache => proxy s -> (Memo -> (Memo, r)) -> IO r
+modifyMemo :: forall s r proxy. Cached s => proxy s -> (Memo -> (Memo, r)) -> IO r
 modifyMemo _ = atomicModifyIORef $ getMemo $ reflect (Proxy :: Proxy s)
 
 -- this node is allowed as a child of a 'hi' branch for a BDD node
@@ -124,10 +128,10 @@ okhi F = False
 okhi (Node i _ _ _) = i > 0
 okhi _ = True
 
-nodeId :: forall s proxy. Reifies s Cache => proxy s -> Var -> Node -> Node -> NodeId
+nodeId :: forall s proxy. Cached s => proxy s -> Var -> Node -> Node -> NodeId
 nodeId _ v l r = unsafePerformIO $ modifyCache (Proxy :: Proxy s) $ Bimap.insertR $ Key v l r
 
-bdd :: forall s. Reifies s Cache => Var -> BDD s -> BDD s -> BDD s
+bdd :: forall s. Cached s => Var -> BDD s -> BDD s -> BDD s
 bdd v (D l) (D r)
   | l == r = D l
   | okhi r = D (Node (nodeId (Proxy :: Proxy s) v l r) v l r)
@@ -139,7 +143,7 @@ bdd v (D l) (D r)
 --------------------------------------------------------------------------------
 
 -- bidirectional matching and construction using the tape, censoring node ids
-pattern BDD :: Reifies s Cache => Var -> BDD s -> BDD s -> BDD s
+pattern BDD :: Cached s => Var -> BDD s -> BDD s -> BDD s
 pattern BDD v l r <- D (Node _ v (D -> l) (D -> r)) where
   BDD v l r = bdd v l r
 
@@ -179,7 +183,8 @@ negNode F = T
 negNode T = F
 negNode (Node i v l r) = Node (-i) v l r
 
-reifyCache :: (forall s. Reifies s Cache => Proxy s -> r) -> r
+
+reifyCache :: (forall s. Cached s => Proxy s -> r) -> r
 reifyCache f = unsafePerformIO $ do
   r <- newIORef Bimap.empty
   m <- newIORef HashMap.empty
@@ -196,7 +201,7 @@ shannon :: Var -> BDD s -> (BDD s, BDD s)
 shannon u (ROBDD i v l r) | u == v = if i > 0 then (l, r) else (r, l)
 shannon _ n = (n, n)
 
-ite :: forall s. Reifies s Cache => BDD s -> BDD s -> BDD s -> BDD s
+ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
 -- initial cases avoid touching the memo table
 ite (D T) f _ = f
 ite (D F) _ f = f
@@ -268,7 +273,7 @@ fun f = toEnum
   + 2 * fromEnum (f True False)
   +     fromEnum (f True True)
 
-table :: Reifies s Cache => Fun -> BDD s -> BDD s -> BDD s
+table :: Cached s => Fun -> BDD s -> BDD s -> BDD s
 table TNever  _ _ = Zero               -- false
 table TAnd    f g = ite f g Zero       -- f && g
 table TGt     f g = ite f (neg g) Zero -- f > g
@@ -287,27 +292,34 @@ table TNand   f g = ite f (neg g) One  -- nand f g
 table TAlways _ _ = One                -- true
 
 -- | lift boolean functions through the table e.g. @liftB2 (&&)@, @liftB2 (<=)@
-liftB2 :: Reifies s Cache => (Bool -> Bool -> Bool) -> BDD s -> BDD s -> BDD s
+liftB2 :: Cached s => (Bool -> Bool -> Bool) -> BDD s -> BDD s -> BDD s
 liftB2 = table . fun
 
-and :: Reifies s Cache => BDD s -> BDD s -> BDD s
+and :: Cached s => BDD s -> BDD s -> BDD s
 and f g = ite f g Zero
 
-or  :: Reifies s Cache => BDD s -> BDD s -> BDD s
+or  :: Cached s => BDD s -> BDD s -> BDD s
 or f g = ite f One g 
 
-xor :: Reifies s Cache => BDD s -> BDD s -> BDD s
+xor :: Cached s => BDD s -> BDD s -> BDD s
 xor f g = ite f (neg g) g
 
 bool :: Bool -> BDD s
 bool False = D F
 bool True = D T
 
-var :: Reifies s Cache => Var -> BDD s
+var :: Cached s => Var -> BDD s
 var v = bdd v Zero One
 
+-- relevant variables
+vars :: BDD s -> Set Var
+vars (D n0) = go n0 Set.empty  where
+  go T s = s
+  go F s = s
+  go (Node _ v l r) s = Set.insert v (go l (go r s))
+
 -- O(|n|) copy a BDD over to a new tape
-copy_ :: forall s' s. Reifies s' Cache => BDD s -> BDD s'
+copy_ :: forall s' s. Cached s' => BDD s -> BDD s'
 copy_ (D n) = evalState (go n) HashMap.empty where
   go :: Node -> State (HashMap NodeId (BDD s')) (BDD s')
   go (Node i v l r) 
@@ -325,7 +337,7 @@ copy_ (D n) = evalState (go n) HashMap.empty where
 
 
 -- copy a BDD over to a new tape and performs variable substitution
-copy :: forall s s'. Reifies s' Cache => (Var -> BDD s') -> BDD s -> BDD s'
+copy :: forall s s'. Cached s' => (Var -> BDD s') -> BDD s -> BDD s'
 copy f n0 = evalState (go n0) HashMap.empty where
   go :: BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
   go (ROBDD i v l r) 
@@ -343,11 +355,11 @@ copy f n0 = evalState (go n0) HashMap.empty where
   go Zero = pure Zero
 
 -- work within one cache
-copy' :: Reifies s Cache => (Var -> BDD s) -> BDD s -> BDD s
+copy' :: Cached s => (Var -> BDD s) -> BDD s -> BDD s
 copy' = copy
 
 -- relabel with a monotone function
-copyMono :: forall s s'. Reifies s' Cache => (Var -> Var) -> BDD s -> BDD s'
+copyMono :: forall s s'. Cached s' => (Var -> Var) -> BDD s -> BDD s'
 copyMono f n0 = evalState (go n0) HashMap.empty where
   go :: BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
   go (ROBDD i v l r) 
@@ -364,5 +376,5 @@ copyMono f n0 = evalState (go n0) HashMap.empty where
   go One  = pure One
   go Zero = pure Zero
 
-copyMono' :: Reifies s Cache => (Var -> Var) -> BDD s -> BDD s
+copyMono' :: Cached s => (Var -> Var) -> BDD s -> BDD s
 copyMono' = copyMono
