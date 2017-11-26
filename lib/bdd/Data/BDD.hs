@@ -30,6 +30,7 @@ module Data.BDD
   , unique
     -- * functions of two arguments
   , Fun(..)
+  , andFun, orFun, xorFun, notFun
   , fun, table
     -- * memo management
   , reifyCache, Cache, Cached
@@ -57,18 +58,17 @@ module Data.BDD
   , polarize
   ) where
 
+import Control.Applicative as A
 import Control.Monad.Trans.State.Strict
 import Data.Bimap as Bimap
+import qualified Data.Bits as Bits
 import Data.Coerce
 import Data.Data
 import Data.Hashable
 import Data.HashMap.Strict as HashMap
 import Data.IORef
 import Data.Reflection
-import Data.Semigroup
 import Data.Set as Set
-import Data.Sequence as Seq
-import Data.Tuple (swap)
 import GHC.Arr
 import GHC.Generics
 import System.IO.Unsafe (unsafePerformIO)
@@ -126,9 +126,6 @@ type Cached s = Reifies s Cache
 
 modifyCache :: forall s r proxy. Cached s => proxy s -> (DAG -> (DAG, r)) -> IO r
 modifyCache _ = atomicModifyIORef' $ getCache $ reflect (Proxy :: Proxy s)
-
-modifyMemo :: forall s r proxy. Cached s => proxy s -> (Memo -> (Memo, r)) -> IO r
-modifyMemo _ = atomicModifyIORef' $ getMemo $ reflect (Proxy :: Proxy s)
 
 -- this node is allowed as a child of a 'hi' branch for a BDD node
 okhi :: Node -> Bool
@@ -231,15 +228,15 @@ ite One f _ = f
 ite Zero _ f = f
 ite f One Zero = f
 ite _ g h | g == h = g
--- NB: currently locks up the ite memo table for the duration
-ite f0 g0 h0 = unsafePerformIO $ modifyMemo (Proxy :: Proxy s) $ swap . runState (go f0 g0 h0) where
-  go :: BDD s -> BDD s -> BDD s -> State Memo (BDD s)
+ite f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
+  mr = getMemo $ reflect (Proxy :: Proxy s)
+  go :: BDD s -> BDD s -> BDD s -> IO (BDD s)
   go One f _ = pure f
   go Zero _ f = pure f
   go f One Zero = pure f
   go f g h
     | g == h = pure g
-    | k <- coerce ITE f g h = gets (HashMap.lookup k) >>= \case
+    | k <- coerce ITE f g h = readIORef mr >>= \m -> case HashMap.lookup k m of
       Just r -> pure $ D r
       Nothing
         | v <- root f `max` root g `max` root h
@@ -247,7 +244,7 @@ ite f0 g0 h0 = unsafePerformIO $ modifyMemo (Proxy :: Proxy s) $ swap . runState
         , (g',g'') <- shannon v g
         , (h',h'') <- shannon v h -> do
           r <- bdd v <$> go f' g' h' <*> go f'' g'' h''
-          r <$ modify (HashMap.insert k $ node r)
+          r <$ atomicModifyIORef' mr (\m' -> (HashMap.insert k (node r) m', ()))
 
 -- check satisfiability
 sat :: BDD s -> Bool
@@ -261,17 +258,17 @@ tautology _   = False
 
 data Binding = Var := Bool deriving (Eq,Ord,Show,Read,Data,Generic,Hashable)
 
--- find all satisfying variable assignments
-sats :: BDD s -> Seq [Binding]
+-- find any or all satisfying variable assignments by choosing Seq or Maybe
+sats :: Alternative m => BDD s -> m [Binding]
 sats n0 = evalState (go n0) HashMap.empty where
-  go Zero = pure Seq.empty
-  go One = pure (Seq.singleton [])
-  go (ROBDD i v (D . polarizeNode i . node -> l) (D . polarizeNode i . node -> r)) = gets (HashMap.lookup i) >>= \case
+  go Zero = pure A.empty
+  go One = pure (pure [])
+  go (ROBDD i v (polarize i -> l) (polarize i -> r)) = gets (HashMap.lookup i) >>= \case
     Just x  -> pure x
     Nothing -> do
       x <- go l
       y <- go r
-      let result = fmap ((v := False):) x <> fmap ((v := True):) y
+      let result = fmap ((v := False):) x <|> fmap ((v := True):) y
       result <$ modify (HashMap.insert i result)
 
 -- # of distinct nodes present in the BDD
@@ -280,10 +277,9 @@ size (D n0) = Set.size (go n0 Set.empty) where
   go (Node (abs -> i) _ l r) s | Set.notMember i s = go l $ go r $ Set.insert i s
   go _ s = s
 
-
 quantify :: forall s. Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
 quantify q vs n0 = evalState (go n0) HashMap.empty where
-  go (D (Node i v (D . polarizeNode i -> l) (D . polarizeNode i -> r))) = gets (HashMap.lookup i) >>= \case
+  go (ROBDD i v (polarize i -> l) (polarize i -> r)) = gets (HashMap.lookup i) >>= \case
     Just z -> pure z
     Nothing -> do
       z <- (if Set.member v vs then q else bdd v) <$> go l <*> go r
@@ -305,9 +301,23 @@ liftB f s
   | f False   = if f True then One else neg s
   | otherwise = if f True then s else Zero
 
--- all two argument functions
+-- | all two argument functions enumerated by truth tables
 data Fun = TNever | TAnd | TGt | TF | TLt | TG | TXor | TOr | TNor | TXnor | TG' | TGe | TF' | TLe | TNand | TAlways
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
+
+-- | andFun TF TG = TAnd
+andFun :: Fun -> Fun -> Fun
+andFun f g = toEnum (fromEnum f Bits..&. fromEnum g)
+
+orFun :: Fun -> Fun -> Fun
+orFun f g = toEnum (fromEnum f Bits..|. fromEnum g)
+
+xorFun :: Fun -> Fun -> Fun
+xorFun f g = toEnum (fromEnum f `Bits.xor` fromEnum g)
+
+-- | notFun TF = TF'
+notFun :: Fun -> Fun
+notFun f = toEnum (Bits.complement (fromEnum f) Bits..&. 15)
 
 -- enumerate as a two argument boolean function
 fun :: (Bool -> Bool -> Bool) -> Fun
@@ -334,7 +344,6 @@ table TF'     f _ = neg f              -- neg f
 table TLe     f g = ite f g One        -- f <= g
 table TNand   f g = ite f (neg g) One  -- nand f g
 table TAlways _ _ = One                -- true
-
 
 -- | lift boolean functions through the table e.g. @liftB2 (&&)@, @liftB2 (<=)@
 liftB2 :: Cached s => (Bool -> Bool -> Bool) -> BDD s -> BDD s -> BDD s
