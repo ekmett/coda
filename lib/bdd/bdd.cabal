@@ -47,7 +47,7 @@ library
 test-suite factor
   type: exitcode-stdio-1.0
   default-language: Haskell2010
-  ghc-options: -Wall
+  ghc-options: -Wall -rtsopts -with-rtsopts=-K64m
   hs-source-dirs: examples
   main-is: factor.hs
   if !flag(examples)
@@ -62,7 +62,7 @@ test-suite factor
 test-suite fish
   type: exitcode-stdio-1.0
   default-language: Haskell2010
-  ghc-options: -Wall
+  ghc-options: -Wall -rtsopts
   hs-source-dirs: examples
   main-is: fish.hs
   if !flag(examples)
@@ -80,7 +80,7 @@ test-suite sudoku
   default-language: Haskell2010
   main-is: Main.hs
   other-modules: Sudoku.Cell Sudoku.Problem
-  ghc-options: -Wall
+  ghc-options: -Wall -rtsopts
   hs-source-dirs: examples/sudoku
   if !flag(examples)
     buildable: False

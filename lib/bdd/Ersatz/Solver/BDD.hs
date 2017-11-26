@@ -1,6 +1,7 @@
 {-# language ScopedTypeVariables #-}
 {-# language FlexibleContexts #-}
 {-# language BangPatterns #-}
+{-# language Strict #-}
 module Ersatz.Solver.BDD where
 
 import Control.Applicative
@@ -15,6 +16,11 @@ literal :: Cached s => Int -> BDD s
 literal 1    = One
 literal (-1) = Zero
 literal i    = polarize i $ var (abs i)
+
+-- TODO: we can construct an optimal cache for and, given its the only ITE form used
+-- for now remove the cache entirely to see if its the problem
+and' :: Cached s => BDD s -> BDD s -> BDD s
+and' = gtable TAnd id id
 
 -- use a more deliberate bdd construction for the clauses that constructs from the bottom up
 clause :: Cached s => IntSet -> BDD s
@@ -31,18 +37,18 @@ clause is = case splitMember 1 is of
     posi acc (y:ys) = posi (BDD y acc One) ys
     negi !acc [] = acc
     negi acc (x:xs) = negi (BDD (negate x) One acc) xs
-    go !acc x xs y ys = case compare x y of
+    go !acc !x xs !y ys = case compare x y of
       GT | acc' <- BDD x One acc -> case xs of
-        [] -> posi (BDD y acc' One) ys
+        []     -> posi (BDD y acc' One) ys
         x':xs' -> go acc' (negate x') xs' y ys
       EQ -> One -- x \/ ~x => this clause is always true
       LT | acc' <- BDD y acc One -> case ys of
-        [] -> negi (BDD x One acc') xs
+        []     -> negi (BDD x One acc') xs
         y':ys' -> go acc' x xs y' ys'
 
 robdd :: Monad m => Solver SAT m
 robdd problem = pure $ reifyCache $ \(Proxy :: Proxy s) ->
-  let solve = Prelude.foldr (\a r -> clause a `BDD.and` r) One
+  let solve = Prelude.foldr (\a r -> clause a `and'` r) One
 
       result :: BDD s
       result = solve (dimacsClauses problem)
