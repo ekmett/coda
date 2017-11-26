@@ -142,18 +142,18 @@ bdd v (D l) (D r)
 -- safe user accessible BDD constructors:
 --------------------------------------------------------------------------------
 
--- present only positive forms through the "BDD" constructor
-polarize :: Int -> Node -> BDD s
+-- present only positive forms through the "BDD" constructor so users don't need to understand the negation optimization
+polarize :: Int -> Node -> Node
 polarize i s
-  | i > 0 = D s
-  | otherwise = D (negNode s)
+  | i > 0     = s
+  | otherwise = negNode s
 
 -- bidirectional matching and construction using the tape, censoring node ids
 pattern BDD :: Cached s => Var -> BDD s -> BDD s -> BDD s
-pattern BDD v l r <- D (Node i v (polarize i -> l) (polarize i -> r)) where
+pattern BDD v l r <- D (Node i v (D . polarize i -> l) (D . polarize i -> r)) where
   BDD v l r = bdd v l r
 
--- read only access to node ids
+-- read only access to node ids, NB: this exposes the negation optimization
 pattern ROBDD :: NodeId -> Var -> BDD s -> BDD s -> BDD s
 pattern ROBDD i v l r <- D (Node i v (D -> l) (D -> r))
 
@@ -202,9 +202,10 @@ root = \case
   D (Node _ v _ _) -> v
   _ -> 0
 
--- "twisted" shannon decomposition to allow for negated nodes
+-- Shannon decomposition assuming u >= v
 shannon :: Var -> BDD s -> (BDD s, BDD s)
-shannon u (ROBDD i v l r) | u == v = if i > 0 then (l, r) else (r, l)
+shannon u (ROBDD i v (D l) (D r))
+  | u == v = (D $ polarize i l, D $ polarize i r) -- present results in positive form
 shannon _ n = (n, n)
 
 ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
@@ -227,8 +228,7 @@ ite f0 g0 h0 = unsafePerformIO $ modifyMemo (Proxy :: Proxy s) $ swap . runState
         | v <- root f `max` root g `max` root h
         , (f',f'') <- shannon v f
         , (g',g'') <- shannon v g
-        , (h',h'') <- shannon v h
-        -> do
+        , (h',h'') <- shannon v h -> do
           r <- bdd v <$> go f'' g'' h'' <*> go f' g' h'
           r <$ modify (HashMap.insert k $ node r)
 
@@ -246,18 +246,17 @@ data Binding = Var := Bool deriving (Eq,Ord,Show,Read,Data,Generic,Hashable)
 
 -- find all satisfying variable assignments
 sats :: BDD s -> Seq [Binding]
-sats (D n0) = evalState (go n0) HashMap.empty where
-  go F = pure Seq.empty
-  go T = pure (Seq.singleton [])
-  go (Node i v l r) = gets (HashMap.lookup i) >>= \case
+sats n0 = evalState (go n0) HashMap.empty where
+  go Zero = pure Seq.empty
+  go One = pure (Seq.singleton [])
+  go (ROBDD i v (D . polarize i . node -> l) (D . polarize i . node -> r)) = gets (HashMap.lookup i) >>= \case
     Just x  -> pure x
     Nothing -> do
       x <- go l
       y <- go r
-      if i > 0 
-        then pure $ fmap ((v := False):) x <> fmap ((v := True):) y
-        else pure $ fmap ((v := False):) y <> fmap ((v := True):) x
-
+      let result = fmap ((v := False):) x <> fmap ((v := True):) y
+      result <$ modify (HashMap.insert i result)
+ 
 -- # of distinct nodes present in the BDD
 size :: BDD s -> Int
 size (D n0) = Set.size (go n0 Set.empty) where
