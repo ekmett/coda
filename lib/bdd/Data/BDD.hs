@@ -125,10 +125,10 @@ data Cache = Cache
 type Cached s = Reifies s Cache
 
 modifyCache :: forall s r proxy. Cached s => proxy s -> (DAG -> (DAG, r)) -> IO r
-modifyCache _ = atomicModifyIORef $ getCache $ reflect (Proxy :: Proxy s)
+modifyCache _ = atomicModifyIORef' $ getCache $ reflect (Proxy :: Proxy s)
 
 modifyMemo :: forall s r proxy. Cached s => proxy s -> (Memo -> (Memo, r)) -> IO r
-modifyMemo _ = atomicModifyIORef $ getMemo $ reflect (Proxy :: Proxy s)
+modifyMemo _ = atomicModifyIORef' $ getMemo $ reflect (Proxy :: Proxy s)
 
 -- this node is allowed as a child of a 'hi' branch for a BDD node
 okhi :: Node -> Bool
