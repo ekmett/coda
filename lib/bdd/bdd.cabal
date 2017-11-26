@@ -19,7 +19,7 @@ source-repository head
 
 library
   default-language: Haskell2010
-  ghc-options: -Wall
+  ghc-options: -Wall -O2
 
   exposed-modules:
     Data.BDD
@@ -38,7 +38,8 @@ library
     transformers         >= 0.5      && < 0.6,
     unordered-containers >= 0.2.6    && < 3
 
-executable factor
+test-suite factor
+  type: exitcode-stdio-1.0
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: examples
@@ -49,7 +50,8 @@ executable factor
     ersatz,
     mtl
 
-executable fish
+test-suite fish
+  type: exitcode-stdio-1.0
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: examples
