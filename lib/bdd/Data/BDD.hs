@@ -42,6 +42,7 @@ module Data.BDD
   , copyMono' -- relabel monotonically and copy (in the same cache)
   , copyStrictMono  -- relabel strictly monotonically and copy
   , copyStrictMono' -- relabel strictly monotonically and copy (in the same cache)
+  , gite, gtable, gliftB2
     -- * satisfaction
   , sat
   , tautology
@@ -59,6 +60,7 @@ module Data.BDD
   ) where
 
 import Control.Applicative as A
+import Control.Lens
 import Control.Monad.Trans.State.Strict
 import Data.Bimap as Bimap
 import qualified Data.Bits as Bits
@@ -222,6 +224,11 @@ shannon :: Var -> BDD s -> (BDD s, BDD s)
 shannon u (ROBDD i v l r) | u == v = (polarize i l, polarize i r) -- present results in positive form
 shannon _ n = (n, n)
 
+-- Shannon decomposition assuming u >= v with a strictly monotone function used to shift the root
+gshannon :: (Var -> Var) -> Var -> BDD s -> (BDD s, BDD s)
+gshannon f u (ROBDD i v l r) | u == f v = (polarize i l, polarize i r) -- present results in positive form
+gshannon _ _ n = (n, n)
+
 ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
 -- initial cases avoid touching the memo table
 ite One f _ = f
@@ -239,12 +246,38 @@ ite f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
     | k <- coerce ITE f g h = readIORef mr >>= \m -> case HashMap.lookup k m of
       Just r -> pure $ D r
       Nothing
-        | v <- root f `max` root g `max` root h
+        | v <- root f `min` root g `min` root h
         , (f',f'') <- shannon v f
         , (g',g'') <- shannon v g
         , (h',h'') <- shannon v h -> do
           r <- bdd v <$> go f' g' h' <*> go f'' g'' h''
           r <$ atomicModifyIORef' mr (\m' -> (HashMap.insert k (node r) m', ()))
+
+-- perform an if then else using strictly monotone relabeling scheme
+gite
+  :: forall s t u v. Cached v
+  => (Var -> Var) -- strictly monotone relabeling for f
+  -> (Var -> Var) -- strictly monotone relabeling for g
+  -> (Var -> Var) -- strictly monotone relabeling for h
+  -> BDD s
+  -> BDD t
+  -> BDD u
+  -> BDD v
+gite vf vg vh f0 g0 h0 = evalState (go f0 g0 h0) mempty where
+  go :: BDD s -> BDD t -> BDD u -> State (HashMap NodeId (BDD v), HashMap NodeId (BDD v), HashMap NodeId (BDD v), HashMap ITE (BDD v)) (BDD v)
+  go One g _    = zoom _2 $ copyStrictMonoM vg g
+  go Zero _ h   = zoom _3 $ copyStrictMonoM vh h
+  go f One Zero = zoom _1 $ copyStrictMonoM vf f
+  go f g h
+    | k <- coerce ITE f g h = use (_4.at k) >>= \case
+      Just r -> pure r
+      Nothing
+        | v <- vf (root f) `min` vg (root g) `min` vh (root h)
+        , (f',f'') <- gshannon vf v f
+        , (g',g'') <- gshannon vg v g
+        , (h',h'') <- gshannon vh v h -> do
+          r <- bdd v <$> go f' g' h' <*> go f'' g'' h''
+          r <$ (_4.at k ?= r)
 
 -- check satisfiability
 sat :: BDD s -> Bool
@@ -349,6 +382,28 @@ table TAlways _ _ = One                -- true
 liftB2 :: Cached s => (Bool -> Bool -> Bool) -> BDD s -> BDD s -> BDD s
 liftB2 = table . fun
 
+gtable :: Cached v => Fun -> (Var -> Var) -> (Var -> Var) -> BDD s -> BDD u -> BDD v
+gtable m vf vg f g | vh <- id = case m of
+  TNever  -> Zero                          -- false
+  TAnd    -> gite vf vg vh f g Zero        -- f && g
+  TGt     -> gite vf vg vh f (neg g) Zero  -- f > g
+  TF      -> copyStrictMono vf f           -- f
+  TLt     -> gite vf vh vg f Zero g        -- f < g
+  TG      -> copyStrictMono vg g           -- g
+  TXor    -> gite vf vg vg f (neg g) g     -- xor f g
+  TOr     -> gite vf vh vg f One g         -- f || g
+  TNor    -> gite vf vh vg f Zero (neg g)  -- nor f g
+  TXnor   -> gite vf vg vg f g (neg g)     -- xnor f g
+  TG'     -> copyStrictMono vg (neg g)     -- neg g
+  TGe     -> gite vf vh vg f One (neg g)   -- f >= g
+  TF'     -> copyStrictMono vf (neg f)     -- neg f
+  TLe     -> gite vf vg vh f g One         -- f <= g
+  TNand   -> gite vf vg vh f (neg g) One   -- nand f g
+  TAlways -> One
+
+gliftB2 :: Cached v => (Bool -> Bool -> Bool) -> (Var -> Var) -> (Var -> Var) -> BDD s -> BDD u -> BDD v
+gliftB2 = gtable . fun
+
 and :: Cached s => BDD s -> BDD s -> BDD s
 and f g = ite f g Zero
 
@@ -407,14 +462,16 @@ copy' = copy
 
 -- relabel with a strictly monotone increasing function
 copyStrictMono :: forall s s'. Cached s' => (Var -> Var) -> BDD s -> BDD s'
-copyStrictMono f n0 = evalState (go n0) HashMap.empty where
-  go :: BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
-  go Zero = pure Zero
-  go One  = pure One
-  go (ROBDD i (f -> v) l r) = gets (HashMap.lookup $ abs i) >>= \case
+copyStrictMono f n0 = evalState (copyStrictMonoM f n0) HashMap.empty where
+
+-- relabel with a strictly monotone increasing function with a preserved cache
+copyStrictMonoM :: forall s s'. Cached s' => (Var -> Var) -> BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
+copyStrictMonoM _ Zero = pure Zero
+copyStrictMonoM _ One  = pure One
+copyStrictMonoM f (ROBDD i (f -> v) l r) = gets (HashMap.lookup $ abs i) >>= \case
     Just z -> pure (polarize i z)
     Nothing -> do
-      z <- bdd v <$> go (polarize i l) <*> go (polarize i r)
+      z <- bdd v <$> copyStrictMonoM f (polarize i l) <*> copyStrictMonoM f (polarize i r)
       polarize i z <$ modify (HashMap.insert (abs i) z)
 
 copyStrictMono' :: Cached s => (Var -> Var) -> BDD s -> BDD s
