@@ -142,9 +142,15 @@ bdd v (D l) (D r)
 -- safe user accessible BDD constructors:
 --------------------------------------------------------------------------------
 
+-- present only positive forms through the "BDD" constructor
+polarize :: Int -> Node -> BDD s
+polarize i s
+  | i > 0 = D s
+  | otherwise = D (negNode s)
+
 -- bidirectional matching and construction using the tape, censoring node ids
 pattern BDD :: Cached s => Var -> BDD s -> BDD s -> BDD s
-pattern BDD v l r <- D (Node _ v (D -> l) (D -> r)) where
+pattern BDD v l r <- D (Node i v (polarize i -> l) (polarize i -> r)) where
   BDD v l r = bdd v l r
 
 -- read only access to node ids
