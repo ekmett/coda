@@ -18,14 +18,14 @@ module Data.BDD
   ( -- * ROBDDs
     BDD(Zero, One, BDD, ROBDD)
     -- * combinators
-  , ite
-  , neg
-  , and
-  , or
-  , xor
-  , bool
+  , ite, neg, and, or, xor, implies, nand
+    -- * variables
   , var
+    -- * booleans
+  , bool
+  , liftB
   , liftB2
+    -- * quantification
   , forall
   , exists
   , unique
@@ -34,15 +34,15 @@ module Data.BDD
   , fun, table
     -- * memo management
   , reifyCache, Cache, Cached
-  , copy_     -- copy
-  , copy      -- relabel and copy
-  , copy'     -- relabel and copy (in the same cache)
+  , copy_     -- copy without relabeling
+  , copy      -- substitute and copy
+  , copy'     -- substitute and copy (in the same cache)
   , copyMono  -- relabel monotonically and copy
   , copyMono' -- relabel monotonically and copy (in the same cache)
-    -- * computations
+    -- * satisfaction
   , sat
   , tautology
-    -- * enumerating solutions
+    -- ** enumerating solutions
   , Binding(..)
   , sats
     -- * observations
@@ -290,6 +290,16 @@ exists = quantify or
 unique :: Cached s => Set Var -> BDD s -> BDD s
 unique = quantify xor
 
+-- lift a unary boolean function
+liftB :: (Bool -> Bool) -> BDD s -> BDD s
+liftB f s = case f False of
+  False -> case f True of
+    False -> Zero
+    True  -> s
+  True -> case f True of
+    False -> neg s
+    True -> One
+
 -- enumerate as a two argument boolean function
 fun :: (Bool -> Bool -> Bool) -> Fun
 fun f = toEnum 
@@ -316,6 +326,7 @@ table TLe     f g = ite f g One        -- f <= g
 table TNand   f g = ite f (neg g) One  -- nand f g
 table TAlways _ _ = One                -- true
 
+
 -- | lift boolean functions through the table e.g. @liftB2 (&&)@, @liftB2 (<=)@
 liftB2 :: Cached s => (Bool -> Bool -> Bool) -> BDD s -> BDD s -> BDD s
 liftB2 = table . fun
@@ -328,6 +339,12 @@ or f g = ite f One g
 
 xor :: Cached s => BDD s -> BDD s -> BDD s
 xor f g = ite f (neg g) g
+
+implies :: Cached s => BDD s -> BDD s -> BDD s
+implies f g = ite f One (neg g) -- f >= g
+
+nand :: Cached s => BDD s -> BDD s -> BDD s
+nand f g = ite f (neg g) One
 
 bool :: Bool -> BDD s
 bool False = D F
