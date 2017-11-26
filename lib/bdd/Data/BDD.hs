@@ -307,7 +307,7 @@ size !(D n0) = Set.size (go n0 Set.empty) where
   go (Node (abs -> i) _ l r) s | Set.notMember i s = go l $ go r $ Set.insert i s
   go _ s = s
 
-quantify :: forall s. Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
+quantify :: Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
 quantify q !vs !n0 = evalState (go n0) HashMap.empty where
   go (ROBDD i v (polarize i -> l) (polarize i -> r)) = gets (HashMap.lookup i) >>= \case
     Just z -> pure z
@@ -431,9 +431,8 @@ vars (D n0) = go n0 Set.empty  where
   go (Node _ v l r) s = Set.insert v (go l (go r s))
 
 -- O(|n|) copy a BDD over to a new tape
-copy_ :: forall s' s. Cached s' => BDD s -> BDD s'
+copy_ :: Cached s' => BDD s -> BDD s'
 copy_ (D n) = evalState (go n) HashMap.empty where
-  go :: Node -> State (HashMap NodeId (BDD s')) (BDD s')
   go (Node i v l r) = gets (HashMap.lookup $ abs i) >>= \case
     Just z -> pure z
     Nothing -> do
@@ -442,9 +441,8 @@ copy_ (D n) = evalState (go n) HashMap.empty where
   go x = pure (D x)
 
 -- copy a BDD over to a new tape and performs variable substitution
-copy :: forall s s'. Cached s' => (Var -> BDD s') -> BDD s -> BDD s'
+copy :: Cached s' => (Var -> BDD s') -> BDD s -> BDD s'
 copy f !n0 = evalState (go n0) HashMap.empty where
-  go :: BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
   go Zero = pure Zero
   go One  = pure One
   go (ROBDD i (f -> v) l r) = gets (HashMap.lookup $ abs i) >>= \case
@@ -486,10 +484,9 @@ bddMono v l r = bdd v (fst $ shannon v l) (snd $ shannon v r)
 -}
 
 -- relabel with a monotone increasing function
-copyMono :: forall s s'. Cached s' => (Var -> Var) -> BDD s -> BDD s'
+copyMono :: Cached s' => (Var -> Var) -> BDD s -> BDD s'
 copyMono f !n0 = evalState (go False maxBound n0) HashMap.empty where
   -- tracks direction and last variable
-  go :: Bool -> Var -> BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
   go _ _ Zero = pure Zero
   go _ _ One  = pure One
   go b u (ROBDD i (f -> v) l r)
