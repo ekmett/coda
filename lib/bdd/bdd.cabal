@@ -23,6 +23,7 @@ library
 
   exposed-modules:
     Data.BDD
+    Ersatz.Solver.BDD
 
   other-modules:
     Data.Bimap
@@ -31,22 +32,11 @@ library
   build-depends:
     base                 >= 4.10     && < 5,
     containers           >= 0.5      && < 0.6,
+    ersatz               >= 0.4      && < 1,
     hashable             >= 1.2.6    && < 1.3,
     reflection           >= 2.1      && < 3,
     transformers         >= 0.5      && < 0.6,
     unordered-containers >= 0.2.6    && < 3
-
-library solver
-  default-language: Haskell2010
-  ghc-options: -Wall
-  hs-source-dirs: solver
-
-  exposed-modules: Ersatz.Solver.BDD
-  build-depends:
-    base,
-    bdd,
-    containers,
-    ersatz >= 0.4      && < 1
 
 executable factor-example
   default-language: Haskell2010
@@ -57,5 +47,4 @@ executable factor-example
     base,
     bdd,
     ersatz,
-    mtl,
-    solver
+    mtl

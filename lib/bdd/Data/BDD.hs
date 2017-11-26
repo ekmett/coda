@@ -53,6 +53,8 @@ module Data.BDD
   , Node(..)
   , vars
   , showBDD
+    -- * internals
+  , polarize
   ) where
 
 import Control.Monad.Trans.State.Strict
