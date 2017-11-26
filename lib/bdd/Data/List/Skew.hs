@@ -1,7 +1,6 @@
 {-# language BangPatterns #-}
 {-# language DeriveTraversable #-}
 {-# language TypeFamilies #-}
-{-# language LambdaCase #-}
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
 {-# language PatternSynonyms #-}

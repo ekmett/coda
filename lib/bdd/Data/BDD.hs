@@ -10,7 +10,6 @@
 {-# language RoleAnnotations #-}
 {-# language ScopedTypeVariables #-}
 {-# language StrictData #-}
-{-# language TypeApplications #-}
 {-# language ViewPatterns #-}
 {-# options_ghc -funbox-strict-fields #-}
 
@@ -197,7 +196,7 @@ pattern One = D T
 -- Gives constant time negation and 2x space improvement
 
 neg :: BDD s -> BDD s
-neg (D x) = D (negNode x) where
+neg (D x) = D (negNode x)
 
 negNode :: Node -> Node
 negNode F = T
@@ -276,11 +275,8 @@ sats n0 = evalState (go n0) HashMap.empty where
 -- # of distinct nodes present in the BDD
 size :: BDD s -> Int
 size (D n0) = Set.size (go n0 Set.empty) where
-  go F s = s
-  go T s = s
-  go (Node (abs -> i) _ l r) s = case Set.member i s of
-    True -> s
-    False -> go l $ go r $ Set.insert i s
+  go (Node (abs -> i) _ l r) s | Set.notMember i s = go l $ go r $ Set.insert i s
+  go _ s = s
 
 
 quantify :: forall s. Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
@@ -303,13 +299,9 @@ unique = quantify xor
 
 -- lift a unary boolean function
 liftB :: (Bool -> Bool) -> BDD s -> BDD s
-liftB f s = case f False of
-  False -> case f True of
-    False -> Zero
-    True  -> s
-  True -> case f True of
-    False -> neg s
-    True -> One
+liftB f s
+  | f False   = if f True then One else neg s
+  | otherwise = if f True then s else Zero
 
 -- all two argument functions
 data Fun = TNever | TAnd | TGt | TF | TLt | TG | TXor | TOr | TNor | TXnor | TG' | TGe | TF' | TLe | TNand | TAlways
@@ -350,7 +342,7 @@ and :: Cached s => BDD s -> BDD s -> BDD s
 and f g = ite f g Zero
 
 or  :: Cached s => BDD s -> BDD s -> BDD s
-or f g = ite f One g
+or f = ite f One
 
 xor :: Cached s => BDD s -> BDD s -> BDD s
 xor f g = ite f (neg g) g
