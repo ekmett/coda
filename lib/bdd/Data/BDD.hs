@@ -39,6 +39,8 @@ module Data.BDD
   , copy'     -- substitute and copy (in the same cache)
   , copyMono  -- relabel monotonically and copy
   , copyMono' -- relabel monotonically and copy (in the same cache)
+  , copyStrictMono  -- relabel strictly monotonically and copy
+  , copyStrictMono' -- relabel strictly monotonically and copy (in the same cache)
     -- * satisfaction
   , sat
   , tautology
@@ -50,6 +52,7 @@ module Data.BDD
   , node
   , Node(..)
   , vars
+  , showBDD
   ) where
 
 import Control.Monad.Trans.State.Strict
@@ -140,21 +143,28 @@ bdd v (D l) (D r)
   | okhi r = D (Node (nodeId (Proxy :: Proxy s) v l r) v l r)
   | nl <- negNode l
   , nr <- negNode r = D (Node (- nodeId (Proxy :: Proxy s) v nl nr) v nl nr)
-    
+
 --------------------------------------------------------------------------------
 -- safe user accessible BDD constructors:
 --------------------------------------------------------------------------------
 
 -- present only positive forms through the "BDD" constructor so users don't need to understand the negation optimization
-polarize :: Int -> Node -> Node
-polarize i s
+polarizeNode :: Int -> Node -> Node
+polarizeNode i s
   | i > 0     = s
   | otherwise = negNode s
 
+polarize :: Int -> BDD s -> BDD s
+polarize i (D m) = D $ polarizeNode i m
+
 -- bidirectional matching and construction using the tape, censoring node ids
 pattern BDD :: Cached s => Var -> BDD s -> BDD s -> BDD s
-pattern BDD v l r <- D (Node i v (D . polarize i -> l) (D . polarize i -> r)) where
+pattern BDD v l r <- D (Node i v (D . polarizeNode i -> l) (D . polarizeNode i -> r)) where
   BDD v l r = bdd v l r
+
+-- read only access to the node, hiding negation
+pattern BDD_ :: Var -> BDD s -> BDD s -> BDD s
+pattern BDD_ v l r <- D (Node i v (D . polarizeNode i -> l) (D . polarizeNode i -> r))
 
 -- read only access to node ids, NB: this exposes the negation optimization
 pattern ROBDD :: NodeId -> Var -> BDD s -> BDD s -> BDD s
@@ -198,6 +208,9 @@ reifyCache f = unsafePerformIO $ do
   m <- newIORef HashMap.empty
   return $ reify (Cache r m) f
 
+with :: forall f r. (forall s. Cached s => f s) -> (forall s. f s -> r) -> r
+with f k = reifyCache $ \(Proxy :: Proxy s) -> k (f :: f s)
+
 -- root decision variable
 root :: BDD s -> Var
 root = \case
@@ -206,22 +219,21 @@ root = \case
 
 -- Shannon decomposition assuming u >= v
 shannon :: Var -> BDD s -> (BDD s, BDD s)
-shannon u (ROBDD i v (D l) (D r))
-  | u == v = (D $ polarize i l, D $ polarize i r) -- present results in positive form
+shannon u (ROBDD i v l r) | u == v = (polarize i l, polarize i r) -- present results in positive form
 shannon _ n = (n, n)
 
 ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
 -- initial cases avoid touching the memo table
-ite (D T) f _ = f
-ite (D F) _ f = f
-ite f (D T) (D F) = f
+ite One f _ = f
+ite Zero _ f = f
+ite f One Zero = f
 ite _ g h | g == h = g
 -- NB: currently locks up the ite memo table for the duration
 ite f0 g0 h0 = unsafePerformIO $ modifyMemo (Proxy :: Proxy s) $ swap . runState (go f0 g0 h0) where
   go :: BDD s -> BDD s -> BDD s -> State Memo (BDD s)
-  go (D T) f _ = pure f
-  go (D F) _ f = pure f
-  go f (D T) (D F) = pure f
+  go One f _ = pure f
+  go Zero _ f = pure f
+  go f One Zero = pure f
   go f g h
     | g == h = pure g
     | k <- coerce ITE f g h = gets (HashMap.lookup k) >>= \case
@@ -231,7 +243,7 @@ ite f0 g0 h0 = unsafePerformIO $ modifyMemo (Proxy :: Proxy s) $ swap . runState
         , (f',f'') <- shannon v f
         , (g',g'') <- shannon v g
         , (h',h'') <- shannon v h -> do
-          r <- bdd v <$> go f'' g'' h'' <*> go f' g' h'
+          r <- bdd v <$> go f' g' h' <*> go f'' g'' h''
           r <$ modify (HashMap.insert k $ node r)
 
 -- check satisfiability
@@ -251,14 +263,14 @@ sats :: BDD s -> Seq [Binding]
 sats n0 = evalState (go n0) HashMap.empty where
   go Zero = pure Seq.empty
   go One = pure (Seq.singleton [])
-  go (ROBDD i v (D . polarize i . node -> l) (D . polarize i . node -> r)) = gets (HashMap.lookup i) >>= \case
+  go (ROBDD i v (D . polarizeNode i . node -> l) (D . polarizeNode i . node -> r)) = gets (HashMap.lookup i) >>= \case
     Just x  -> pure x
     Nothing -> do
       x <- go l
       y <- go r
       let result = fmap ((v := False):) x <> fmap ((v := True):) y
       result <$ modify (HashMap.insert i result)
- 
+
 -- # of distinct nodes present in the BDD
 size :: BDD s -> Int
 size (D n0) = Set.size (go n0 Set.empty) where
@@ -268,13 +280,10 @@ size (D n0) = Set.size (go n0 Set.empty) where
     True -> s
     False -> go l $ go r $ Set.insert i s
 
--- all two argument functions
-data Fun = TNever | TAnd | TGt | TF | TLt | TG | TXor | TOr | TNor | TXnor | TG' | TGe | TF' | TLe | TNand | TAlways
-  deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
 
 quantify :: forall s. Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
 quantify q vs n0 = evalState (go n0) HashMap.empty where
-  go (D (Node i v (D . polarize i -> l) (D . polarize i -> r))) = gets (HashMap.lookup i) >>= \case
+  go (D (Node i v (D . polarizeNode i -> l) (D . polarizeNode i -> r))) = gets (HashMap.lookup i) >>= \case
     Just z -> pure z
     Nothing -> do
       z <- (if Set.member v vs then q else bdd v) <$> go l <*> go r
@@ -300,9 +309,13 @@ liftB f s = case f False of
     False -> neg s
     True -> One
 
+-- all two argument functions
+data Fun = TNever | TAnd | TGt | TF | TLt | TG | TXor | TOr | TNor | TXnor | TG' | TGe | TF' | TLe | TNand | TAlways
+  deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
+
 -- enumerate as a two argument boolean function
 fun :: (Bool -> Bool -> Bool) -> Fun
-fun f = toEnum 
+fun f = toEnum
   $ 8 * fromEnum (f False False)
   + 4 * fromEnum (f False True)
   + 2 * fromEnum (f True False)
@@ -335,7 +348,7 @@ and :: Cached s => BDD s -> BDD s -> BDD s
 and f g = ite f g Zero
 
 or  :: Cached s => BDD s -> BDD s -> BDD s
-or f g = ite f One g 
+or f g = ite f One g
 
 xor :: Cached s => BDD s -> BDD s -> BDD s
 xor f g = ite f (neg g) g
@@ -364,58 +377,78 @@ vars (D n0) = go n0 Set.empty  where
 copy_ :: forall s' s. Cached s' => BDD s -> BDD s'
 copy_ (D n) = evalState (go n) HashMap.empty where
   go :: Node -> State (HashMap NodeId (BDD s')) (BDD s')
-  go (Node i v l r) 
-    | i > 0 = gets (HashMap.lookup i) >>= \case
-      Just z -> pure z
-      Nothing -> do
-        z <- bdd v <$> go l <*> go r
-        z <$ modify (HashMap.insert i z)
-    | ni <- negate i = gets (HashMap.lookup ni) >>= \case
-      Just z' -> pure $ neg z'
-      Nothing -> do
-        z' <- bdd v <$> go l <*> go r
-        z' <$ modify (HashMap.insert ni (neg z'))
+  go (Node i v l r) = gets (HashMap.lookup $ abs i) >>= \case
+    Just z -> pure z
+    Nothing -> do
+      z <- bdd v <$> go (polarizeNode i l) <*> go (polarizeNode i r)
+      polarize i z <$ modify (HashMap.insert (abs i) z)
   go x = pure (D x)
 
 -- copy a BDD over to a new tape and performs variable substitution
 copy :: forall s s'. Cached s' => (Var -> BDD s') -> BDD s -> BDD s'
 copy f n0 = evalState (go n0) HashMap.empty where
   go :: BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
-  go (ROBDD i v l r) 
-    | i > 0 = gets (HashMap.lookup i) >>= \case
-      Just z -> pure z
-      Nothing -> do
-        z <- ite (f v) <$> go l <*> go r  
-        z <$ modify (HashMap.insert i z)
-    | ni <- negate i = gets (HashMap.lookup ni) >>= \case
-      Just z' -> pure (neg z')
-      Nothing -> do
-        z' <- ite (f v) <$> go l <*> go r  
-        neg z' <$ modify (HashMap.insert ni z')
-  go One  = pure One
   go Zero = pure Zero
+  go One  = pure One
+  go (ROBDD i (f -> v) l r) = gets (HashMap.lookup $ abs i) >>= \case
+      Just z -> pure (polarize i z)
+      Nothing -> do
+        z <- ite v <$> go (polarize i l) <*> go (polarize i r)
+        polarize i z <$ modify (HashMap.insert (abs i) z)
 
 -- work within one cache
 copy' :: Cached s => (Var -> BDD s) -> BDD s -> BDD s
 copy' = copy
 
--- relabel with a monotone function
-copyMono :: forall s s'. Cached s' => (Var -> Var) -> BDD s -> BDD s'
-copyMono f n0 = evalState (go n0) HashMap.empty where
+-- relabel with a strictly monotone increasing function
+copyStrictMono :: forall s s'. Cached s' => (Var -> Var) -> BDD s -> BDD s'
+copyStrictMono f n0 = evalState (go n0) HashMap.empty where
   go :: BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
-  go (ROBDD i v l r) 
-    | i > 0 = gets (HashMap.lookup i) >>= \case
-      Just z -> pure z
-      Nothing -> do
-        z <- bdd (f v) <$> go l <*> go r  
-        z <$ modify (HashMap.insert i z)
-    | ni <- negate i = gets (HashMap.lookup ni) >>= \case
-      Just z' -> pure (neg z')
-      Nothing -> do
-        z' <- bdd (f v) <$> go l <*> go r  
-        neg z' <$ modify (HashMap.insert ni z')
-  go One  = pure One
   go Zero = pure Zero
+  go One  = pure One
+  go (ROBDD i (f -> v) l r) = gets (HashMap.lookup $ abs i) >>= \case
+    Just z -> pure (polarize i z)
+    Nothing -> do
+      z <- bdd v <$> go (polarize i l) <*> go (polarize i r)
+      polarize i z <$ modify (HashMap.insert (abs i) z)
+
+copyStrictMono' :: Cached s => (Var -> Var) -> BDD s -> BDD s
+copyStrictMono' = copyStrictMono
+
+{-
+-- create a BDD node that may be related to its _immediate_ children by sharing the same variable
+--     v
+--    / \         v
+--   v   v   =>  / \
+--  / \ / \      a d
+--  a b c d
+bddMono :: Cached s => Var -> BDD s -> BDD s -> BDD s
+bddMono v l r = bdd v (fst $ shannon v l) (snd $ shannon v r)
+-}
+
+-- relabel with a monotone increasing function
+copyMono :: forall s s'. Cached s' => (Var -> Var) -> BDD s -> BDD s'
+copyMono f n0 = evalState (go False maxBound n0) HashMap.empty where
+  -- tracks direction and last variable
+  go :: Bool -> Var -> BDD s -> State (HashMap NodeId (BDD s')) (BDD s')
+  go _ _ Zero = pure Zero
+  go _ _ One  = pure One
+  go b u (ROBDD i (f -> v) l r)
+    | u == v = go b u $ polarize i $ if b then l else r -- skip directly rather than common up with bddMono ex post facto
+    | otherwise = gets (HashMap.lookup (abs i)) >>= \case
+      Just z -> pure $ polarize i z
+      Nothing -> do
+        z <- bdd v <$> go False v (polarize i l) <*> go True v (polarize i r)
+        polarize i z <$ modify (HashMap.insert (abs i) z)
 
 copyMono' :: Cached s => (Var -> Var) -> BDD s -> BDD s
 copyMono' = copyMono
+
+showBDD :: BDD s -> String
+showBDD n0 = go 0 n0 "" where
+  go _ One  = showString "One"
+  go _ Zero = showString "Zero"
+  go d (BDD_ v l r) = showParen (d>10)
+    $ showString "BDD " . showsPrec 11 v
+    . showChar ' ' . go 11 l
+    . showChar ' ' . go 11 r
