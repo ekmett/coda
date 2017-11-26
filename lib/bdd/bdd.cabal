@@ -10,7 +10,7 @@ homepage:      http://github.com/ekmett/coda/
 bug-reports:   http://github.com/ekmett/coda/issues
 copyright:     Copyright (C) 2017 Edward A. Kmett
 build-type:    Simple
-synopsis:      Reduced ordered binary decision diagrams
+synopsis:      ROBDDs
 description:   Reduced ordered binary decision diagrams with optimized negation
 
 source-repository head
