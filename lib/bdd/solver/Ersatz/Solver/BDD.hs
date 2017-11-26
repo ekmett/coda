@@ -22,7 +22,8 @@ robdd problem = pure $ reifyCache $ \(Proxy :: Proxy s) ->
       result = solve (dimacsClauses problem)
       present One  = Just IntMap.empty
       present Zero = Nothing
-      present (BDD v l r) = IntMap.insert v False <$> present l <|> IntMap.insert v True  <$> present r
+      present (BDD v l r) = IntMap.insert v False <$> present l
+                        <|> IntMap.insert v True  <$> present r
   in case present result of
     Nothing -> (Unsatisfied, IntMap.empty)
     Just s -> (Satisfied, s)
