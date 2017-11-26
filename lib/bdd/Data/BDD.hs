@@ -16,7 +16,7 @@
 
 module Data.BDD
   ( -- * ROBDDs
-    BDD(Zero, One, BDD, ROBDD)
+    BDD(Zero, One, BDD, BDD_, ROBDD)
     -- * combinators
   , ite, neg, and, or, xor, implies, nand
     -- * variables
@@ -34,6 +34,7 @@ module Data.BDD
   , fun, table
     -- * memo management
   , reifyCache, Cache, Cached
+  , with
   , copy_     -- copy without relabeling
   , copy      -- substitute and copy
   , copy'     -- substitute and copy (in the same cache)
@@ -177,6 +178,7 @@ pattern One :: BDD s
 pattern One = D T
 
 {-# complete Zero, One, BDD #-}
+{-# complete Zero, One, BDD_ #-}
 {-# complete Zero, One, ROBDD #-}
 {-# complete D #-}
 
@@ -445,7 +447,7 @@ copyMono' :: Cached s => (Var -> Var) -> BDD s -> BDD s
 copyMono' = copyMono
 
 showBDD :: BDD s -> String
-showBDD n0 = go 0 n0 "" where
+showBDD n0 = go (0 :: Int) n0 "" where
   go _ One  = showString "One"
   go _ Zero = showString "Zero"
   go d (BDD_ v l r) = showParen (d>10)
