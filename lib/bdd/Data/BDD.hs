@@ -189,7 +189,6 @@ negNode F = T
 negNode T = F
 negNode (Node i v l r) = Node (-i) v l r
 
-
 reifyCache :: (forall s. Cached s => Proxy s -> r) -> r
 reifyCache f = unsafePerformIO $ do
   r <- newIORef Bimap.empty
