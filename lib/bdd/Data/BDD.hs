@@ -26,6 +26,9 @@ module Data.BDD
   , bool
   , var
   , liftB2
+  , forall
+  , exists
+  , unique
     -- * functions of two arguments
   , Fun(..)
   , fun, table
@@ -269,6 +272,24 @@ size (D n0) = Set.size (go n0 Set.empty) where
 data Fun = TNever | TAnd | TGt | TF | TLt | TG | TXor | TOr | TNor | TXnor | TG' | TGe | TF' | TLe | TNand | TAlways
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
 
+quantify :: forall s. Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
+quantify q vs n0 = evalState (go n0) HashMap.empty where
+  go (D (Node i v (D . polarize i -> l) (D . polarize i -> r))) = gets (HashMap.lookup i) >>= \case
+    Just z -> pure z
+    Nothing -> do
+      z <- (if Set.member v vs then q else bdd v) <$> go l <*> go r
+      z <$ modify (HashMap.insert i z)
+  go x = pure x
+
+forall :: Cached s => Set Var -> BDD s -> BDD s
+forall = quantify and
+
+exists :: Cached s => Set Var -> BDD s -> BDD s
+exists = quantify or
+
+unique :: Cached s => Set Var -> BDD s -> BDD s
+unique = quantify xor
+
 -- enumerate as a two argument boolean function
 fun :: (Bool -> Bool -> Bool) -> Fun
 fun f = toEnum 
@@ -338,7 +359,6 @@ copy_ (D n) = evalState (go n) HashMap.empty where
         z' <- bdd v <$> go l <*> go r
         z' <$ modify (HashMap.insert ni (neg z'))
   go x = pure (D x)
-
 
 -- copy a BDD over to a new tape and performs variable substitution
 copy :: forall s s'. Cached s' => (Var -> BDD s') -> BDD s -> BDD s'
