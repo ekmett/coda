@@ -17,11 +17,6 @@ literal 1    = One
 literal (-1) = Zero
 literal i    = polarize i $ var (abs i)
 
--- TODO: we can construct an optimal cache for and, given its the only ITE form used
--- for now remove the cache entirely to see if its the problem
-and' :: Cached s => BDD s -> BDD s -> BDD s
-and' = gtable TAnd id id
-
 -- use a more deliberate bdd construction for the clauses that constructs from the bottom up
 clause :: Cached s => IntSet -> BDD s
 -- clause = IntSet.foldr (\a r -> literal a `BDD.or` r) Zero
@@ -48,7 +43,7 @@ clause is = case splitMember 1 is of
 
 robdd :: Monad m => Solver SAT m
 robdd problem = pure $ reifyCache $ \(Proxy :: Proxy s) ->
-  let solve = Prelude.foldr (\a r -> clause a `and'` r) One
+  let solve = Prelude.foldr (\a r -> clause a `BDD.and` r) One
 
       result :: BDD s
       result = solve (dimacsClauses problem)

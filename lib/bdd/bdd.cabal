@@ -24,7 +24,7 @@ flag examples
 
 library
   default-language: Haskell2010
-  ghc-options: -Wall -O2
+  ghc-options: -Wall
 
   exposed-modules:
     Data.BDD
@@ -47,7 +47,7 @@ library
 test-suite factor
   type: exitcode-stdio-1.0
   default-language: Haskell2010
-  ghc-options: -Wall -rtsopts -with-rtsopts=-K64m
+  ghc-options: -Wall -rtsopts
   hs-source-dirs: examples
   main-is: factor.hs
   if !flag(examples)

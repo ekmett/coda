@@ -13,7 +13,7 @@
 {-# language StrictData #-}
 -- {-# language Strict #-}
 {-# language ViewPatterns #-}
-{-# options_ghc -funbox-strict-fields -O0 #-}
+{-# options_ghc -funbox-strict-fields #-}
 
 module Data.BDD
   ( -- * ROBDDs
