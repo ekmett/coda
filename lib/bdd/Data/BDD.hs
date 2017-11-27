@@ -13,7 +13,7 @@
 {-# language StrictData #-}
 -- {-# language Strict #-}
 {-# language ViewPatterns #-}
-{-# options_ghc -funbox-strict-fields #-}
+{-# options_ghc -funbox-strict-fields -O0 #-}
 
 module Data.BDD
   ( -- * ROBDDs
@@ -219,7 +219,7 @@ with f k = reifyCache $ \(Proxy :: Proxy s) -> k (f :: f s)
 root :: BDD s -> Var
 root = \case
   D (Node _ v _ _) -> v
-  _ -> 0
+  _ -> maxBound
 
 -- Shannon decomposition assuming u >= v
 shannon :: Var -> BDD s -> (BDD s, BDD s)
