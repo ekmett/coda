@@ -9,6 +9,7 @@ module Data.Bimap
   , insert
   , insertR
   , empty
+  , size
   ) where
 
 import Data.Hashable
@@ -41,3 +42,6 @@ insertR a b@(Bimap i m n) = case HashMap.lookup a m of
 -- node ids start at 1, so we can use negated node ids
 empty :: Bimap a
 empty = Bimap 1 HashMap.empty Skew.Nil
+
+size :: Bimap a -> Int
+size (Bimap i _ _) = i

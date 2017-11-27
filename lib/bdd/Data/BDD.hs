@@ -10,6 +10,7 @@
 {-# language RankNTypes #-}
 {-# language RoleAnnotations #-}
 {-# language ScopedTypeVariables #-}
+{-# language UndecidableInstances #-}
 {-# language StrictData #-}
 -- {-# language Strict #-}
 {-# language ViewPatterns #-}
@@ -19,9 +20,9 @@ module Data.BDD
   ( -- * ROBDDs
     BDD(Zero, One, BDD, BDD_, ROBDD)
     -- * combinators
-  , ite, neg, and, or, xor, implies, nand
+  , ite, neg, implies, nand
     -- * variables
-  , var
+  , var -- bit
     -- * booleans
   , bool
   , liftB
@@ -31,11 +32,9 @@ module Data.BDD
   , exists
   , unique
     -- * functions of two arguments
-  , Fun(..)
-  , andFun, orFun, xorFun, notFun
-  , fun, table
+  , Fun(..), fun, table
     -- * memo management
-  , reifyCache, Cache, Cached
+  , reifyCache, Cache, Cached, cacheSizes
   , with
   , copy_     -- copy without relabeling
   , copy      -- substitute and copy
@@ -65,7 +64,7 @@ import Control.Applicative as A
 import Control.Lens
 import Control.Monad.Trans.State.Strict
 import Data.Bimap as Bimap
-import qualified Data.Bits as Bits
+import Data.Bits as Bits
 import Data.Coerce
 import Data.Data
 import Data.Hashable
@@ -307,6 +306,10 @@ size !(D n0) = Set.size (go n0 Set.empty) where
   go (Node (abs -> i) _ l r) s | Set.notMember i s = go l $ go r $ Set.insert i s
   go _ s = s
 
+cacheSizes :: forall s proxy. Cached s => proxy s -> IO (Int,Int)
+cacheSizes _ = case reflect (Proxy :: Proxy s) of
+  Cache c m -> (\x y -> (Bimap.size x, HashMap.size y)) <$> readIORef c <*> readIORef m
+
 quantify :: Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
 quantify q !vs !n0 = evalState (go n0) HashMap.empty where
   go (ROBDD i v (polarize i -> l) (polarize i -> r)) = gets (HashMap.lookup i) >>= \case
@@ -317,10 +320,10 @@ quantify q !vs !n0 = evalState (go n0) HashMap.empty where
   go x = pure x
 
 forall :: Cached s => Set Var -> BDD s -> BDD s
-forall = quantify and
+forall = quantify (.&.)
 
 exists :: Cached s => Set Var -> BDD s -> BDD s
-exists = quantify or
+exists = quantify (.|.)
 
 unique :: Cached s => Set Var -> BDD s -> BDD s
 unique = quantify xor
@@ -335,19 +338,26 @@ liftB f !s
 data Fun = TNever | TAnd | TGt | TF | TLt | TG | TXor | TOr | TNor | TXnor | TG' | TGe | TF' | TLe | TNand | TAlways
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
 
--- | andFun TF TG = TAnd
-andFun :: Fun -> Fun -> Fun
-andFun !f !g = toEnum (fromEnum f Bits..&. fromEnum g)
+instance Bits Fun where
+  (.&.) f g    = toEnum (fromEnum f .&. fromEnum g)
+  (.|.) f g    = toEnum (fromEnum f .|. fromEnum g)
+  xor f g      = toEnum (fromEnum f `xor` fromEnum g)
+  complement f = toEnum (Bits.complement (fromEnum f) .&. 15)
+  shift x i = toEnum (shift (fromEnum x) i .&. 15)
+  rotateL (fromEnum -> x) i = toEnum $ (shiftL x i .|. shiftR x (4 - i)) .&. 15
+  rotateR (fromEnum -> x) i = toEnum $ (shiftR x i .|. shiftL x (4 - i)) .&. 15
+  bit i = toEnum (bit i .&. 15)
+  testBit = testBit . fromEnum
+  setBit x i = toEnum (setBit (fromEnum x) i .&. 15)
+  clearBit x i = toEnum (clearBit (fromEnum x) i .&. 15)
+  bitSizeMaybe _ = Just 4
+  bitSize _ = 4
+  isSigned _ = False
+  zeroBits = TNever
+  popCount = popCount . fromEnum
 
-orFun :: Fun -> Fun -> Fun
-orFun !f !g = toEnum (fromEnum f Bits..|. fromEnum g)
-
-xorFun :: Fun -> Fun -> Fun
-xorFun !f !g = toEnum (fromEnum f `Bits.xor` fromEnum g)
-
--- | notFun TF = TF'
-notFun :: Fun -> Fun
-notFun !f = toEnum (Bits.complement (fromEnum f) Bits..&. 15)
+instance FiniteBits Fun where
+  finiteBitSize _ = 4
 
 -- enumerate as a two argument boolean function
 fun :: (Bool -> Bool -> Bool) -> Fun
@@ -400,15 +410,6 @@ gtable m vf vg f g | vh <- id = case m of
 
 gliftB2 :: Cached v => (Bool -> Bool -> Bool) -> (Var -> Var) -> (Var -> Var) -> BDD s -> BDD u -> BDD v
 gliftB2 = gtable . fun
-
-and :: Cached s => BDD s -> BDD s -> BDD s
-and !f !g = ite f g Zero
-
-or  :: Cached s => BDD s -> BDD s -> BDD s
-or !f !g = ite f One g
-
-xor :: Cached s => BDD s -> BDD s -> BDD s
-xor !f !g = ite f (neg g) g
 
 implies :: Cached s => BDD s -> BDD s -> BDD s
 implies !f !g = ite f One (neg g) -- f >= g
@@ -508,3 +509,22 @@ showBDD !n0 = go (0 :: Int) n0 "" where
     $ showString "BDD " . showsPrec 11 v
     . showChar ' ' . go 11 l
     . showChar ' ' . go 11 r
+
+-- punning for great good
+instance Cached s => Bits (BDD s) where
+  (.&.) f g = ite f g Zero
+  (.|.) f g = ite f One g
+  xor f g = ite f (neg g) g
+  complement = neg
+  shift b i = copyStrictMono (i+) b
+  rotate b i = copyStrictMono (i+) b
+  zeroBits = Zero
+  bit = var
+  setBit b i = copy (\j -> if i == j then One else var i) b
+  clearBit b i = copy (\j -> if i == j then Zero else var i) b
+  complementBit b i = copy (\j -> if i == j then neg (var j) else var j) b
+  testBit = error "BDD.testBit" -- ok, yeah i got nothing
+  bitSizeMaybe _ = Nothing
+  bitSize = error "BDD.bitSize" -- legacy
+  isSigned _ = True
+  popCount = error "BDD.popCount"

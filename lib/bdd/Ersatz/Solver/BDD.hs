@@ -5,6 +5,7 @@
 module Ersatz.Solver.BDD where
 
 import Control.Applicative
+import Data.Bits
 import Data.BDD as BDD
 import Data.IntMap as IntMap
 import Data.IntSet as IntSet
@@ -43,7 +44,7 @@ clause is = case splitMember 1 is of
 
 robdd :: Monad m => Solver SAT m
 robdd problem = pure $ reifyCache $ \(Proxy :: Proxy s) ->
-  let solve = Prelude.foldr (\a r -> clause a `BDD.and` r) One
+  let solve = Prelude.foldr (\a r -> clause a .&. r) One
 
       result :: BDD s
       result = solve (dimacsClauses problem)
