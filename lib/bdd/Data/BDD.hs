@@ -265,10 +265,10 @@ isPos (D F) = False
 --ite f g 0 ==> garbage
 
 -- normalize arguments for if then else exploiting symmetries, no cache required
-normalized :: BDD s -> BDD s -> BDD s -> (BDD s, BDD s, BDD s)
+normalized :: BDD s -> BDD s -> BDD s -> (Bool, BDD s, BDD s, BDD s)
 normalized = go where
   go f g h
-    | f ==  g   = go1 f One h  -- ite f f h = ite f T h
+    | f ==  g   = go1 f One h  -- ite f f h  = ite f T h
     | f ==! g   = go1 f Zero h -- ite f ~f h = ite f F h
     | otherwise = go1 f g h
 
@@ -292,31 +292,33 @@ normalized = go where
     | otherwise          = go5 f g h
 
   go5 f g h = case (isPos f, isPos g) of -- convert to positive f and g
-    (True, True)  -> (f,     g,     h    )
-    (False,True)  -> (neg f, h,     g    )
-    (False,False) -> (neg f, neg h, g    )
-    (True, False) -> (f,     neg g, neg h)
+    (True, True)  -> (True,  f,     g,     h    )
+    (False,True)  -> (True,  neg f, h,     g    )
+    (False,False) -> (False, neg f, neg h, g    )
+    (True, False) -> (False, f,     neg g, neg h)
 {-# inline normalized #-}
 
 ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
 ite f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
   mr = getMemo $ reflect (Proxy :: Proxy s)
+  tweak True x = x
+  tweak False x = neg x
   go :: BDD s -> BDD s -> BDD s -> IO (BDD s)
   go f1 g1 h1 = case normalized f1 g1 h1 of
-    (One,  g,   _   ) -> pure g
-    (Zero, _,   h   ) -> pure h
-    (f,    One, Zero) -> pure f
-    (f,    g,   h   )
-      | g == h -> pure g
+    (i, One,  g,   _   ) -> pure (tweak i g)
+    (i, Zero, _,   h   ) -> pure (tweak i h)
+    (i, f,    One, Zero) -> pure (tweak i f)
+    (i, f,    g,   h   )
+      | g == h -> pure (tweak i g)
       | k <- coerce ITE f g h -> readIORef mr >>= \m -> case HashMap.lookup k m of
-      Just r -> pure $ D r
+      Just r -> pure $ tweak i $ D r
       Nothing
         | v <- root f `min` root g `min` root h -- TODO: can we prove this is just root f after normalize?
         , (f',f'') <- shannon v f
         , (g',g'') <- shannon v g
         , (h',h'') <- shannon v h -> do
           r <- bdd v <$> go f' g' h' <*> go f'' g'' h''
-          r <$ atomicModifyIORef' mr (\m' -> (HashMap.insert k (node r) m', ()))
+          tweak i r <$ atomicModifyIORef' mr (\m' -> (HashMap.insert k (node r) m', ()))
 
 instance Semigroup Constant where
   FalseConstant <> FalseConstant = FalseConstant
@@ -332,26 +334,30 @@ instance Semigroup Constant where
 itec :: forall s. Cached s => BDD s -> BDD s -> BDD s -> Constant
 itec f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
   mr = getConstantMemo $ reflect (Proxy :: Proxy s)
+  tweak True x = x
+  tweak False FalseConstant = TrueConstant
+  tweak False TrueConstant = FalseConstant
+  tweak False NonConstant = NonConstant
   cont :: ITE -> Constant -> IO Constant
   cont k r = r <$ atomicModifyIORef' mr (\m' -> (HashMap.insert k r m', ()))
   go :: BDD s -> BDD s -> BDD s -> IO Constant
   go f1 g1 h1 = case normalized f1 g1 h1 of
-    (One,g,_)    -> pure $ constant g
-    (Zero,_,h)   -> pure $ constant h
-    (f,One,Zero) -> pure $ constant f
-    (f,g,h)
-      | g == h -> pure $ constant g
+    (i,One,g,_)    -> pure $ tweak i $ constant g
+    (i,Zero,_,h)   -> pure $ tweak i $ constant h
+    (i,f,One,Zero) -> pure $ tweak i $ constant f
+    (i,f,g,h)
+      | g == h -> pure $ tweak i $ constant g
       | k <- coerce ITE f g h -> readIORef mr >>= \m -> case HashMap.lookup k m of
-      Just r -> pure r
+      Just r -> pure $ tweak i r
       Nothing
         | v <- root f `min` root g `min` root h
         , (f',f'') <- shannon v f
         , (g',g'') <- shannon v g
         , (h',h'') <- shannon v h -> go f' g' h' >>= \case
           NonConstant -> cont k NonConstant
-          i           -> go f'' g'' h'' >>= \case
+          x           -> go f'' g'' h'' >>= \case
             NonConstant -> cont k NonConstant
-            j           -> cont k (i <> j)
+            y           -> tweak i <$> cont k (x <> y)
 
 -- perform an if then else using strictly monotone relabeling scheme
 gite
