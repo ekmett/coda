@@ -76,6 +76,7 @@ import Data.IORef
 import Data.Reflection
 import Data.Semigroup
 import Data.Set as Set
+-- import Debug.Trace
 import GHC.Arr
 import GHC.Generics
 import System.IO.Unsafe (unsafePerformIO)
@@ -93,6 +94,12 @@ instance Eq Node where
   T == T = True
   Node i _ _ _ == Node j _ _ _ = i == j
   _ == _ = False
+
+(==!) :: BDD s -> BDD s -> Bool
+D F ==! D T = True
+D T ==! D F = True
+D (Node i _ _ _) ==! D (Node j _ _ _) = i == -j
+_ ==! _ = False
 
 instance Ord Node where
   F `compare` F = EQ
@@ -255,32 +262,40 @@ isPos (D (Node i _ _ _)) = i > 0
 isPos (D T) = True
 isPos (D F) = False
 
+--ite f g 0 ==> garbage
+
 -- normalize arguments for if then else exploiting symmetries, no cache required
-normalized :: BDD s -> BDD s -> BDD s -> (BDD s , BDD s, BDD s)
+normalized :: BDD s -> BDD s -> BDD s -> (BDD s, BDD s, BDD s)
 normalized = go where
-  go f g h | f == g      = go1 f One h -- ffg -> fTh
-           | f == neg g  = go1 f Zero g -- ff'g -> fFg
-           | otherwise   = go1 f g h
-  go1 f g h | f == h     = go2 f g One -- fgf -> fgF
-            | f == neg h = go2 f g Zero -- fgf' -> fgT
-            | otherwise  = go2 f g h
-  go2 f One g  | itegt f g = go3 g One f
-  go2 f Zero g | itegt f g = go3 (neg g) One (neg f)
+  go f g h
+    | f ==  g   = go1 f One h  -- ite f f h = ite f T h
+    | f ==! g   = go1 f Zero h -- ite f ~f h = ite f F h
+    | otherwise = go1 f g h
+
+  go1 f g h
+    | f ==  h   = go2 f g Zero -- ite f g f  = ite f g F
+    | f ==! h   = go2 f g One  -- ite f g ~f = ite f g T
+    | otherwise = go2 f g h
+
+  -- ite f g h = ite ~f h g
+
+  go2 f One h  | itegt f h = go3 h One f              -- ite f T h = f | h = h | f = ite h T f
+  go2 f Zero h | itegt f h = go3 (neg h) Zero (neg f) -- ite f F h = h & ~f = ite h ~f F = ite ~h F ~f
   go2 f g h                = go3 f g h
 
-  go3 f g Zero | itegt f g = go4 g f Zero
-  go3 f g One  | itegt f g = go4 (neg g) (neg f) One
+  go3 f g Zero | itegt f g = go4 g f Zero            -- ite f g F = f & g = g & f = ite g f F
+  go3 f g One  | itegt f g = go4 (neg g) (neg f) One -- ite f g T = f & g | ~f = ite g T ~f = ite ~g ~f T
   go3 f g h                = go4 f g h
 
   go4 f g h
-    | g == neg h, itegt g h = go5 g f (neg f)
-    | otherwise = go5 f g h
+    | g ==! h, itegt f g = go5 g f (neg f)           -- ite f g ~g = (f&g)|(~f&~g = ite g f ~f
+    | otherwise          = go5 f g h
 
   go5 f g h = case (isPos f, isPos g) of -- convert to positive f and g
     (True, True)  -> (f,     g,     h    )
     (False,True)  -> (neg f, h,     g    )
     (False,False) -> (neg f, neg h, g    )
-    (True,False)  -> (f,     neg g, neg h)
+    (True, False) -> (f,     neg g, neg h)
 {-# inline normalized #-}
 
 ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
@@ -288,15 +303,15 @@ ite f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
   mr = getMemo $ reflect (Proxy :: Proxy s)
   go :: BDD s -> BDD s -> BDD s -> IO (BDD s)
   go f1 g1 h1 = case normalized f1 g1 h1 of
-    (One,g,_)    -> pure g
-    (Zero,_,h)   -> pure h
-    (f,One,Zero) -> pure f
-    (f,g,h)
+    (One,  g,   _   ) -> pure g
+    (Zero, _,   h   ) -> pure h
+    (f,    One, Zero) -> pure f
+    (f,    g,   h   )
       | g == h -> pure g
       | k <- coerce ITE f g h -> readIORef mr >>= \m -> case HashMap.lookup k m of
       Just r -> pure $ D r
       Nothing
-        | v <- root f `min` root g `min` root h
+        | v <- root f `min` root g `min` root h -- TODO: can we prove this is just root f after normalize?
         , (f',f'') <- shannon v f
         , (g',g'') <- shannon v g
         , (h',h'') <- shannon v h -> do
