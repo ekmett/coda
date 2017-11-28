@@ -257,45 +257,50 @@ itegt f g = case compare (root f) (root g) of
   EQ -> iteid f > iteid g
   GT -> True
 
-isPos :: BDD s -> Bool
-isPos (D (Node i _ _ _)) = i > 0
-isPos (D T) = True
-isPos (D F) = False
-
---ite f g 0 ==> garbage
+isNeg :: BDD s -> Bool
+isNeg (D (Node i _ _ _)) = i < 0
+isNeg (D T) = False
+isNeg (D F) = True
 
 -- normalize arguments for if then else exploiting symmetries, no cache required
 normalized :: BDD s -> BDD s -> BDD s -> (Bool, BDD s, BDD s, BDD s)
 normalized = go where
+  -- redundant g
   go f g h
     | f ==  g   = go1 f One h  -- ite f f h  = ite f T h
     | f ==! g   = go1 f Zero h -- ite f ~f h = ite f F h
     | otherwise = go1 f g h
 
+  -- redundant h
   go1 f g h
     | f ==  h   = go2 f g Zero -- ite f g f  = ite f g F
     | f ==! h   = go2 f g One  -- ite f g ~f = ite f g T
     | otherwise = go2 f g h
 
-  -- ite f g h = ite ~f h g
-
+  -- minimize f against h if we can
   go2 f One h  | itegt f h = go3 h One f              -- ite f T h = f | h = h | f = ite h T f
   go2 f Zero h | itegt f h = go3 (neg h) Zero (neg f) -- ite f F h = h & ~f = ite h ~f F = ite ~h F ~f
   go2 f g h                = go3 f g h
 
+  -- minimize f against g if we can
   go3 f g Zero | itegt f g = go4 g f Zero            -- ite f g F = f & g = g & f = ite g f F
   go3 f g One  | itegt f g = go4 (neg g) (neg f) One -- ite f g T = f & g | ~f = ite g T ~f = ite ~g ~f T
   go3 f g h                = go4 f g h
 
+  -- symmetric difference is symmetric, minimize f
   go4 f g h
-    | g ==! h, itegt f g = go5 g f (neg f)           -- ite f g ~g = (f&g)|(~f&~g = ite g f ~f
+    | g ==! h, itegt f g = go5 g f (neg f)           -- ite f g ~g = (f&g)|(~f&~g) = ite g f ~f
     | otherwise          = go5 f g h
 
-  go5 f g h = case (isPos f, isPos g) of -- convert to positive f and g
-    (True, True)  -> (True,  f,     g,     h    )
-    (False,True)  -> (True,  neg f, h,     g    )
-    (False,False) -> (False, neg f, neg h, g    )
-    (True, False) -> (False, f,     neg g, neg h)
+  -- ite f g h = ite ~f h g, ensure f is positive
+  go5 f g h
+    | isNeg f = go6 (neg f) h g
+    | otherwise = go6 f g h
+
+  -- ite f g h = ~ite f ~g ~h, ensure g is positive
+  go6 f g h
+    | isNeg g   = (False, f, neg g, neg h)
+    | otherwise = (True,  f, g,     h    )
 {-# inline normalized #-}
 
 ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
