@@ -46,7 +46,10 @@ module Data.BDD
   , gite, gtable, gliftB2
     -- * satisfaction
   , sat
-  , tautology
+    -- * tautology checking
+  , Constant(..)
+  , constant
+  , itec
     -- ** enumerating solutions
   , Binding(..)
   , sats
@@ -71,6 +74,7 @@ import Data.Hashable
 import Data.HashMap.Strict as HashMap
 import Data.IORef
 import Data.Reflection
+import Data.Semigroup
 import Data.Set as Set
 import GHC.Arr
 import GHC.Generics
@@ -118,11 +122,16 @@ node (D n) = n
 
 type Memo = HashMap ITE Node -- cached ite results
 
+type ConstantMemo = HashMap ITE Constant
+
+data Constant = FalseConstant | NonConstant | TrueConstant
+
 type DAG = Bimap Key
 
 data Cache = Cache
   { getCache :: IORef DAG
   , getMemo :: IORef Memo
+  , getConstantMemo :: IORef ConstantMemo
   } deriving Eq
 
 type Cached s = Reifies s Cache
@@ -209,7 +218,8 @@ reifyCache :: (forall s. Cached s => Proxy s -> r) -> r
 reifyCache f = unsafePerformIO $ do
   r <- newIORef Bimap.empty
   m <- newIORef HashMap.empty
-  return $ reify (Cache r m) f
+  n <- newIORef HashMap.empty
+  return $ reify (Cache r m n) f
 
 with :: forall f r. (forall s. Cached s => f s) -> (forall s. f s -> r) -> r
 with f k = reifyCache $ \(Proxy :: Proxy s) -> k (f :: f s)
@@ -230,16 +240,60 @@ gshannon :: (Var -> Var) -> Var -> BDD s -> (BDD s, BDD s)
 gshannon f !u (ROBDD i v l r) | u == f v = (polarize i l, polarize i r) -- present results in positive form
 gshannon _ _ n = (n, n)
 
+iteid :: BDD s -> Int
+iteid (D (Node i _ _ _)) = abs i
+iteid _ = minBound
+
+itegt :: BDD s -> BDD s -> Bool
+itegt f g = case compare (root f) (root g) of
+  LT -> False
+  EQ -> iteid f > iteid g
+  GT -> True
+
+isPos :: BDD s -> Bool
+isPos (D (Node i _ _ _)) = i > 0
+isPos (D T) = True
+isPos (D F) = False
+
+-- normalize arguments for if then else exploiting symmetries, no cache required
+normalized :: BDD s -> BDD s -> BDD s -> (BDD s , BDD s, BDD s)
+normalized = go where
+  go f g h | f == g      = go1 f One h -- ffg -> fTh
+           | f == neg g  = go1 f Zero g -- ff'g -> fFg
+           | otherwise   = go1 f g h
+  go1 f g h | f == h     = go2 f g One -- fgf -> fgF
+            | f == neg h = go2 f g Zero -- fgf' -> fgT
+            | otherwise  = go2 f g h
+  go2 f One g  | itegt f g = go3 g One f
+  go2 f Zero g | itegt f g = go3 (neg g) One (neg f)
+  go2 f g h                = go3 f g h
+
+  go3 f g Zero | itegt f g = go4 g f Zero
+  go3 f g One  | itegt f g = go4 (neg g) (neg f) One
+  go3 f g h                = go4 f g h
+
+  go4 f g h
+    | g == neg h, itegt g h = go5 g f (neg f)
+    | otherwise = go5 f g h
+
+  go5 f g h = case (isPos f, isPos g) of -- convert to positive f and g
+    (True, True)  -> (f,     g,     h    )
+    (False,True)  -> (neg f, h,     g    )
+    (False,False) -> (neg f, neg h, g    )
+    (True,False)  -> (f,     neg g, neg h)
+{-# inline normalized #-}
+
 ite :: forall s. Cached s => BDD s -> BDD s -> BDD s -> BDD s
 ite f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
   mr = getMemo $ reflect (Proxy :: Proxy s)
   go :: BDD s -> BDD s -> BDD s -> IO (BDD s)
-  go One !f !_ = pure f
-  go Zero _ f = pure f
-  go f One Zero = pure f
-  go f g h
-    | g == h = pure g
-    | k <- coerce ITE f g h = readIORef mr >>= \m -> case HashMap.lookup k m of
+  go f1 g1 h1 = case normalized f1 g1 h1 of
+    (One,g,_)    -> pure g
+    (Zero,_,h)   -> pure h
+    (f,One,Zero) -> pure f
+    (f,g,h)
+      | g == h -> pure g
+      | k <- coerce ITE f g h -> readIORef mr >>= \m -> case HashMap.lookup k m of
       Just r -> pure $ D r
       Nothing
         | v <- root f `min` root g `min` root h
@@ -248,6 +302,41 @@ ite f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
         , (h',h'') <- shannon v h -> do
           r <- bdd v <$> go f' g' h' <*> go f'' g'' h''
           r <$ atomicModifyIORef' mr (\m' -> (HashMap.insert k (node r) m', ()))
+
+instance Semigroup Constant where
+  FalseConstant <> FalseConstant = FalseConstant
+  TrueConstant <> TrueConstant = TrueConstant
+  _ <> _ = NonConstant
+
+-- |
+-- @
+-- itec f g h = constant (ite f g h)
+-- @
+--
+-- but it can be implemented much more efficiently
+itec :: forall s. Cached s => BDD s -> BDD s -> BDD s -> Constant
+itec f0 g0 h0 = unsafePerformIO $ go f0 g0 h0 where
+  mr = getConstantMemo $ reflect (Proxy :: Proxy s)
+  cont :: ITE -> Constant -> IO Constant
+  cont k r = r <$ atomicModifyIORef' mr (\m' -> (HashMap.insert k r m', ()))
+  go :: BDD s -> BDD s -> BDD s -> IO Constant
+  go f1 g1 h1 = case normalized f1 g1 h1 of
+    (One,g,_)    -> pure $ constant g
+    (Zero,_,h)   -> pure $ constant h
+    (f,One,Zero) -> pure $ constant f
+    (f,g,h)
+      | g == h -> pure $ constant g
+      | k <- coerce ITE f g h -> readIORef mr >>= \m -> case HashMap.lookup k m of
+      Just r -> pure r
+      Nothing
+        | v <- root f `min` root g `min` root h
+        , (f',f'') <- shannon v f
+        , (g',g'') <- shannon v g
+        , (h',h'') <- shannon v h -> go f' g' h' >>= \case
+          NonConstant -> cont k NonConstant
+          i           -> go f'' g'' h'' >>= \case
+            NonConstant -> cont k NonConstant
+            j           -> cont k (i <> j)
 
 -- perform an if then else using strictly monotone relabeling scheme
 gite
@@ -261,6 +350,7 @@ gite
   -> BDD v
 gite vf vg vh f0 g0 h0 = evalState (go f0 g0 h0) mempty where
   go :: BDD s -> BDD t -> BDD u -> State (HashMap NodeId (BDD v), HashMap NodeId (BDD v), HashMap NodeId (BDD v), HashMap ITE (BDD v)) (BDD v)
+  -- we don't get the nice symmetries above
   go One g _    = zoom _2 $ copyStrictMonoM vg g
   go Zero _ h   = zoom _3 $ copyStrictMonoM vh h
   go f One Zero = zoom _1 $ copyStrictMonoM vf f
@@ -281,9 +371,10 @@ sat Zero = False
 sat _ = True
 
 -- check for tautology
-tautology :: BDD s -> Bool
-tautology One = True
-tautology _   = False
+constant :: BDD s -> Constant
+constant One = TrueConstant
+constant Zero = FalseConstant
+constant _ = NonConstant
 
 data Binding = Var := Bool deriving (Eq,Ord,Show,Read,Data,Generic,Hashable)
 
@@ -306,9 +397,9 @@ size !(D n0) = Set.size (go n0 Set.empty) where
   go (Node (abs -> i) _ l r) s | Set.notMember i s = go l $ go r $ Set.insert i s
   go _ s = s
 
-cacheSizes :: forall s proxy. Cached s => proxy s -> IO (Int,Int)
+cacheSizes :: forall s proxy. Cached s => proxy s -> IO (Int,Int,Int)
 cacheSizes _ = case reflect (Proxy :: Proxy s) of
-  Cache c m -> (\x y -> (Bimap.size x, HashMap.size y)) <$> readIORef c <*> readIORef m
+  Cache c m n -> (\x y z -> (Bimap.size x, HashMap.size y, HashMap.size z)) <$> readIORef c <*> readIORef m <*> readIORef n
 
 quantify :: Cached s => (BDD s -> BDD s -> BDD s) -> Set Var -> BDD s -> BDD s
 quantify q !vs !n0 = evalState (go n0) HashMap.empty where
