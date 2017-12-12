@@ -39,9 +39,9 @@ library
   autogen-modules: Paths_coda_common
 
   build-depends:
-    base                 >= 4.10     && < 5,
-    data-default         >= 0.7.1.1  && < 0.8,
+    base >= 4.10 && < 5,
+    data-default ^>= 0.7.1.1,
     ghc-prim,
-    hashable             >= 1.2.6    && < 1.3,
-    lens                 >= 4.15     && < 5,
-    text                 >= 1.2      && < 1.3
+    hashable ^>= 1.2.6,
+    lens >= 4.15 && < 5,
+    text ^>= 1.2

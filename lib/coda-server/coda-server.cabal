@@ -32,6 +32,6 @@ library
     data-default,
     lens,
     mtl,
-    optparse-applicative >= 0.13     && < 0.15,
+    optparse-applicative >= 0.13 && < 0.15,
     text,
     unordered-containers

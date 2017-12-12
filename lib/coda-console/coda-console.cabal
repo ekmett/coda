@@ -29,15 +29,15 @@ library
     Coda.Console.Unicode
   build-depends: coda-common, coda-lsp, coda-syntax
   build-depends:
-    ansi-wl-pprint       >= 0.6      && < 0.7,
+    ansi-wl-pprint ^>= 0.6,
     base,
     containers,
     data-default,
-    exceptions           >= 0.8.2.1  && < 0.9,
-    haskeline            >= 0.7.4    && < 0.8,
-    hyphenation          >= 0.7      && < 0.8,
+    exceptions >= 0.8.2.1  && < 0.9,
+    haskeline ^>= 0.7.4,
+    hyphenation ^>= 0.7,
     lens,
     mtl,
-    optparse-applicative >= 0.13     && < 0.15,
-    split                >= 0.2      && < 0.3,
+    optparse-applicative >= 0.13 && < 0.15,
+    split ^>= 0.2,
     text

@@ -22,7 +22,7 @@ library
   ghc-options: -Wall
   build-depends:
     base >= 4.10 && < 5,
-    containers >= 0.5.8.2 && < 0.6,
+    containers ^>= 0.5.8.2,
     contravariant >= 1.4 && < 2,
     nats >= 1.1.1 && < 2
 
