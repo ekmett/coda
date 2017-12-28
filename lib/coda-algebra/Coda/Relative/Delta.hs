@@ -11,7 +11,7 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- Stuff we an measure in UTF-16 code units
+-- Stuff we can measure in UTF-16 code units
 ---------------------------------------------------------------------------------
 
 module Coda.Relative.Delta
