@@ -67,7 +67,7 @@ Directories
 | ------------- | ----- |
 | `.vscode`     | Visual Studio Code configuration for the current workspace |
 | `bin`         | Executable scripts |
-| `coda*`       | Haskell code for the language |
+| `lib/coda*`   | Haskell code for the language |
 | `code`        | Typescript code for the extension |
 | `images`      | The logo, etc. |
 | `test/code`   | Typescript code for testing |
