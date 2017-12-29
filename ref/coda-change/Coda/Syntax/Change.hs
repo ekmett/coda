@@ -63,7 +63,7 @@ class Semigroup a => InverseSemigroup a where
 -- kind of non-deterministic diagnostic output
 
 data Error
-instance Eq Error where _ == _ = True 
+instance Eq Error where _ == _ = True
 instance Ord Error where compare _ _ = EQ
 instance Show Error where showsPrec _ !e = case e of {}
 instance Read Error where
@@ -80,7 +80,7 @@ instance Show a => Show (Partial a) where
   showsPrec d (OK a) = showParen (d > 10) $ showString "OK " . showsPrec 11 a
   showsPrec _ (Fail !e) = case e of {}
 
-instance Applicative Partial where 
+instance Applicative Partial where
   pure = OK
   {-# inline pure #-}
 
@@ -127,6 +127,11 @@ total (Fail !e) = case e of {}
 total (OK a) = a
 {-# inline total #-}
 
+partial :: Partial a -> Maybe a
+partial (Fail _) = Nothing
+partial (OK a)   = Just a
+{-# inline partial #-}
+
 --------------------------------------------------------------------------------
 -- Composable
 --------------------------------------------------------------------------------
@@ -160,7 +165,7 @@ class (Inverse (Idempotent a), Composable a, Idempotent (Idempotent a) ~ Idempot
   inverse :: a -> a
 
   -- | Inverse gives us an inverse category, but the 'types' aren't parameters and are down here at the value level
-  -- 
+  --
   -- @src@ and @tgt@ are the source and target mappings, and @ident@ provides us the identity arrows.
   type Idempotent a :: *
   type Idempotent a = a
@@ -184,7 +189,7 @@ instance Inverse a => InverseSemigroup (Partial a) where
 
 -- not to be confused with inv!
 instance Inverse Delta where
-  inverse a = a 
+  inverse a = a
 
 --------------------------------------------------------------------------------
 -- Text Utilities
@@ -198,7 +203,7 @@ foldMapWithPos :: forall a m. (Measured a, Monoid m) => (Measure a -> a -> m) ->
 foldMapWithPos f = getConst . traverseWithPos (\v a -> Const (f v a) :: Const m (FingerTree a))
 {-# inline foldMapWithPos #-}
 
--- respects measure 
+-- respects measure
 class (Measured t, HasDelta (Measure t)) => Splittable t where
   splitDelta :: Delta -> t -> (t, t)
   splitDelta d t = (takeDelta d t, dropDelta d t)
@@ -363,7 +368,7 @@ instance Relative Edit where
   rel d (Edit n f t) = Edit (d+n) f t
 
 instance Splittable Edit where
-  splitDelta i e@(Edit n f t) 
+  splitDelta i e@(Edit n f t)
     | i < 0 = (def, e)
     | i < n = (cpy i, Edit (n-1) f t)
     | nf <- n+f, i < nf = (Edit n (nf - i) t, Edit 0 (f + i - nf) 0)
@@ -473,13 +478,15 @@ class Changeable a where
 -- | /O(log(min(k,n-k)))/ where there are @n@ edits, @k@ of which occur before the position in question
 instance Changeable Delta where
   change (Change xs d) i = case search (\m _ -> i < delta m) xs of
-    Position (measure -> Grade o n) _ _ -> pure (n + i - o)
+    Position (measure -> Grade o n) (Edit a _ _) _
+      | i - o <= a -> pure (n + i - o)
+      | otherwise  -> fail "changePos: deleted position"
     OnRight
-      | Grade o n <- measure xs, res <- i - o, res <= d -> pure (n + res)
+      | Grade o n <- measure xs, res <- i - o, res < d -> pure (n + res)
       | otherwise -> fail "changePos: Past end"
     OnLeft -> fail "changePos: index < 0"
     Nowhere -> fail "changePos: Nowhere"
-  
+
 instance FromEdit Change where
   fromEdit e
     | Grade 0 0 <- measure e = C0 0
