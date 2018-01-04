@@ -65,6 +65,7 @@ import Coda.Relative.Delta.Type
 -- | /O(log(min(n1,n2)))/. Concatenate two sequences.
 instance Measured a => Semigroup (FingerTree a) where
   (<>) = appendFingerTree0
+  stimes = mtimesDefault
 
 instance Measured a => Monoid (FingerTree a) where
   mempty = EmptyTree
