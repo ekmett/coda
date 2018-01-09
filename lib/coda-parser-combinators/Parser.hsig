@@ -1,0 +1,15 @@
+signature Parser where
+
+import Control.Applicative
+import Control.Monad
+import Data.Semigroup
+
+data Parser a
+
+instance Functor Parser
+instance Applicative Parser
+instance Alternative Parser
+instance Monad Parser
+instance MonadPlus Parser
+instance Semigroup a => Semigroup (Parser a)
+instance Monoid a => Monoid (Parser a)
