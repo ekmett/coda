@@ -480,7 +480,13 @@ instance Default DocumentUri where
 -- | Encode/decode FilePaths <-> "file://" urls
 pattern File :: FilePath -> DocumentUri
 pattern File path <- (documentUriToFilePath -> Just path) where
-  File path = DocumentUri $ Text.pack $ "file://" ++ URI.encode path
+  File path = filePathToDocumentUri path
+
+filePathToDocumentUri :: FilePath -> DocumentUri
+filePathToDocumentUri xs@(c:':':_)
+  | c /= '/' = DocumentUri $ Text.pack $ "file:///" ++ URI.encode xs
+filePathToDocumentUri xs
+             = DocumentUri $ Text.pack $ "file://"  ++ URI.encode xs
 
 documentUriToFilePath :: DocumentUri -> Maybe FilePath
 documentUriToFilePath (DocumentUri u)
