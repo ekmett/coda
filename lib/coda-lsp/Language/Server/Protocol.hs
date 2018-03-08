@@ -210,9 +210,10 @@ import Data.Aeson hiding (Error)
 import Data.Aeson.Encoding
 import Data.Aeson.Internal
 import Data.Aeson.Lens
+import Data.Char as Char
 import Data.Data
 import Data.Default
-import Data.Foldable
+import Data.Foldable as Foldable
 import Data.Hashable
 import Data.HashMap.Strict (HashMap)
 import Data.Ix (Ix)
@@ -222,6 +223,7 @@ import Data.String
 import Data.Text as Text
 import GHC.Generics
 import Network.URI.Encode as URI
+import System.FilePath as FilePath
 import Text.Read as Read hiding (Number, String)
 
 import Language.Server.TH
@@ -483,14 +485,16 @@ pattern File path <- (documentUriToFilePath -> Just path) where
   File path = filePathToDocumentUri path
 
 filePathToDocumentUri :: FilePath -> DocumentUri
-filePathToDocumentUri xs@(c:':':_)
-  | c /= '/' = DocumentUri $ Text.pack $ "file:///" ++ URI.encode xs
-filePathToDocumentUri xs
-             = DocumentUri $ Text.pack $ "file://"  ++ URI.encode xs
+filePathToDocumentUri (c:':':xs)
+  | c /= '/' = DocumentUri $ Text.pack $ Foldable.concat ["file:///", URI.encode [Char.toUpper c], ":", URI.encode $ convertDelim <$> xs]
+  where
+    convertDelim '\\' = '/'
+    convertDelim c = c
+filePathToDocumentUri xs = DocumentUri $ Text.pack $ "file://"  ++ URI.encode xs
 
 documentUriToFilePath :: DocumentUri -> Maybe FilePath
 documentUriToFilePath (DocumentUri u)
-  = adjust . URI.decode . Text.unpack <$> Text.stripPrefix "file://" u
+  = FilePath.normalise . adjust . URI.decode . Text.unpack <$> Text.stripPrefix "file://" u
   where
     adjust ('/':xs@(_:':':_)) = xs
     adjust xs = xs
