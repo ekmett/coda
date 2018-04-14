@@ -42,7 +42,7 @@ library
     lens,
     reflection >= 2.1 && < 3,
     transformers ^>= 0.5,
-    unordered-containers >= 0.2.6    && < 3
+    unordered-containers >= 0.2.6 && < 3
 
 test-suite factor
   type: exitcode-stdio-1.0
