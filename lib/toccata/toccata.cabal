@@ -40,6 +40,7 @@ library
 executable toccata
   default-language: Haskell2010
   build-depends: base, toccata, optparse-applicative
-  main-is: app/Main.hs
+  hs-source-dirs: app
+  main-is: Main.hs
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   other-modules: Paths_toccata
