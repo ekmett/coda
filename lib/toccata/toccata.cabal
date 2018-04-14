@@ -24,9 +24,18 @@ library
   build-depends:
     base >= 4.11 && < 5,
     data-default-class,
+    exceptions,
+    haskeline,
     lens,
-    optparse-applicative
-  exposed-modules: Options
+    optparse-applicative,
+    transformers
+  exposed-modules:
+    Console
+    Options
+
+  other-modules:
+    Unicode
+
   ghc-options: -Wall
 
 executable toccata
