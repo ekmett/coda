@@ -12,7 +12,7 @@
 --
 --------------------------------------------------------------------
 
-module Unicode
+module Console.Unicode
   ( withUnicode
   ) where
 

@@ -5,15 +5,15 @@ import Control.Monad (when)
 import Data.Char
 import System.Console.Haskeline
 
-import Options
-import Unicode
+import Console.Options
+import Console.Unicode
 
 -- returns whether to carry on
 executeCommand :: String -> InputT IO Bool
 executeCommand "q" = return False
 executeCommand _ = return True
 
-console :: Options -> IO ()
+console :: ConsoleOptions -> IO ()
 console _opts = withUnicode $ runInputT defaultSettings loop
 
 loop :: InputT IO ()
