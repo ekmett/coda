@@ -5,6 +5,7 @@
 .stack-work
 .tags
 .vscode-test
+.ghc.env*
 *.coda
 *.o
 *.hi
