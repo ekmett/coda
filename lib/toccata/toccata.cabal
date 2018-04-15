@@ -11,8 +11,8 @@ homepage:      http://github.com/ekmett/coda
 bug-reports:   http://github.com/ekmett/coda/issues
 build-type:    Simple
 cabal-version: >= 2.0
-synopsis:      Bootstrapping Coda Interpreter
-description:   Bootstrapping Coda Interpreter.
+synopsis:      Bootstrapping Coda
+description:   Bootstrapping Coda.
 
 source-repository head
   type: git
@@ -20,27 +20,38 @@ source-repository head
 
 library
   default-language: Haskell2010
+  ghc-options: -Wall
+
   build-depends:
+    ansi-terminal,
     base >= 4.11 && < 5,
     data-default-class,
     exceptions,
     haskeline,
     lens,
     optparse-applicative,
+    prettyprinter,
+    prettyprinter-ansi-terminal,
     transformers
+
   exposed-modules:
     Console
     Console.Options
+    Console.Pretty
 
   other-modules:
     Console.Unicode
 
-  ghc-options: -Wall
-
 executable toccata
   default-language: Haskell2010
-  build-depends: base, toccata, optparse-applicative
   hs-source-dirs: app
   main-is: Main.hs
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  other-modules: Paths_toccata
+
+  build-depends:
+    base,
+    optparse-applicative,
+    toccata
+
+  other-modules:
+    Paths_toccata

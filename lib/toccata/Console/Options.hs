@@ -6,11 +6,17 @@ import Data.Default.Class
 import GHC.Generics
 import Options.Applicative as Options
 
+import Console.Pretty
+
 data ConsoleOptions = ConsoleOptions
-  {}
-  deriving (Eq,Ord,Show,Read,Generic,Default)
+  { _consoleFancyOptions :: FancyOptions
+  }
+  deriving (Show,Generic,Default)
 
 parseConsoleOptions :: Options.Parser ConsoleOptions
-parseConsoleOptions = pure ConsoleOptions
+parseConsoleOptions = ConsoleOptions <$> parseFancyOptions
 
 makeClassy ''ConsoleOptions
+
+instance HasFancyOptions ConsoleOptions where
+  fancyOptions = consoleFancyOptions
