@@ -88,7 +88,7 @@ hPutFancy opts h doc = liftIO $ do
        else RenderText.hPutDoc h doc
 
 pp :: (MonadIO m, Fancy a) => FancyOptions -> a -> m ()
-pp opts = putFancy opts . fancy
+pp opts a = putFancy opts (fancy a <> line')
 
 -- for quick testing
 pp_ :: (MonadIO m, Fancy a) => a -> m ()
