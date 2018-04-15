@@ -33,13 +33,13 @@ import System.Console.ANSI (hSupportsANSI)
 import System.IO (Handle, stdout)
 
 data CodeStyle
-  = StyleVar
+  = StyleName
   | StyleOp
   | StyleKeyword
   deriving (Eq,Ord,Show,Read,Ix,Bounded,Enum)
 
 ansi :: CodeStyle -> AnsiStyle
-ansi StyleVar = bold
+ansi StyleName = bold
 ansi StyleOp = color Yellow
 ansi StyleKeyword = color Green
 
