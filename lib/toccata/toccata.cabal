@@ -32,12 +32,14 @@ library
     optparse-applicative,
     prettyprinter,
     prettyprinter-ansi-terminal,
+    text-short,
     transformers
 
   exposed-modules:
     Console
     Console.Options
     Console.Pretty
+    Syntax.Name
 
   other-modules:
     Console.Unicode
