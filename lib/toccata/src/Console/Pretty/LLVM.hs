@@ -687,7 +687,7 @@ instance PP C.Constant where
   pp C.AddrSpaceCast {..} = "addrspacecast" <+> parens (ppTyped operand0 <+> "to" <+> pp type')
 
 instance PP a => PP (Named a) where
-  pp (nm := a) = "%" <> pp nm <+> "=" <+> pp a
+  pp (nm := a) = local (pp nm) <+> "=" <+> pp a
   pp (Do a) = pp a
 
 instance PP Module where
