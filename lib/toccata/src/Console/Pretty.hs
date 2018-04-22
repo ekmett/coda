@@ -3,21 +3,13 @@
 
 module Console.Pretty
   ( 
-  -- * styles
-    CodeStyle(..)
   -- * options
-  , FancyOptions(..)
+    FancyOptions(..)
   , HasFancyOptions(..)
   , parseFancyOptions
   -- * pretty printing
   , putFancy
   , hPutFancy
-  -- * pretty printing class
-  , Fancy(..)
-  , pp
-  -- * internals
-  , ansi
-  , pp_ -- convenience
   ) where
 
 import Control.Monad.IO.Class
@@ -27,27 +19,9 @@ import Data.Default.Class
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text as RenderText
 import Data.Text.Prettyprint.Doc.Render.Terminal as RenderTerminal
-import GHC.Arr (Ix(..))
 import Options.Applicative as Options
 import System.Console.ANSI (hSupportsANSI)
 import System.IO (Handle, stdout)
-
-data CodeStyle
-  = StyleName
-  | StyleOp
-  | StyleKeyword
-  deriving (Eq,Ord,Show,Read,Ix,Bounded,Enum)
-
-ansi :: CodeStyle -> AnsiStyle
-ansi StyleName = bold
-ansi StyleOp = color Yellow
-ansi StyleKeyword = color Green
-
--- ansi er.. fansi er.. fancy
-class Fancy a where
-  fancy :: a -> Doc CodeStyle
-  default fancy :: Pretty a => a -> Doc CodeStyle
-  fancy = pretty
 
 data FancyOptions
   = FancyOptions
@@ -78,19 +52,11 @@ parseFancyOptions = FancyOptions
 fansi :: FancyOptions -> Handle -> IO Bool
 fansi opts h = maybe (hSupportsANSI h) pure (_fancyColor opts)
  
-putFancy :: MonadIO m => FancyOptions -> Doc CodeStyle -> m ()
+putFancy :: MonadIO m => FancyOptions -> Doc AnsiStyle -> m ()
 putFancy opts = hPutFancy opts stdout
 
-hPutFancy :: MonadIO m => FancyOptions -> Handle -> Doc CodeStyle -> m ()
+hPutFancy :: MonadIO m => FancyOptions -> Handle -> Doc AnsiStyle -> m ()
 hPutFancy opts h doc = liftIO $ do
   b <- fansi opts h
-  if b then RenderTerminal.hPutDoc h (fmap ansi doc)
-       else RenderText.hPutDoc h doc
-
-pp :: (MonadIO m, Fancy a) => FancyOptions -> a -> m ()
-pp opts a = putFancy opts (fancy a <> line')
-
--- for quick testing
-pp_ :: (MonadIO m, Fancy a) => a -> m ()
-pp_ = pp def
-
+  if b then RenderTerminal.hPutDoc h doc
+       else RenderText.hPutDoc h (unAnnotate doc)
