@@ -38,14 +38,20 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
+flag terminfo
+  description: Build with terminfo.
+  default: True
+  manual: False
+
 flag test-tasty
+  description: Build tasty test suite.
   default: True
   manual: True
 
-flag terminfo
-  description: Build with terminfo.
-  manual: False
+flag coda
+  description: Build vs code plugin.
   default: True
+  manual: True
 
 -- bootstrapping codebase
 library
@@ -117,7 +123,10 @@ executable coda
   default-language: Haskell2010
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   main-is: main.hs
-  build-depends: base, coda-common, coda-console, coda-server, optparse-applicative
+  if flag(coda)
+    build-depends: base, coda-common, coda-console, coda-server, optparse-applicative
+  else
+    buildable: False
 
 --------------------------------------------------------------------------------
 -- tests
