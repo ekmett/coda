@@ -117,7 +117,7 @@ a `cma` b = a <> "," <+> b
 -------------------------------------------------------------------------------
 
 class Ann a where
-  annIdentifier, annType, annStmt, annKeyword, annComment :: a
+  annIdentifier, annType, annStmt, annKeyword, annComment, annString :: a
 
 instance Ann () where
   annIdentifier = ()
@@ -125,6 +125,7 @@ instance Ann () where
   annStmt = ()
   annKeyword = ()
   annComment = ()
+  annString = ()
 
 instance Ann AnsiStyle where
   annIdentifier = color Green
@@ -132,6 +133,7 @@ instance Ann AnsiStyle where
   annStmt = colorDull Yellow
   annKeyword = underlined
   annComment = color Magenta
+  annString = color Cyan
 
 astmt :: Ann a => Doc a -> Doc a
 astmt = annotate annStmt
@@ -144,6 +146,9 @@ akw = annotate annKeyword
 
 acomment :: Ann a => Doc a -> Doc a
 acomment = annotate annComment
+
+dquoted :: Ann a => Doc a -> Doc a
+dquoted = annotate annString . dquotes
 
 class PP p where
   pp :: Ann a => p -> Doc a
@@ -181,9 +186,9 @@ instance PP [Char]
 
 instance PP Name where
   pp (Name nm)
-   | BS.null nm = dquotes mempty
+   | BS.null nm = dquoted mempty
     | isFirst first && all isRest name = pretty (pack name)
-    | otherwise = dquotes . hcat . map escape $ name
+    | otherwise = dquoted . hcat . map escape $ name
     where
         name = unShort nm
         first = head name
@@ -236,7 +241,7 @@ instance PP Type where
 instance PP Global where
   pp Function {..} =
       case basicBlocks of
-        [] -> hsep 
+        [] -> hsep
            $ pre
           ++ [pp returnType, global (pp name) <> ppParams (pp . typeOf) parameters]
           ++ post
@@ -255,7 +260,7 @@ instance PP Global where
       pre = akw "declare" : pp linkage : pp callingConvention : fmap pp returnAttributes
       post = fmap pp functionAttributes ++ align' ++ gcName ++ foldMap (\con -> [ akw "prefix", ppTyped con ]) prefix
       align' = guard (alignment /= 0) *> [akw "align", pp alignment]
-      gcName = foldMap (\n -> [akw "gc", dquotes (pretty $ unShort n)]) garbageCollectorName
+      gcName = foldMap (\n -> [akw "gc", dquoted (pretty $ unShort n)]) garbageCollectorName
 
   pp GlobalVariable {..} = global (pp name) <+> "=" <+> ppLinkage hasInitializer linkage <+> ppMaybe unnamedAddr
                              <+> addrSpace' <+> kind <+> pp type' <+> ppMaybe initializer <> ppAlign alignment
@@ -283,7 +288,7 @@ instance PP Definition where
   pp (FunctionAttributes gid attrs) = "attributes" <+> pp gid <+> "=" <+> braces (hsep (fmap ppAttrInGroup attrs))
   pp (NamedMetadataDefinition nm meta) = "!" <> short nm <+> "=" <+> "!" <> braces (commas (fmap pp meta))
   pp (MetadataNodeDefinition node meta) = pp node <+> "=" <+> "!" <> braces (commas (fmap ppMetadata meta))
-  pp (ModuleInlineAssembly asm) = "module asm" <+> dquotes (pretty (pack (BL.unpack asm)))
+  pp (ModuleInlineAssembly asm) = "module asm" <+> dquoted (pretty (pack (BL.unpack asm)))
   pp (COMDAT name selKind) = "$" <> short name <+> "=" <+> "comdat" <+> pp selKind
 
 instance PP SelectionKind where
@@ -337,75 +342,78 @@ instance PP FunctionAttribute where
    AllocSize a Nothing -> "allocsize" <> parens (pp a)
    AllocSize a (Just b) -> "allocsize" <> parens (commas [pp a, pp b])
    InaccessibleMemOrArgMemOnly -> "inaccessiblemem_or_argmemonly"
-   FA.StringAttribute k v -> dquotes (short k) <> "=" <> dquotes (short v)
+   FA.StringAttribute k v -> dquoted (short k) <> "=" <> dquoted (short v)
    Speculatable        -> "speculatable"
 
 instance PP ParameterAttribute where
   pp = \case
-    ZeroExt                    -> "zeroext"
-    SignExt                    -> "signext"
-    InReg                      -> "inreg"
-    SRet                       -> "sret"
-    Alignment word             -> "align" <+> pp word
-    NoAlias                    -> "noalias"
-    ByVal                      -> "byval"
-    NoCapture                  -> "nocapture"
-    Nest                       -> "nest"
-    PA.ReadNone                -> "readnone"
-    PA.ReadOnly                -> "readonly"
-    PA.WriteOnly               -> "writeonly"
-    InAlloca                   -> "inalloca"
-    NonNull                    -> "nonnull"
-    Dereferenceable word       -> "dereferenceable" <> parens (pp word)
-    DereferenceableOrNull word -> "dereferenceable_or_null" <> parens (pp word)
-    Returned                   -> "returned"
-    SwiftSelf                  -> "swiftself"
-    SwiftError                 -> "swifterror"
-    PA.StringAttribute k v -> dquotes (short k) <> "=" <> dquotes (short v)
+    ZeroExt                    -> akw "zeroext"
+    SignExt                    -> akw "signext"
+    InReg                      -> akw "inreg"
+    SRet                       -> akw "sret"
+    Alignment word             -> akw "align" <+> pp word
+    NoAlias                    -> akw "noalias"
+    ByVal                      -> akw "byval"
+    NoCapture                  -> akw "nocapture"
+    Nest                       -> akw "nest"
+    PA.ReadNone                -> akw "readnone"
+    PA.ReadOnly                -> akw "readonly"
+    PA.WriteOnly               -> akw "writeonly"
+    InAlloca                   -> akw "inalloca"
+    NonNull                    -> akw "nonnull"
+    Dereferenceable word       -> akw "dereferenceable" <> parens (pp word)
+    DereferenceableOrNull word -> akw "dereferenceable_or_null" <> parens (pp word)
+    Returned                   -> akw "returned"
+    SwiftSelf                  -> akw "swiftself"
+    SwiftError                 -> akw "swifterror"
+    PA.StringAttribute k v -> dquoted (short k) <> "=" <> dquoted (short v)
 
 instance PP CC.CallingConvention where
-  pp = \case
-   CC.Numbered word -> "cc" <+> pp word
-   CC.C             -> "ccc"
-   CC.Fast          -> "fastcc"
-   CC.Cold          -> "coldcc"
-   CC.GHC           -> "cc 10"
-   CC.HiPE          -> "cc 11"
-   CC.WebKit_JS     -> "webkit_jscc"
-   CC.AnyReg        -> "anyregcc"
-   CC.PreserveMost  -> "preserve_mostcc"
-   CC.PreserveAll   -> "preserve_allcc"
-   CC.Swift         -> "swiftcc"
-   CC.CXX_FastTLS   -> "cxx_fast_tlscc"
-   CC.X86_StdCall   -> "cc 64"
-   CC.X86_FastCall  -> "cc 65"
-   CC.ARM_APCS      -> "cc 66"
-   CC.ARM_AAPCS     -> "cc 67"
-   CC.ARM_AAPCS_VFP -> "cc 68"
-   CC.MSP430_INTR   -> "cc 69"
-   CC.X86_ThisCall  -> "cc 70"
-   CC.PTX_Kernel    -> "cc 71"
-   CC.PTX_Device    -> "cc 72"
-   CC.SPIR_FUNC     -> "cc 75"
-   CC.SPIR_KERNEL   -> "cc 76"
-   CC.Intel_OCL_BI  -> "cc 77"
-   CC.X86_64_SysV   -> "cc 78"
-   CC.Win64         -> "cc 79"
-   CC.X86_Intr      -> "x86_intrcc"
-   CC.X86_RegCall   -> "x86_regcallcc"
-   CC.X86_VectorCall -> "x86_vectorcallcc"
-   CC.AVR_Intr      -> "avr_intrcc"
-   CC.AVR_Signal    -> "avr_signalcc"
-   CC.AVR_Builtin   -> "cc 86"
-   CC.HHVM          -> "hhvmcc"
-   CC.HHVM_C        -> "hhvm_ccc"
-   CC.AMDGPU_VS     -> "amdgpu_vs"
-   CC.AMDGPU_GS     -> "amdgpu_gs"
-   CC.AMDGPU_PS     -> "amdgpu_ps"
-   CC.AMDGPU_CS     -> "amdgpu_cs"
-   CC.AMDGPU_HS     -> "amdgpu_hs"
-   CC.AMDGPU_Kernel -> "amdgpu_kernel"
-   CC.MSP430_Builtin -> "msp430"
+ pp = \case
+   CC.Numbered word -> cc word
+   CC.C             -> akw "ccc"
+   CC.Fast          -> akw "fastcc"
+   CC.Cold          -> akw "coldcc"
+   CC.GHC           -> cc 10
+   CC.HiPE          -> cc 11
+   CC.WebKit_JS     -> akw "webkit_jscc"
+   CC.AnyReg        -> akw "anyregcc"
+   CC.PreserveMost  -> akw "preserve_mostcc"
+   CC.PreserveAll   -> akw "preserve_allcc"
+   CC.Swift         -> akw "swiftcc"
+   CC.CXX_FastTLS   -> akw "cxx_fast_tlscc"
+   CC.X86_StdCall   -> cc 64
+   CC.X86_FastCall  -> cc 65
+   CC.ARM_APCS      -> cc 66
+   CC.ARM_AAPCS     -> cc 67
+   CC.ARM_AAPCS_VFP -> cc 68
+   CC.MSP430_INTR   -> cc 69
+   CC.X86_ThisCall  -> cc 70
+   CC.PTX_Kernel    -> cc 71
+   CC.PTX_Device    -> cc 72
+   CC.SPIR_FUNC     -> cc 75
+   CC.SPIR_KERNEL   -> cc 76
+   CC.Intel_OCL_BI  -> cc 77
+   CC.X86_64_SysV   -> cc 78
+   CC.Win64         -> cc 79
+   CC.X86_Intr      -> akw "x86_intrcc"
+   CC.X86_RegCall   -> akw "x86_regcallcc"
+   CC.X86_VectorCall -> akw "x86_vectorcallcc"
+   CC.AVR_Intr      -> akw "avr_intrcc"
+   CC.AVR_Signal    -> akw "avr_signalcc"
+   CC.AVR_Builtin   -> cc 86
+   CC.HHVM          -> akw "hhvmcc"
+   CC.HHVM_C        -> akw "hhvm_ccc"
+   CC.AMDGPU_VS     -> akw "amdgpu_vs"
+   CC.AMDGPU_GS     -> akw "amdgpu_gs"
+   CC.AMDGPU_PS     -> akw "amdgpu_ps"
+   CC.AMDGPU_CS     -> akw "amdgpu_cs"
+   CC.AMDGPU_HS     -> akw "amdgpu_hs"
+   CC.AMDGPU_Kernel -> akw "amdgpu_kernel"
+   CC.MSP430_Builtin -> akw "msp430"
+  where
+    cc :: Ann a => Word32 -> Doc a
+    cc n = akw "cc" <+> pp n
 
 instance PP L.Linkage where
     pp = ppLinkage False
@@ -585,7 +593,7 @@ instance PP Operand where
   pp (MetadataOperand mdata) = pp mdata
 
 instance PP Metadata where
-  pp (MDString str) = "!" <> dquotes (pretty (decodeShortUtf8 str))
+  pp (MDString str) = "!" <> dquoted (pretty (decodeShortUtf8 str))
   pp (MDNode node) = pp node
   pp (MDValue operand) = pp operand
 
@@ -662,7 +670,7 @@ instance PP C.Constant where
   pp (C.BlockAddress fn blk) = "blockaddress" <> parens (commas (fmap pp [fn, blk]))
 
   pp C.Array {..}
-    | memberType == (IntegerType 8) = "c" <> (dquotes $ hcat [ppIntAsChar val | C.Int _ val <- memberValues])
+    | memberType == (IntegerType 8) = "c" <> (dquoted $ hcat [ppIntAsChar val | C.Int _ val <- memberValues])
     | otherwise = brackets $ commas $ fmap ppTyped memberValues
 
   pp C.GetElementPtr {..} = "getelementptr" <+> bounds inBounds <+> parens (commas (pp argTy : fmap ppTyped (address:indices)))
@@ -683,8 +691,8 @@ instance PP a => PP (Named a) where
 instance PP Module where
   pp Module {..} = hlinecat (header : layout ++ target ++ fmap pp moduleDefinitions) where
     header = acomment $ fromString $ printf "; ModuleID = '%s'" (unShort moduleName)
-    target = foldMap (\tgt -> [ "target triple =" <+> dquotes (pp tgt)]) moduleTargetTriple
-    layout = foldMap (\lyt -> [ "target datalayout =" <+> dquotes (pp lyt) ]) moduleDataLayout
+    target = foldMap (\tgt -> [ "target triple =" <+> dquoted (pp tgt)]) moduleTargetTriple
+    layout = foldMap (\lyt -> [ "target datalayout =" <+> dquoted (pp lyt) ]) moduleDataLayout
 
 instance PP FP.FloatingPointPredicate where
   pp op = case op of
