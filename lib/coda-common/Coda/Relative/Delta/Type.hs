@@ -27,6 +27,7 @@ import Data.Hashable
 import Data.Semigroup
 import GHC.Generics
 import Text.Read
+import Prelude
 
 -- | A count of UTF-16 code-units.
 --
