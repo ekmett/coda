@@ -2,7 +2,7 @@
 {-# language TemplateHaskell #-}
 {-# language DefaultSignatures #-}
 
-module Console.Pretty
+module Coda.Console.Pretty
   (
   -- * options
     FancyOptions(..)
@@ -11,6 +11,8 @@ module Console.Pretty
   -- * pretty printing
   , putFancy
   , hPutFancy
+  -- * useful internals
+  , fcols
   ) where
 
 import Control.Monad.IO.Class
@@ -53,7 +55,7 @@ parseFancyOptions = FancyOptions
       <> short 'c'
       <> metavar "SETTING"
       <> value Nothing
-      <> help "Emit ANSI from the console: 'always', 'never' or 'auto'"
+      <> help "Emit ANSI: 'always', 'never' or 'auto'"
     colorOpt = eitherReader $ \s -> case map toLower s of
       "always" -> pure $ Just True
       "never"  -> pure $ Just False
@@ -69,7 +71,7 @@ parseFancyOptions = FancyOptions
       <> short 'w'
       <> metavar "WIDTH"
       <> value Nothing
-      <> help "Width of the console in characters or 'auto'"
+      <> help "Console width in characters or 'auto'"
 
 defaultCols :: Int
 defaultCols = 78

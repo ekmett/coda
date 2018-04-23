@@ -3,7 +3,7 @@
 
 module Main where
 
-import Console.Pretty.LLVM
+import Coda.Console.Pretty.LLVM
 import LLVM.AST.Type as AST
 import LLVM.IRBuilder.Module
 import LLVM.IRBuilder.Monad

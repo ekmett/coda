@@ -2,7 +2,7 @@
 {-# language OverloadedStrings #-}
 {-# language FlexibleContexts #-}
 
-module Syntax.Error 
+module Coda.Syntax.Error 
   ( ppError
   ) where
 
@@ -17,7 +17,7 @@ import Data.Text.Prettyprint.Doc.Render.Terminal
 import Text.Megaparsec.Error
 import Text.Megaparsec.Stream
 import Text.Megaparsec.Pos
-import Syntax.Located
+import Coda.Syntax.Located
 
 ppError :: (Ord a, ShowToken (Located a), ShowErrorComponent e) => Text -> ParseError (Located a) e -> Doc AnsiStyle
 ppError s e = vsep

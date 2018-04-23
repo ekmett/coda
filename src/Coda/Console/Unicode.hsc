@@ -12,7 +12,7 @@
 --
 --------------------------------------------------------------------
 
-module Console.Unicode
+module Coda.Console.Unicode
   ( withUnicode
   ) where
 

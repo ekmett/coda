@@ -71,6 +71,7 @@ library
     optparse-applicative,
     prettyprinter,
     prettyprinter-ansi-terminal,
+    prettyprinter-convert-ansi-wl-pprint,
     text,
     text-short,
     transformers
@@ -79,17 +80,17 @@ library
     build-depends: terminfo
 
   exposed-modules:
-    Console
-    Console.Options
-    Console.Pretty
-    Console.Pretty.LLVM
-    Syntax.Error
-    Syntax.Name
-    Syntax.Lexer
-    Syntax.Located
+    Coda.Console
+    Coda.Console.Options
+    Coda.Console.Pretty
+    Coda.Console.Pretty.LLVM
+    Coda.Syntax.Error
+    Coda.Syntax.Name
+    Coda.Syntax.Lexer
+    Coda.Syntax.Located
 
   other-modules:
-    Console.Unicode
+    Coda.Console.Unicode
 
 -- bootstrapping executable
 executable toccata
@@ -100,8 +101,9 @@ executable toccata
 
   build-depends:
     base,
-    optparse-applicative,
-    coda
+    coda,
+    data-default-class,
+    optparse-applicative
 
   other-modules:
     Paths_coda

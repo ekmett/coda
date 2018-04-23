@@ -15,7 +15,7 @@
 -- A simple input adapter that allows @alex@ to work with 'Text'
 ---------------------------------------------------------------------------------
 
-module Syntax.Alex
+module Coda.Syntax.Alex
   ( AlexInput(..)
   , AlexInputState(..)
   , alexGetByte

@@ -18,7 +18,7 @@
 -- A simple input adapter that allows @alex@ to work with 'Text'
 ---------------------------------------------------------------------------------
 
-module Syntax.Lexer
+module Coda.Syntax.Lexer
   ( AlexInput(..)
   , AlexInputState(..)
   , alexGetByte
@@ -39,7 +39,7 @@ import GHC.Generics
 import Text.Megaparsec.Pos
 import Text.Megaparsec.Stream
 
-import Syntax.Located
+import Coda.Syntax.Located
 
 }
 

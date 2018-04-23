@@ -1,12 +1,12 @@
-module Console (console) where
+module Coda.Console (console) where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (when)
 import Data.Char
 import System.Console.Haskeline
 
-import Console.Options
-import Console.Unicode
+import Coda.Console.Options
+import Coda.Console.Unicode
 
 -- returns whether to carry on
 executeCommand :: String -> InputT IO Bool

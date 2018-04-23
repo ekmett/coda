@@ -1,12 +1,12 @@
 {-# language DeriveGeneric, DeriveAnyClass, TemplateHaskell #-}
-module Console.Options where
+module Coda.Console.Options where
 
 import Control.Lens
 import Data.Default.Class
 import GHC.Generics
 import Options.Applicative as Options
 
-import Console.Pretty
+import Coda.Console.Pretty
 
 data ConsoleOptions = ConsoleOptions
   { _consoleFancyOptions :: FancyOptions

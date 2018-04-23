@@ -20,13 +20,13 @@
 --
 -----------------------------------------------------------------------------
 
-module Console.Pretty.LLVM (
+module Coda.Console.Pretty.LLVM (
   PP(..),
   ppll,
   ppll_
 ) where
 
-import Console.Pretty
+import Coda.Console.Pretty
 import Control.Monad (guard)
 import Control.Monad.IO.Class
 import Control.Monad.ST

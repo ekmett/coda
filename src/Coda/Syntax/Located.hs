@@ -2,7 +2,7 @@
 {-# language DeriveTraversable #-}
 {-# language FlexibleInstances #-}
 
-module Syntax.Located 
+module Coda.Syntax.Located 
   ( Located(..)
   ) where
 

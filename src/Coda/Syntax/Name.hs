@@ -1,12 +1,10 @@
-module Syntax.Name
+module Coda.Syntax.Name
   ( Name(..)
   , isBound, isFree
   ) where
 
 import Data.String
--- import Data.Text.Prettyprint.Doc
 import Data.Text.Short as T
--- import Console.Pretty
 
 data Name
   = Free ShortText Integer
