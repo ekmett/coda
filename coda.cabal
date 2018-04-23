@@ -90,6 +90,7 @@ library
     Coda.Console.Options
     Coda.Console.Pretty
     Coda.Console.Pretty.LLVM
+    Coda.LLVM
     Coda.Syntax.Error
     Coda.Syntax.Name
     Coda.Syntax.Lexer
