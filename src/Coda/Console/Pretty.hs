@@ -17,6 +17,7 @@ module Coda.Console.Pretty
 
 import Control.Monad.IO.Class
 import Control.Lens
+import Data.Bool (bool)
 import Data.Char (toLower)
 import Data.Default.Class
 import Data.Maybe (fromMaybe)
@@ -102,7 +103,6 @@ putFancy opts = hPutFancy opts stdout
 
 hPutFancy :: MonadIO m => FancyOptions -> Handle -> Doc AnsiStyle -> m ()
 hPutFancy opts h doc = liftIO $ do
-  b <- fansi opts h
+  render <- bool RenderText.renderIO RenderTerminal.renderIO <$> fansi opts h
   layout <- flayoutOptions opts h
-  if b then RenderTerminal.renderIO h $ layoutPretty layout doc
-       else RenderText.renderIO h $ layoutPretty layout $ unAnnotate doc
+  render h $ layoutPretty layout doc
