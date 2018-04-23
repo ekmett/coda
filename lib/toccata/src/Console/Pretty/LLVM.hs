@@ -27,6 +27,7 @@ module Console.Pretty.LLVM (
 ) where
 
 import Console.Pretty
+import Control.Monad (guard)
 import Control.Monad.IO.Class
 import Control.Monad.ST
 import Data.Array.MArray hiding (index)
@@ -88,7 +89,7 @@ hlinecat :: [Doc a] -> Doc a
 hlinecat = vcat . intersperse softline
 
 wrapbraces :: Doc a -> Doc a -> Doc a
-wrapbraces leadIn x = (leadIn <> pretty '{') <$> x <$> pretty '}'
+wrapbraces leadIn x = (leadIn <+> pretty '{') <$> x <$> pretty '}'
 
 (<$>) :: Doc a -> Doc a -> Doc a
 x <$> y = x <> line <> y
@@ -128,8 +129,8 @@ instance Ann () where
 instance Ann AnsiStyle where
   annIdentifier = color Green
   annType = color Blue
-  annStmt = color Yellow
-  annKeyword = bold
+  annStmt = colorDull Yellow
+  annKeyword = underlined
   annComment = color Magenta
 
 astmt :: Ann a => Doc a -> Doc a
@@ -148,8 +149,6 @@ class PP p where
   pp :: Ann a => p -> Doc a
   default pp :: Pretty p => p -> Doc a
   pp = pretty
-  pps :: Ann a => p -> [Doc a]
-  pps a = [pp a]
 
 ppMaybe :: (PP a, Ann b) => Maybe a -> Doc b
 ppMaybe (Just x) = pp x
@@ -238,34 +237,25 @@ instance PP Global where
   pp Function {..} =
       case basicBlocks of
         [] -> hsep 
-           $ [akw "declare",  pp linkage, pp callingConvention]
-          ++ fmap pp returnAttributes
+           $ pre
           ++ [pp returnType, global (pp name) <> ppParams (pp . typeOf) parameters]
-          ++ fmap pp functionAttributes
-          ++ [align', gcName, pre]
-
+          ++ post
         -- single unnamed block is special cased, and won't parse otherwise... yeah good times
         [b@(BasicBlock (UnName _) _ _)] -> hsep (
-             [akw "define", pp linkage, pp callingConvention] 
-          ++ fmap pp returnAttributes
+             pre
           ++ [pp returnType, global (pp name) <> ppParams pp parameters]
-          ++ fmap pp functionAttributes 
-          ++ [align', gcName, pre]
+          ++ post
           ) `wrapbraces` (indent 2 $ ppSingleBlock b)
         bs -> hsep (
-             [akw "define" <+> pp linkage <+> pp callingConvention]
-          ++ fmap pp returnAttributes
-          ++ [pp returnType <+> global (pp name) <> ppParams pp parameters]
-          ++ fmap pp functionAttributes 
-          ++ [align', gcName, pre]
+             pre
+          ++ [pp returnType, global (pp name) <> ppParams pp parameters]
+          ++ post
           ) `wrapbraces` (vcat $ fmap pp bs)
     where
-      pre = case prefix of
-              Nothing  -> mempty
-              Just con -> akw "prefix" <+> ppTyped con
-      align' | alignment == 0    = mempty
-             | otherwise = akw "align" <+> pp alignment
-      gcName = maybe mempty (\n -> akw "gc" <+> dquotes (pretty n)) (fmap unShort garbageCollectorName)
+      pre = akw "declare" : pp linkage : pp callingConvention : fmap pp returnAttributes
+      post = fmap pp functionAttributes ++ align' ++ gcName ++ foldMap (\con -> [ akw "prefix", ppTyped con ]) prefix
+      align' = guard (alignment /= 0) *> [akw "align", pp alignment]
+      gcName = foldMap (\n -> [akw "gc", dquotes (pretty $ unShort n)]) garbageCollectorName
 
   pp GlobalVariable {..} = global (pp name) <+> "=" <+> ppLinkage hasInitializer linkage <+> ppMaybe unnamedAddr
                              <+> addrSpace' <+> kind <+> pp type' <+> ppMaybe initializer <> ppAlign alignment
@@ -691,14 +681,10 @@ instance PP a => PP (Named a) where
   pp (Do a) = pp a
 
 instance PP Module where
-  pp Module {..} = hlinecat (acomment (fromString header) : (layout <> softline <> target) : fmap pp moduleDefinitions) where
-    header = printf "; ModuleID = '%s'" (unShort moduleName)
-    target = case moduleTargetTriple of
-      Nothing -> mempty
-      Just tgt -> "target triple =" <+> dquotes (pp tgt)
-    layout = case moduleDataLayout of
-      Nothing -> mempty
-      Just lyt -> "target datalayout =" <+> dquotes (pp lyt) 
+  pp Module {..} = hlinecat (header : layout ++ target ++ fmap pp moduleDefinitions) where
+    header = acomment $ fromString $ printf "; ModuleID = '%s'" (unShort moduleName)
+    target = foldMap (\tgt -> [ "target triple =" <+> dquotes (pp tgt)]) moduleTargetTriple
+    layout = foldMap (\lyt -> [ "target datalayout =" <+> dquotes (pp lyt) ]) moduleDataLayout
 
 instance PP FP.FloatingPointPredicate where
   pp op = case op of
