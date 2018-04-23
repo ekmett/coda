@@ -242,22 +242,22 @@ instance PP Global where
   pp Function {..} =
       case basicBlocks of
         [] -> sep
-           $ pre
+           $ pre "declare"
           ++ [pp returnType, global (pp name) <> ppParams (pp . typeOf) parameters]
           ++ post
         -- single unnamed block is special cased, and won't parse otherwise... yeah good times
         [b@(BasicBlock (UnName _) _ _)] -> sep (
-             pre
+             pre "define"
           ++ [pp returnType, global (pp name) <> ppParams pp parameters]
           ++ post
           ) `wrapbraces` (indent 2 $ ppSingleBlock b)
         bs -> sep (
-             pre
+             pre "define"
           ++ [pp returnType, global (pp name) <> ppParams pp parameters]
           ++ post
           ) `wrapbraces` (vcat $ fmap pp bs)
     where
-      pre = akw "declare" : pp linkage : pp callingConvention : fmap pp returnAttributes
+      pre kw = akw kw : pp linkage : pp callingConvention : fmap pp returnAttributes
       post = fmap pp functionAttributes ++ align' ++ gcName ++ foldMap (\con -> [ akw "prefix", ppTyped con ]) prefix
       align' = guard (alignment /= 0) *> [akw "align", pp alignment]
       gcName = foldMap (\n -> [akw "gc", dquoted (pretty $ unShort n)]) garbageCollectorName
