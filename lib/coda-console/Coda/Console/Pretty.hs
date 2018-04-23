@@ -25,7 +25,6 @@ module Coda.Console.Pretty
 
 import Control.Monad.IO.Class
 import Control.Lens
-import Data.Monoid -- Semigroup
 import Data.Maybe (fromMaybe)
 import Numeric.Lens
 import System.IO

@@ -35,7 +35,7 @@ import Control.Lens
 import Data.Default
 import Data.Hashable
 import Data.Function (on)
-import Data.Monoid
+import Data.Semigroup
 import GHC.Exts
 import Prelude hiding (lookup)
 
@@ -99,6 +99,10 @@ singleton k a = Bin 1 mempty k a Tip Tip
 
 instance Default (Map k a) where
   def = Tip
+
+instance (StrictRelativeOrder k, Relative a) => Semigroup (Map k a) where
+  (<>) = union
+  stimes = stimesIdempotentMonoid
 
 -- | /O(m*log(n\/m + 1)), m <= n/
 instance (StrictRelativeOrder k, Relative a) => Monoid (Map k a) where

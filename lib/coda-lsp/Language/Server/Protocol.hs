@@ -219,12 +219,14 @@ import Data.HashMap.Strict (HashMap)
 import Data.Ix (Ix)
 import Data.Maybe (catMaybes)
 import Data.Monoid ((<>))
+import Data.Semigroup
 import Data.String
 import Data.Text as Text
 import GHC.Generics
 import Network.URI.Encode as URI
 import System.FilePath as FilePath
 import Text.Read as Read hiding (Number, String)
+import Prelude
 
 import Language.Server.TH
 
@@ -518,10 +520,13 @@ data Position = Position
   , _character :: !Int -- ^ 0-based count of utf-16 words (not code-points!)
   } deriving (Eq, Ord, Show, Read, Data, Generic)
 
+instance Semigroup Position where
+  Position a b <> Position 0 d = Position a (b + d)
+  Position a _ <> Position c d = Position (a + c) d
+
 instance Monoid Position where
   mempty = Position 0 0
-  mappend (Position a b) (Position 0 d) = Position a (b + d)
-  mappend (Position a _) (Position c d) = Position (a + c) d
+  mappend = (<>)
 
 jsonKeep ''Position
 lenses ''Position

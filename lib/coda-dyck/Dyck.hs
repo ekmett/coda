@@ -43,6 +43,7 @@ import Control.Lens
 import Data.Default
 import Data.Semigroup
 import GHC.Generics
+import Prelude
 
 import Token
 

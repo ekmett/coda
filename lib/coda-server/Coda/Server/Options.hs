@@ -20,7 +20,6 @@ module Coda.Server.Options
 import Control.Lens
 import Data.Data
 import Data.Default
-import Data.Monoid
 import Options.Applicative as Options
 
 -- | Options for @coda server@

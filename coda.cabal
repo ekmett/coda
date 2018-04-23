@@ -41,7 +41,7 @@ source-repository head
 flag terminfo
   description: Build with terminfo.
   default: True
-  manual: False
+  manual: True
 
 flag test-tasty
   description: Build tasty test suite.

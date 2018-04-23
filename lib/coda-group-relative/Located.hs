@@ -56,6 +56,9 @@ instance Comonad Located where
   extract (Located _ a) = a
   extend f w@(Located d _) = Located d (f w)
 
+instance Semigroup a => Semigroup (Located a) where
+  (<>) = liftA2 (<>)
+
 instance Monoid a => Monoid (Located a) where
   mempty = pure mempty
   mappend = liftA2 mappend
