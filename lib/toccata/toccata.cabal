@@ -35,11 +35,13 @@ library
     bound,
     bytestring,
     bytestring-short,
+    comonad,
     data-default-class,
     exceptions,
     haskeline,
     lens,
     llvm-hs-pure,
+    megaparsec,
     optparse-applicative,
     prettyprinter,
     prettyprinter-ansi-terminal,
@@ -56,6 +58,8 @@ library
     Console.Pretty
     Console.Pretty.LLVM
     Syntax.Name
+    Syntax.Lexer
+    Syntax.Located
 
   other-modules:
     Console.Unicode
