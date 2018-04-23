@@ -4,7 +4,7 @@ import Control.Monad
 import Options.Applicative
 import Data.Foldable
 import Data.Version
-import Paths_toccata
+import Paths_coda
 
 import Console.Options
 import Console
