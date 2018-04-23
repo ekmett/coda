@@ -36,6 +36,7 @@ library
     bytestring,
     bytestring-short,
     comonad,
+    containers,
     data-default-class,
     exceptions,
     haskeline,
@@ -57,6 +58,7 @@ library
     Console.Options
     Console.Pretty
     Console.Pretty.LLVM
+    Syntax.Error
     Syntax.Name
     Syntax.Lexer
     Syntax.Located
