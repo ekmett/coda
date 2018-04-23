@@ -233,7 +233,7 @@ instance PP Type where
                                then "<{" <> (commas $ fmap pp elementTypes ) <> "}>"
                                else  "{" <> (commas $ fmap pp elementTypes ) <> "}"
   pp (ArrayType {..}) = atype $ brackets $ pp nArrayElements <+> "x" <+> pp elementType
-  pp (NamedTypeReference name) = atype "%" <> pp name
+  pp (NamedTypeReference name) = atype ("%" <> pp name)
   pp MetadataType = atype "metadata"
   pp TokenType = atype "token"
   pp LabelType = atype "label"
@@ -270,9 +270,9 @@ instance PP Global where
         case addrSpace of
           AS.AddrSpace addr
             | addr == 0 -> mempty
-            | otherwise -> "addrspace" <> parens (pp addr)
-      kind | isConstant = "constant"
-           | otherwise  = "global"
+            | otherwise -> akw "addrspace" <> parens (pp addr)
+      kind | isConstant = akw "constant"
+           | otherwise  = akw "global"
 
   pp GlobalAlias {..} = global (pp name) <+> "=" <+> pp linkage <+> ppMaybe unnamedAddr <+> "alias" <+> pp typ `cma` ppTyped aliasee
     where
@@ -288,7 +288,7 @@ instance PP Definition where
   pp (FunctionAttributes gid attrs) = "attributes" <+> pp gid <+> "=" <+> braces (hsep (fmap ppAttrInGroup attrs))
   pp (NamedMetadataDefinition nm meta) = "!" <> short nm <+> "=" <+> "!" <> braces (commas (fmap pp meta))
   pp (MetadataNodeDefinition node meta) = pp node <+> "=" <+> "!" <> braces (commas (fmap ppMetadata meta))
-  pp (ModuleInlineAssembly asm) = "module asm" <+> dquoted (pretty (pack (BL.unpack asm)))
+  pp (ModuleInlineAssembly asm) = akw "module" <+> akw "asm" <+> dquoted (pretty (pack (BL.unpack asm)))
   pp (COMDAT name selKind) = "$" <> short name <+> "=" <+> "comdat" <+> pp selKind
 
 instance PP SelectionKind where
@@ -305,45 +305,45 @@ ppAttrInGroup = \case
 
 instance PP FunctionAttribute where
   pp = \case
-   NoReturn            -> "noreturn"
-   NoUnwind            -> "nounwind"
-   FA.ReadNone         -> "readnone"
-   FA.ReadOnly         -> "readonly"
-   FA.WriteOnly        -> "writeonly"
-   NoInline            -> "noinline"
-   AlwaysInline        -> "alwaysinline"
-   MinimizeSize        -> "minsize"
-   OptimizeForSize     -> "optsize"
-   OptimizeNone        -> "optnone"
-   SafeStack           -> "safestack"
-   StackProtect        -> "ssp"
-   StackProtectReq     -> "sspreq"
-   StackProtectStrong  -> "sspstrong"
-   NoRedZone           -> "noredzone"
-   NoImplicitFloat     -> "noimplicitfloat"
-   Naked               -> "naked"
-   InlineHint          -> "inlinehint"
-   StackAlignment n    -> "alignstack" <> parens (pp n)
-   ReturnsTwice        -> "returns_twice"
-   UWTable             -> "uwtable"
-   NonLazyBind         -> "nonlazybind"
-   Builtin             -> "builtin"
-   NoBuiltin           -> "nobuiltin"
-   Cold                -> "cold"
-   JumpTable           -> "jumptable"
-   NoDuplicate         -> "noduplicate"
-   SanitizeAddress     -> "sanitize_address"
-   SanitizeThread      -> "sanitize_thread"
-   SanitizeMemory      -> "sanitize_memory"
-   NoRecurse           -> "norecurse"
-   Convergent          -> "convergent"
-   ArgMemOnly          -> "argmemonly"
-   InaccessibleMemOnly -> "inaccessiblememonly"
-   AllocSize a Nothing -> "allocsize" <> parens (pp a)
-   AllocSize a (Just b) -> "allocsize" <> parens (commas [pp a, pp b])
-   InaccessibleMemOrArgMemOnly -> "inaccessiblemem_or_argmemonly"
+   NoReturn            -> akw "noreturn"
+   NoUnwind            -> akw "nounwind"
+   FA.ReadNone         -> akw "readnone"
+   FA.ReadOnly         -> akw "readonly"
+   FA.WriteOnly        -> akw "writeonly"
+   NoInline            -> akw "noinline"
+   AlwaysInline        -> akw "alwaysinline"
+   MinimizeSize        -> akw "minsize"
+   OptimizeForSize     -> akw "optsize"
+   OptimizeNone        -> akw "optnone"
+   SafeStack           -> akw "safestack"
+   StackProtect        -> akw "ssp"
+   StackProtectReq     -> akw "sspreq"
+   StackProtectStrong  -> akw "sspstrong"
+   NoRedZone           -> akw "noredzone"
+   NoImplicitFloat     -> akw "noimplicitfloat"
+   Naked               -> akw "naked"
+   InlineHint          -> akw "inlinehint"
+   StackAlignment n    -> akw "alignstack" <> parens (pp n)
+   ReturnsTwice        -> akw "returns_twice"
+   UWTable             -> akw "uwtable"
+   NonLazyBind         -> akw "nonlazybind"
+   Builtin             -> akw "builtin"
+   NoBuiltin           -> akw "nobuiltin"
+   Cold                -> akw "cold"
+   JumpTable           -> akw "jumptable"
+   NoDuplicate         -> akw "noduplicate"
+   SanitizeAddress     -> akw "sanitize_address"
+   SanitizeThread      -> akw "sanitize_thread"
+   SanitizeMemory      -> akw "sanitize_memory"
+   NoRecurse           -> akw "norecurse"
+   Convergent          -> akw "convergent"
+   ArgMemOnly          -> akw "argmemonly"
+   InaccessibleMemOnly -> akw "inaccessiblememonly"
+   AllocSize a Nothing -> akw "allocsize" <> parens (pp a)
+   AllocSize a (Just b) -> akw "allocsize" <> parens (commas [pp a, pp b])
+   InaccessibleMemOrArgMemOnly -> akw "inaccessiblemem_or_argmemonly"
    FA.StringAttribute k v -> dquoted (short k) <> "=" <> dquoted (short v)
-   Speculatable        -> "speculatable"
+   Speculatable        -> akw "speculatable"
 
 instance PP ParameterAttribute where
   pp = \case
