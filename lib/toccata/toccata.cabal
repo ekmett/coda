@@ -18,6 +18,11 @@ source-repository head
   type: git
   location: git://github.com/ekmett/coda.git
 
+flag terminfo
+  description: Build with terminfo.
+  manual: False
+  default: True
+
 library
   default-language: Haskell2010
   ghc-options: -Wall
@@ -41,6 +46,9 @@ library
     text,
     text-short,
     transformers
+
+  if flag(terminfo) && !os(windows)
+    build-depends: terminfo
 
   exposed-modules:
     Console

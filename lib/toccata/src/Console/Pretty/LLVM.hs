@@ -241,17 +241,17 @@ instance PP Type where
 instance PP Global where
   pp Function {..} =
       case basicBlocks of
-        [] -> hsep
+        [] -> sep
            $ pre
           ++ [pp returnType, global (pp name) <> ppParams (pp . typeOf) parameters]
           ++ post
         -- single unnamed block is special cased, and won't parse otherwise... yeah good times
-        [b@(BasicBlock (UnName _) _ _)] -> hsep (
+        [b@(BasicBlock (UnName _) _ _)] -> sep (
              pre
           ++ [pp returnType, global (pp name) <> ppParams pp parameters]
           ++ post
           ) `wrapbraces` (indent 2 $ ppSingleBlock b)
-        bs -> hsep (
+        bs -> sep (
              pre
           ++ [pp returnType, global (pp name) <> ppParams pp parameters]
           ++ post
