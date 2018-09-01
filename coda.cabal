@@ -246,6 +246,7 @@ library layout
 
 library syntax
   import: base
+  hs-source-dirs: src/syntax
   build-depends: common, lexer, rope, summary-unit
 
   mixins:
@@ -265,6 +266,9 @@ library syntax
     Syntax.Rope,
     Syntax.Summary,
     Syntax.Token
+
+  other-modules: Syntax
+
 
 library set
   import: base, data-default, deepseq, lens

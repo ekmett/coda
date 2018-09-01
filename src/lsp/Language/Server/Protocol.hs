@@ -491,7 +491,7 @@ filePathToDocumentUri (c:':':xs)
   | c /= '/' = DocumentUri $ Text.pack $ Foldable.concat ["file:///", URI.encode [Char.toUpper c], ":", URI.encode $ convertDelim <$> xs]
   where
     convertDelim '\\' = '/'
-    convertDelim c = c
+    convertDelim c' = c'
 filePathToDocumentUri xs = DocumentUri $ Text.pack $ "file://"  ++ URI.encode xs
 
 documentUriToFilePath :: DocumentUri -> Maybe FilePath

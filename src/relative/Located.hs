@@ -1,3 +1,4 @@
+{-# language CPP #-}
 {-# language DeriveGeneric #-}
 {-# language DeriveTraversable #-}
 {-# language DeriveDataTypeable #-}
@@ -26,7 +27,9 @@ import Data.Data
 import Data.Default
 import Data.Hashable
 import Data.Hashable.Lifted
+#if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup
+#endif
 import GHC.Generics
 
 import Algebra.Ordered

@@ -10,11 +10,15 @@ import Console.Pretty
 
 data ConsoleOptions = ConsoleOptions
   { _consoleFancyOptions :: FancyOptions
+  , _consoleOptionsNoHeading :: Bool
   }
-  deriving (Show,Generic,Default)
+  deriving (Show,Generic)
+
+instance Default ConsoleOptions where
+  def = ConsoleOptions def False
 
 parseConsoleOptions :: Options.Parser ConsoleOptions
-parseConsoleOptions = ConsoleOptions <$> parseFancyOptions
+parseConsoleOptions = ConsoleOptions <$> parseFancyOptions <*> pure False
 
 makeClassy ''ConsoleOptions
 

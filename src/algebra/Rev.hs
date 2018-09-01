@@ -1,3 +1,4 @@
+{-# language CPP #-}
 {-# language TemplateHaskell #-}
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
@@ -21,7 +22,10 @@ module Rev
 import Relative.Class
 import Control.Lens
 import Data.Default
+
+#if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup
+#endif
 
 -- reversing a catenable list, etc.
 newtype Rev f a

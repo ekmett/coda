@@ -1,3 +1,4 @@
+{-# language CPP #-}
 ---------------------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett 2017
@@ -15,7 +16,9 @@ signature Delta
 import Data.Data
 import Data.Default
 import Data.Hashable
+#if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup
+#endif
 import GHC.Generics
 
 data Delta
