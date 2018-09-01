@@ -269,22 +269,16 @@ library set
   signatures: Elem
   exposed-modules: Set Set.Internal
 
-library
-  import: array, base, bytestring, comonad, containers, data-default-class, lens, optparse-applicative, text, transformers
-  hs-source-dirs: src/coda
-
-  build-depends:
+library console
+  import: base, data-default-class, lens, optparse-applicative
+  hs-source-dirs: src/console
+  build-depends: 
     ansi-terminal,
-    bound,
-    bytestring-short,
     exceptions,
     haskeline,
-    llvm-hs-pure ^>= 6.0,
-    megaparsec,
     prettyprinter,
     prettyprinter-ansi-terminal,
-    prettyprinter-convert-ansi-wl-pprint,
-    text-short
+    prettyprinter-convert-ansi-wl-pprint
 
   if flag(terminfo) && !os(windows)
     build-depends: terminfo
@@ -293,6 +287,28 @@ library
     Console
     Console.Options
     Console.Pretty
+
+  other-modules:
+    Console.Unicode
+
+-- simplified lib
+library
+  import: array, base, bytestring, comonad, containers, data-default-class, lens, optparse-applicative, text, transformers
+  hs-source-dirs: src/coda
+  build-depends: console
+  build-depends:
+    bound,
+    bytestring-short,
+    llvm-hs-pure ^>= 6.0,
+    megaparsec,
+    prettyprinter,
+    prettyprinter-ansi-terminal,
+    text-short
+
+  --  ansi-terminal,
+  --  prettyprinter-convert-ansi-wl-pprint,
+
+  exposed-modules:
     Console.Pretty.LLVM
     LLVM
     Syntax.Error
@@ -300,13 +316,11 @@ library
     Syntax.Lexer
     Syntax.Located
 
-  other-modules:
-    Console.Unicode
 
 -- bootstrapping executable
 executable toccata
   import: base, data-default-class, optparse-applicative, threaded-app
-  hs-source-dirs: app
+  hs-source-dirs: src/toccata
   main-is: Main.hs
   build-depends: coda
   other-modules: Paths_coda
