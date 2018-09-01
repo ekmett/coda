@@ -322,7 +322,7 @@ executable toccata
   import: base, data-default-class, optparse-applicative, threaded-app
   hs-source-dirs: src/toccata
   main-is: Main.hs
-  build-depends: coda
+  build-depends: coda, console
   other-modules: Paths_coda
 
 -- working test file for llvm output
