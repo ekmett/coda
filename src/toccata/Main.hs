@@ -3,18 +3,17 @@ module Main where
 import Control.Monad
 import Data.Default.Class
 import Data.Foldable
-import Data.Version
 import Options.Applicative
 import System.IO
 
 import Console
 import Console.Options
 import Console.Pretty
-import Paths_coda
+import Version
 
 consoleCommand, versionCommand :: Parser (IO ())
 consoleCommand = console <$> parseConsoleOptions
-versionCommand = pure $ putStrLn $ showVersion version
+versionCommand = pure $ putStrLn version
 
 commands :: Parser (IO ())
 commands = subparser $ fold

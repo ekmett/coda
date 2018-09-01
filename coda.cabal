@@ -2,7 +2,7 @@ cabal-version: 2.2
 name:          coda
 category:      Language
 version:       0.0.1
-license:       Apache-2.0 OR BSD-3-Clause
+license:       BSD-2-Clause OR Apache-2.0
 license-file:  LICENSE.md
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -141,11 +141,16 @@ library automata
     Automata.DFA
     Set.Lazy
 
+library version
+  import: base
+  hs-source-dirs: src/version
+  other-modules: Paths_coda
+  autogen-modules: Paths_coda
+  exposed-modules: Version
+
 library common
   import: base, data-default, ghc-prim, hashable, lens, text
   hs-source-dirs: src/common
-  other-modules: Paths_coda
-  autogen-modules: Paths_coda
   exposed-modules:
     Algebra.Ordered
     Algebra.Zero
@@ -158,21 +163,20 @@ library common
     Syntax.Sharing
     Util.Bits
     Util.BitQueue
-    Version
 
-library group-relative
+library relative
   import: base, bifunctors, comonad, data-default, ghc-prim, hashable, lens, mtl, profunctors, text
   signatures: Delta
-  hs-source-dirs: src/group-relative
+  hs-source-dirs: src/relative
   exposed-modules: Absolute Cat List Located Map Relative Queue
   build-depends: common
 
 library algebra
   import: base, data-default, hashable, lens, profunctors, text
-  build-depends: common, group-relative
+  build-depends: common, relative
   hs-source-dirs: src/algebra
   mixins:
-    group-relative
+    relative
      (Absolute as Relative.Absolute,
       Cat as Relative.Cat,
       List as Relative.List,
@@ -270,21 +274,25 @@ library set
   exposed-modules: Set Set.Internal
 
 library console
-  import: base, data-default-class, lens, optparse-applicative
+  import: base, containers, data-default-class, lens, optparse-applicative, text
   hs-source-dirs: src/console
+  build-depends: version, lexer
   build-depends: 
     ansi-terminal,
     exceptions,
     haskeline,
     prettyprinter,
     prettyprinter-ansi-terminal,
-    prettyprinter-convert-ansi-wl-pprint
+    prettyprinter-convert-ansi-wl-pprint,
+    split
 
   if flag(terminfo) && !os(windows)
     build-depends: terminfo
 
   exposed-modules:
     Console
+    Console.Command
+    Console.Completion
     Console.Options
     Console.Pretty
 
@@ -322,8 +330,7 @@ executable toccata
   import: base, data-default-class, optparse-applicative, threaded-app
   hs-source-dirs: src/toccata
   main-is: Main.hs
-  build-depends: coda, console
-  other-modules: Paths_coda
+  build-depends: coda, console, version
 
 -- working test file for llvm output
 -- executable llvm-test
