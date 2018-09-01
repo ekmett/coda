@@ -299,7 +299,6 @@ library console
   other-modules:
     Console.Unicode
 
--- simplified lib
 library
   import: array, base, bytestring, comonad, containers, data-default-class, lens, optparse-applicative, text, transformers
   hs-source-dirs: src/coda
@@ -313,9 +312,6 @@ library
     prettyprinter-ansi-terminal,
     text-short
 
-  --  ansi-terminal,
-  --  prettyprinter-convert-ansi-wl-pprint,
-
   exposed-modules:
     Console.Pretty.LLVM
     LLVM
@@ -323,7 +319,6 @@ library
     Syntax.Name
     Syntax.Lexer
     Syntax.Located
-
 
 -- bootstrapping executable
 executable toccata
@@ -333,14 +328,9 @@ executable toccata
   build-depends: coda, console, version
 
 -- working test file for llvm output
--- executable llvm-test
---   default-language: Haskell2010
---   hs-source-dirs: app
---   main-is: LLVM.hs
---   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
--- 
---   build-depends:
---     base,
---     coda,
---     llvm-hs-pure,
---     text
+executable llvm-test
+  import: base, text, threaded-app
+  hs-source-dirs: test
+  main-is: LLVM.hs
+  build-depends: coda, console,
+  build-depends: llvm-hs-pure
