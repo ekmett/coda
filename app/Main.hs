@@ -1,15 +1,16 @@
 module Main where
 
-import Coda.Console
-import Coda.Console.Options
-import Coda.Console.Pretty
 import Control.Monad
 import Data.Default.Class
 import Data.Foldable
 import Data.Version
 import Options.Applicative
-import Paths_coda
 import System.IO
+
+import Console
+import Console.Options
+import Console.Pretty
+import Paths_coda
 
 consoleCommand, versionCommand :: Parser (IO ())
 consoleCommand = console <$> parseConsoleOptions

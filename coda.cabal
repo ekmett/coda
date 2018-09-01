@@ -1,8 +1,8 @@
+cabal-version: 2.2
 name:          coda
 category:      Language
 version:       0.0.1
-license:       BSD2
-cabal-version: 2
+license:       Apache-2.0 OR BSD-3-Clause
 license-file:  LICENSE.md
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -14,25 +14,12 @@ build-type:    Simple
 synopsis:      The coda compiler
 description:   This package provides Coda, a Visual Studio Code language experiment.
 
-data-files:
-  test/data/*.golden
-
 extra-source-files:
   .hlint.yaml
   CHANGELOG.md
   CODE_OF_CONDUCT.md
   CONTRIBUTING.md
   README.md
-  bin/coda.sh
-  bin/coda.bat
-  code/*.ts
-  data/coda.json
-  data/images/*.png
-  package.json
-  package-lock.json
-  tsconfig.json
-  tslint.json
-  test/code/*.ts
 
 source-repository head
   type: git
@@ -43,138 +30,296 @@ flag terminfo
   default: True
   manual: True
 
-flag test-tasty
-  description: Build tasty test suite.
-  default: True
-  manual: True
+common threaded-app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
 
-flag coda
-  description: Build vs code plugin.
-  default: True
-  manual: True
+common aeson
+  build-depends: aeson >= 1.1 && < 1.3
 
--- bootstrapping codebase
-library
+common array
+  build-depends: array
+
+common base
   default-language: Haskell2010
   ghc-options: -Wall
-  hs-source-dirs: src
+  build-depends: base >= 4.10 && < 5
+
+common bifunctors
+  build-depends: bifunctors >= 5 && < 6
+
+common bytestring
+  build-depends: bytestring ^>= 0.10.8
+
+common comonad
+  build-depends: comonad >= 5 && < 6
+
+common containers
+  build-depends: containers ^>= 0.5.8.2
+
+common contravariant
+  build-depends: contravariant >= 1.4 && < 2
+
+common data-default-class
+  build-depends: data-default-class ^>= 0.1
+
+common data-default
+  build-depends: data-default ^>= 0.7.1.1
+
+common deepseq
+  build-depends: deepseq ^>= 1.4
+
+common filepath
+  build-depends: filepath ^>= 1.4
+
+common ghc-prim
+  build-depends: ghc-prim
+
+common hashable
+  build-depends: hashable ^>= 1.2.6
+
+common lens
+  build-depends: lens >= 4.15 && < 5
+
+common lens-aeson
+  build-depends: lens-aeson ^>= 1.0.2
+
+common mtl
+  build-depends: mtl ^>= 2.2.1
+
+common nats
+  build-depends: nats >= 1.1.1 && < 2
+
+common optparse-applicative
+  build-depends: optparse-applicative
+
+common profunctors
+  build-depends: profunctors ^>= 5.2
+
+common template-haskell
+  build-depends: template-haskell >= 2.12 && < 2.14
+
+common text
+  build-depends: text ^>= 1.2
+
+common transformers
+  build-depends: transformers
+
+common unordered-containers
+  build-depends: unordered-containers ^>= 0.2
+
+common uri-encode
+  build-depends: uri-encode ^>= 1.5.0.5
+
+library lsp
+  import: aeson, base, bytestring, data-default, filepath, hashable, lens,
+          lens-aeson, template-haskell, text, unordered-containers, uri-encode
+  hs-source-dirs: src/lsp
+  other-modules: Language.Server.TH
+  exposed-modules:
+    Language.Server.Builder
+    Language.Server.Parser
+    Language.Server.Protocol
+
+library termination
+  import: base, containers, contravariant, nats
+  hs-source-dirs: src/termination
+  exposed-modules:
+    Termination
+    Termination.Class
+    Termination.History
+    Termination.Pair
+    Termination.Test
+    Termination.Trie
+
+library automata
+  import: base, containers, contravariant, deepseq, lens
+  hs-source-dirs: src/automata
+  exposed-modules:
+    Automata.Presburger
+    Automata.Internal
+    Automata.NFA
+    Automata.DFA
+    Set.Lazy
+
+library common
+  import: base, data-default, ghc-prim, hashable, lens, text
+  hs-source-dirs: src/common
+  other-modules: Paths_coda
+  autogen-modules: Paths_coda
+  exposed-modules:
+    Algebra.Ordered
+    Algebra.Zero
+    FingerTree
+    Relative.Delta.Type
+    Syntax.Alex
+    Syntax.FromText
+    Syntax.Name
+    Syntax.Prefix
+    Syntax.Sharing
+    Util.Bits
+    Util.BitQueue
+    Version
+
+library group-relative
+  import: base, bifunctors, comonad, data-default, ghc-prim, hashable, lens, mtl, profunctors, text
+  signatures: Delta
+  hs-source-dirs: src/group-relative
+  exposed-modules: Absolute Cat List Located Map Relative Queue
+  build-depends: common
+
+library algebra
+  import: base, data-default, hashable, lens, profunctors, text
+  build-depends: common, group-relative
+  hs-source-dirs: src/algebra
+  mixins:
+    group-relative
+     (Absolute as Relative.Absolute,
+      Cat as Relative.Cat,
+      List as Relative.List,
+      Located as Relative.Located,
+      Map as Relative.Map,
+      Queue as Relative.Queue,
+      Relative as Relative.Class)
+    requires (Delta as Relative.Delta.Type)
+  exposed-modules:
+    Relative.Delta
+    Rev
+  reexported-modules:
+    Algebra.Ordered,
+    Algebra.Zero,
+    FingerTree,
+    Relative.Absolute,
+    Relative.Cat,
+    Relative.Class,
+    Relative.Delta.Type,
+    Relative.List,
+    Relative.Located,
+    Relative.Map,
+    Relative.Queue
+
+library token
+  import: base, containers, data-default, lens, text
+  hs-source-dirs: src/token
+  exposed-modules: Syntax.Token
+  build-depends: algebra, common
+
+library dyck
+  import: base, comonad, data-default, hashable, lens, text
+  build-depends: algebra
+  hs-source-dirs: src/dyck
+  signatures: Token
+  exposed-modules: Dyck
+
+library lexer
+  import: array, base, data-default, lens, text
+  build-depends: algebra, common, dyck, token
+  hs-source-dirs: src/lexer
+  build-tools: alex
+  exposed-modules: Syntax.Lexer
+  mixins: dyck (Dyck as Syntax.Dyck) requires (Token as Syntax.Token)
+  reexported-modules: Syntax.Token, Syntax.Dyck
+
+library rope
+  import: base, comonad, data-default, hashable, lens, mtl, profunctors, text, unordered-containers
+  build-depends: algebra, common, lsp
+  hs-source-dirs: src/rope
+  signatures: Dyck Lexer Summary
+  exposed-modules: Document Rope
+
+-- a stub layout library
+library summary-unit
+  import: base, text
+  hs-source-dirs: src/summary-unit
+  signatures: Dyck
+  exposed-modules: Summary
+  build-depends: common
+
+library layout
+  import: base, data-default, lens
+  hs-source-dirs: src/layout
+  build-depends: algebra, common, dyck
+  exposed-modules: Layout
+
+library syntax
+  import: base
+  build-depends: common, lexer, rope, summary-unit
+
+  mixins:
+    summary-unit (Summary as Syntax.Summary)
+      requires (Dyck as Syntax.Dyck),
+    rope (Document as Syntax.Document, Rope as Syntax.Rope)
+      requires (Dyck as Syntax.Dyck, Lexer as Syntax.Lexer, Summary as Syntax.Summary)
+
+  reexported-modules:
+    Syntax.Alex,
+    Syntax.Document,
+    Syntax.Dyck,
+    Syntax.Lexer,
+    Syntax.FromText,
+    Syntax.Name,
+    Syntax.Prefix,
+    Syntax.Rope,
+    Syntax.Summary,
+    Syntax.Token
+
+library set
+  import: base, data-default, deepseq, lens
+  hs-source-dirs: src/set
+  ghc-options: -O2
+  signatures: Elem
+  exposed-modules: Set Set.Internal
+
+library
+  import: array, base, bytestring, comonad, containers, data-default-class, lens, optparse-applicative, text, transformers
+  hs-source-dirs: src/coda
 
   build-depends:
     ansi-terminal,
-    array,
-    base >= 4.11 && < 5,
     bound,
-    bytestring,
     bytestring-short,
-    comonad,
-    containers,
-    data-default-class,
     exceptions,
     haskeline,
-    lens,
-    llvm-hs-pure,
+    llvm-hs-pure ^>= 6.0,
     megaparsec,
-    optparse-applicative,
     prettyprinter,
     prettyprinter-ansi-terminal,
     prettyprinter-convert-ansi-wl-pprint,
-    text,
-    text-short,
-    transformers
+    text-short
 
   if flag(terminfo) && !os(windows)
     build-depends: terminfo
 
   exposed-modules:
-    Coda.Console
-    Coda.Console.Options
-    Coda.Console.Pretty
-    Coda.Console.Pretty.LLVM
-    Coda.LLVM
-    Coda.Syntax.Error
-    Coda.Syntax.Name
-    Coda.Syntax.Lexer
-    Coda.Syntax.Located
+    Console
+    Console.Options
+    Console.Pretty
+    Console.Pretty.LLVM
+    LLVM
+    Syntax.Error
+    Syntax.Name
+    Syntax.Lexer
+    Syntax.Located
 
   other-modules:
-    Coda.Console.Unicode
+    Console.Unicode
 
 -- bootstrapping executable
 executable toccata
-  default-language: Haskell2010
+  import: base, data-default-class, optparse-applicative, threaded-app
   hs-source-dirs: app
   main-is: Main.hs
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-
-  build-depends:
-    base,
-    coda,
-    data-default-class,
-    optparse-applicative
-
-  other-modules:
-    Paths_coda
-
---------------------------------------------------------------------------------
--- executable
---------------------------------------------------------------------------------
-
--- vs code plugin
-executable coda
-  default-language: Haskell2010
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  main-is: main.hs
-  if flag(coda)
-    build-depends: base, coda-common, coda-console, coda-server, optparse-applicative
-  else
-    buildable: False
-
---------------------------------------------------------------------------------
--- tests
---------------------------------------------------------------------------------
-
-test-suite tasty
-  type: exitcode-stdio-1.0
-  default-language: Haskell2010
-  main-is: tasty.hs
-  hs-source-dirs: test/src
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-  other-modules:
-    ListTest
-    MessageTest
-    MapTest
-    Paths_coda
-  autogen-modules: Paths_coda
-  if !flag(test-tasty)
-    buildable: False
-  else
-    build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
-    build-depends: coda-algebra, coda-lsp, coda-syntax
-    build-depends:
-      aeson,
-      base,
-      containers,
-      bifunctors,
-      bytestring,
-      filepath,
-      lens,
-      QuickCheck,
-      tagged,
-      tasty ^>= 0.11,
-      tasty-quickcheck,
-      tasty-golden ^>= 2.3,
-      tasty-hunit ^>= 0.9,
-      text
+  build-depends: coda
+  other-modules: Paths_coda
 
 -- working test file for llvm output
-executable llvm-test
-  default-language: Haskell2010
-  hs-source-dirs: app
-  main-is: LLVM.hs
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
-
-  build-depends:
-    base,
-    coda,
-    llvm-hs-pure,
-    text
+-- executable llvm-test
+--   default-language: Haskell2010
+--   hs-source-dirs: app
+--   main-is: LLVM.hs
+--   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+-- 
+--   build-depends:
+--     base,
+--     coda,
+--     llvm-hs-pure,
+--     text

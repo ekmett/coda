@@ -1,0 +1,86 @@
+name:          coda-plugin
+category:      Language
+version:       0.0.1
+license:       BSD2
+cabal-version: 2
+license-file:  LICENSE.md
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/ekmett/coda/
+bug-reports:   http://github.com/ekmett/coda/issues
+copyright:     Copyright (C) 2017-2018 Edward A. Kmett
+build-type:    Simple
+synopsis:      The coda compiler
+description:   This package provides Coda, a Visual Studio Code language experiment.
+
+data-files:
+  test/data/*.golden
+
+extra-source-files:
+  bin/coda.sh
+  bin/coda.bat
+  code/*.ts
+  data/coda.json
+  data/images/*.png
+  package.json
+  package-lock.json
+  tsconfig.json
+  tslint.json
+  test/code/*.ts
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/coda.git
+
+flag test-tasty
+  description: Build tasty test suite.
+  default: True
+  manual: True
+
+--------------------------------------------------------------------------------
+-- executable
+--------------------------------------------------------------------------------
+
+executable coda-plugin
+  default-language: Haskell2010
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  main-is: main.hs
+  build-depends: base, coda-common, coda-console, coda-server, optparse-applicative
+
+--------------------------------------------------------------------------------
+-- tests
+--------------------------------------------------------------------------------
+
+test-suite tasty
+  type: exitcode-stdio-1.0
+  default-language: Haskell2010
+  main-is: tasty.hs
+  hs-source-dirs: test/src
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  other-modules:
+    ListTest
+    MessageTest
+    MapTest
+    Paths_coda
+  autogen-modules: Paths_coda
+  if !flag(test-tasty)
+    buildable: False
+  else
+    build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
+    build-depends: coda-algebra, coda-lsp, coda-syntax
+    build-depends:
+      aeson,
+      base,
+      containers,
+      bifunctors,
+      bytestring,
+      filepath,
+      lens,
+      QuickCheck,
+      tagged,
+      tasty ^>= 0.11,
+      tasty-quickcheck,
+      tasty-golden ^>= 2.3,
+      tasty-hunit ^>= 0.9,
+      text

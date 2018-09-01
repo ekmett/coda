@@ -2,11 +2,9 @@
 
 [![Travis Continuous Integration Status][travis-img]][travis]
 
-This package will eventually provide a toy compiler for experimenting with resumable parsing.
+This package will eventually provide a toy compiler.
 
 For now, it provides an entertaining series of crashes and confusing error messages.
-
-The application is designed as a plugin for Visual Studio Code.
 
 **Table of Contents**
 
@@ -21,7 +19,7 @@ The application is designed as a plugin for Visual Studio Code.
 Installation
 ============
 
-To install the `coda` executable, you will need GHC 8.2.2 release candidate 1 or later, and you'll need to run `cabal new-build`, then fish through `dist-newstyle` for the executable and put it somewhere in your path.
+To install the `coda` executable, you will need GHC 8.4.1 release candidate 1 or later, and you'll need to run `cabal new-build`, and fish through `dist-newstyle` for the executable and put it somewhere in your path.
 
 Once `cabal new-install` works, this will become a lot easier.
 
@@ -75,9 +73,17 @@ Directories
 License
 =======
 
-[BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause).
+[Licensed](LICENSE.md) under either of
+ * Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+ * BSD 2-Clause license (https://opensource.org/licenses/BSD-2-Clause)
+at your option.
 
-See [LICENSE.md](LICENSE.md)
+Contribution
+============
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you shall be dual-licensed as above, without any
+additional terms or conditions.
 
 Contact Information
 ===================

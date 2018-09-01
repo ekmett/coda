@@ -1,6 +1,6 @@
-packages:
-  coda.cabal
-  lib/*/*.cabal
+packages: .
+
+-- , lib/*
 
 package coda-lsp
   optimization: False
