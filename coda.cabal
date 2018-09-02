@@ -281,7 +281,7 @@ library console
   import: base, containers, data-default-class, lens, optparse-applicative, text
   hs-source-dirs: src/console
   build-depends: version, lexer
-  build-depends: 
+  build-depends:
     ansi-terminal,
     exceptions,
     haskeline,
@@ -307,6 +307,7 @@ library
   import: array, base, bytestring, comonad, containers, data-default-class, lens, optparse-applicative, text, transformers
   hs-source-dirs: src/coda
   build-depends: console
+  build-tools: alex
   build-depends:
     bound,
     bytestring-short,
