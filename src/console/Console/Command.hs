@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett 2017, (c) Edward Kmett and Dan Doel 2012-2013
--- License   :  BSD2
+-- License   :  BSD-2-Clause OR Apache-2.0
 -- Maintainer:  Edward Kmett <ekmett@gmail.com>
 -- Stability :  experimental
 -- Portability: non-portable

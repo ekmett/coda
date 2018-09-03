@@ -6,7 +6,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2017 Edward Kmett
--- License     :  BSD2 (see the file LICENSE.md)
+-- License     :  BSD-2-Clause OR Apache-2.0
 -- Maintainer  :  Edward Kmett <ekmett@gmail.com>
 -- Stability   :  experimental
 -- Portability :  non-portable

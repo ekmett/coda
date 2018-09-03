@@ -13,7 +13,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Edward Kmett 2018, (c) Stephen Diehl 2014-2017, (c) Cedric Shoc 2015
--- License     :  BSD3
+-- License     :  BSD-2-Clause OR Apache-2.0
 -- Maintainer  :  ekmett@gmail.com
 -- Stability   :  experimental
 -- Portability :  portable
