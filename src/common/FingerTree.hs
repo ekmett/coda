@@ -13,7 +13,7 @@
 
 -----------------------------------------------------------------------------
 -- |
--- Copyright   :  (c) Edward Kmett 2017, (c) Ross Paterson, Ralf Hinze 2006
+-- Copyright   :  (c) Edward Kmett 2017-2018, (c) Ross Paterson, Ralf Hinze 2006
 -- License     :  BSD-style
 -- Stability   :  experimental
 -- Portability :  non-portable

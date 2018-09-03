@@ -1,4 +1,11 @@
-# BSD 2-Clause License
+# License
+
+Licensed under either of
+ * Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+ * BSD 2-Clause license (https://opensource.org/licenses/BSD-2-Clause)
+at your option.
+
+## BSD 2-Clause License
 
 - Copyright 2017-2018 Edward Kmett
 - Copyright 2012-2014 Edward Kmett and Dan Doel
@@ -28,7 +35,7 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-# Apache License
+## Apache License
 
 _Version 2.0, January 2004_  
 _&lt;<http://www.apache.org/licenses/>&gt;_

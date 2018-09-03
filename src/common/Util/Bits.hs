@@ -3,7 +3,7 @@
 
 -----------------------------------------------------------------------------
 -- |
--- Copyright   :  (c) Edward Kmett 2017 (c) Clark Gaebel 2012, (c) Johan Tibel 2012
+-- Copyright   :  (c) Edward Kmett 2017-2018 (c) Clark Gaebel 2012, (c) Johan Tibel 2012
 -- License     :  BSD-style
 -- Maintainer  :  ekmett@gmail.com
 -- Portability :  non-portable
