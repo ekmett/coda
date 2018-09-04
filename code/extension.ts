@@ -3,7 +3,7 @@ import * as path from 'path';
 import { workspace, Disposable, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions } from 'vscode-languageclient';
 export function activate(context: ExtensionContext) {
-  let serverPath = context.asAbsolutePath(path.join('bin', process.platform === 'win32' ? 'coda.bat' : 'coda.sh'));
+  let serverPath = context.asAbsolutePath(path.join('bin', process.platform === 'win32' ? 'codex.bat' : 'codex.sh'));
   let serverOptions: ServerOptions = {
     run : { command: serverPath, args: ['server'] },
     debug: { command: serverPath, args: ['server', '--debug'] }
