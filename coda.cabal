@@ -318,25 +318,24 @@ executable codex
   main-is: Main.hs
 
 test-suite lsp-test
-  import: aeson, app, base, bifunctors, containers, filepath, lens, text
+  import: aeson, app, base, bifunctors, bytestring, containers, filepath,
+          lens, tagged, text
   main-is: Main.hs
   type: exitcode-stdio-1.0
   hs-source-dirs: app/lsp-test
+  autogen-modules: Paths_coda
+  other-modules:
+    ListTest
+    MessageTest
+    MapTest
+    Paths_coda
+  build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.3
+  build-depends: algebra, lsp, syntax
+  build-depends:
+    QuickCheck,
+    tasty >= 0.11,
+    tasty-quickcheck,
+    tasty-golden >= 2.3,
+    tasty-hunit >= 0.9,
   if !flag(test-tasty)
     buildable: False
-  else
-    autogen-modules: Paths_coda
-    other-modules:
-      ListTest
-      MessageTest
-      MapTest
-      Paths_coda
-    build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
-    build-depends: algebra, lsp, syntax
-    build-depends:
-      QuickCheck,
-      tasty ^>= 0.11,
-      tasty-quickcheck,
-      tasty-golden ^>= 2.3,
-      tasty-hunit ^>= 0.9,
-
