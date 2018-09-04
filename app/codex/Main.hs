@@ -1,7 +1,8 @@
+
 --------------------------------------------------------------------
 -- |
--- Copyright :  (c) Edward Kmett 2017
--- License   :  BSD2
+-- Copyright :  (c) Edward Kmett 2017-2018
+-- License   :  BSD-2-Clause OR Apache-2.0
 -- Maintainer:  Edward Kmett <ekmett@gmail.com>
 -- Stability :  experimental
 -- Portability: non-portable
@@ -10,15 +11,15 @@
 
 module Main where
 
-import Coda.Console
-import Coda.Console.Options
-import Coda.Server
-import Coda.Server.Options
-import Coda.Version
 import Control.Monad (join)
 import Data.Foldable
-import Data.Monoid
 import Options.Applicative
+
+import Console
+import Console.Options
+import Server
+import Server.Options
+import Version
 
 serverCommand, consoleCommand, commands :: Parser (IO ())
 serverCommand = server <$> parseServerOptions

@@ -15,12 +15,13 @@
 
 module MapTest where
 
-import Coda.Relative.Class
-import Coda.Relative.Delta
-import Coda.Relative.Map as Relative
 import Data.Map.Strict as Model
 import GHC.Generics
 import Test.QuickCheck
+
+import Relative.Class
+import Relative.Delta
+import Relative.Map as Relative
 
 deriving instance Arbitrary Delta
 

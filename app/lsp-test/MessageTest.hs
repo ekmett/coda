@@ -19,16 +19,18 @@ import Control.Lens ((<&>))
 import Data.Aeson (ToJSON, FromJSON, Value(..), fromJSON, toJSON, Result(..))
 import Data.ByteString.Builder
 import Data.Tagged
-import Language.Server.Parser
-import Language.Server.Builder
-import Language.Server.Protocol
 import System.FilePath
 import System.IO
 import Test.Tasty
 import Test.Tasty.Golden
 import Test.Tasty.HUnit
 import Test.Tasty.Providers as Tasty
+
 import Paths_coda (getDataDir)
+import Language.Server.Parser
+import Language.Server.Builder
+import Language.Server.Protocol
+
 
 goldenFile :: TestName -> FilePath
 goldenFile name = "test" </> "data" </> name <.> "golden"

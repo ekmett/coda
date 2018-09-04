@@ -16,13 +16,14 @@
 
 module ListTest where
 
-import Coda.Relative.Class
-import Coda.Relative.Delta
-import Coda.Relative.List as List
 import Control.Lens as Lens
 import Data.List as Model
 import GHC.Generics
 import Test.QuickCheck
+
+import Relative.Class
+import Relative.Delta
+import Relative.List as List
 
 deriving instance Arbitrary Delta
 

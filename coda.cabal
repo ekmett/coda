@@ -12,7 +12,7 @@ bug-reports:   http://github.com/ekmett/coda/issues
 copyright:     Copyright (C) 2017-2018 Edward A. Kmett
 build-type:    Simple
 synopsis:      The coda compiler
-description:   This package provides Coda, a Visual Studio Code language experiment.
+description:   The coda compiler.
 
 extra-source-files:
   .hlint.yaml
@@ -20,6 +20,17 @@ extra-source-files:
   CODE_OF_CONDUCT.md
   CONTRIBUTING.md
   README.md
+  bin/codex.sh
+  code/*.ts
+  data/coda.json
+  data/images/*.png
+  package.json
+  tsconfig.json
+  tslint.json
+  test/code/*.ts
+
+data-files:
+  test/data/*.golden
 
 source-repository head
   type: git
@@ -30,85 +41,44 @@ flag terminfo
   default: True
   manual: True
 
-common threaded-app
+flag test-tasty
+  description: Build tasty tests.
+  default: True
+  manual: True
+
+common app 
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
-
-common aeson
-  build-depends: aeson >= 1.1 && < 1.3
-
-common array
-  build-depends: array
 
 common base
   default-language: Haskell2010
   ghc-options: -Wall
   build-depends: base >= 4.10 && < 5
 
-common bifunctors
-  build-depends: bifunctors >= 5 && < 6
-
-common bytestring
-  build-depends: bytestring ^>= 0.10.8
-
-common comonad
-  build-depends: comonad >= 5 && < 6
-
-common containers
-  build-depends: containers ^>= 0.5.8.2
-
-common contravariant
-  build-depends: contravariant >= 1.4 && < 2
-
-common data-default-class
-  build-depends: data-default-class ^>= 0.1
-
-common data-default
-  build-depends: data-default ^>= 0.7.1.1
-
-common deepseq
-  build-depends: deepseq ^>= 1.4
-
-common filepath
-  build-depends: filepath ^>= 1.4
-
-common ghc-prim
-  build-depends: ghc-prim
-
-common hashable
-  build-depends: hashable ^>= 1.2.6
-
-common lens
-  build-depends: lens >= 4.15 && < 5
-
-common lens-aeson
-  build-depends: lens-aeson ^>= 1.0.2
-
-common mtl
-  build-depends: mtl ^>= 2.2.1
-
-common nats
-  build-depends: nats >= 1.1.1 && < 2
-
-common optparse-applicative
-  build-depends: optparse-applicative
-
-common profunctors
-  build-depends: profunctors ^>= 5.2
-
-common template-haskell
-  build-depends: template-haskell >= 2.12 && < 2.14
-
-common text
-  build-depends: text ^>= 1.2
-
-common transformers
-  build-depends: transformers
-
-common unordered-containers
-  build-depends: unordered-containers ^>= 0.2
-
-common uri-encode
-  build-depends: uri-encode ^>= 1.5.0.5
+common aeson                { build-depends: aeson >= 1.1 && < 1.3 }
+common array                { build-depends: array }
+common bifunctors           { build-depends: bifunctors >= 5 && < 6 }
+common bytestring           { build-depends: bytestring ^>= 0.10.8 }
+common comonad              { build-depends: comonad >= 5 && < 6 }
+common containers           { build-depends: containers ^>= 0.5.8.2 }
+common contravariant        { build-depends: contravariant >= 1.4 && < 2 }
+common data-default         { build-depends: data-default ^>= 0.7.1.1 }
+common data-default-class   { build-depends: data-default-class ^>= 0.1 }
+common deepseq              { build-depends: deepseq ^>= 1.4 }
+common filepath             { build-depends: filepath ^>= 1.4 }
+common ghc-prim             { build-depends: ghc-prim }
+common hashable             { build-depends: hashable ^>= 1.2.6 }
+common lens                 { build-depends: lens >= 4.15 && < 5 }
+common lens-aeson           { build-depends: lens-aeson ^>= 1.0.2 }
+common mtl                  { build-depends: mtl ^>= 2.2.1 }
+common nats                 { build-depends: nats >= 1.1.1 && < 2 }
+common optparse-applicative { build-depends: optparse-applicative }
+common profunctors          { build-depends: profunctors ^>= 5.2 }
+common tagged               { build-depends: tagged }
+common template-haskell     { build-depends: template-haskell >= 2.12 && < 2.14 }
+common text                 { build-depends: text ^>= 1.2 }
+common transformers         { build-depends: transformers }
+common unordered-containers { build-depends: unordered-containers ^>= 0.2 }
+common uri-encode           { build-depends: uri-encode ^>= 1.5.0.5 }
 
 library lsp
   import: aeson, base, bytestring, data-default, filepath, hashable, lens,
@@ -230,7 +200,6 @@ library rope
   signatures: Dyck Lexer Summary
   exposed-modules: Document Rope
 
--- a stub layout library
 library summary-unit
   import: base, text
   hs-source-dirs: src/summary-unit
@@ -277,8 +246,7 @@ library set
   exposed-modules: Set Set.Internal
 
 library server
-  import: aeson, base, bytestring, data-default, lens, mtl
-  import: optparse-applicative, text, unordered-containers
+  import: aeson, base, bytestring, data-default, lens, mtl, optparse-applicative, text, unordered-containers
   build-depends: algebra, lsp, syntax
   hs-source-dirs: src/server
   exposed-modules: Server Server.Options
@@ -331,17 +299,44 @@ library
     Syntax.Lexer
     Syntax.Located
 
--- bootstrapping executable
-executable toccata
-  import: base, data-default-class, optparse-applicative, threaded-app
-  hs-source-dirs: src/toccata
-  main-is: Main.hs
+executable codicil
+  import: app, base, data-default-class, optparse-applicative
   build-depends: coda, console, version
+  hs-source-dirs: app/codicil
+  main-is: Main.hs
 
--- working test file for llvm output
 executable llvm-test
-  import: base, text, threaded-app
-  hs-source-dirs: test
-  main-is: LLVM.hs
-  build-depends: coda, console,
-  build-depends: llvm-hs-pure
+  import: app, base, text
+  build-depends: coda, console, llvm-hs-pure
+  hs-source-dirs: app/llvm-test
+  main-is: Main.hs
+
+executable codex
+  import: app, base, optparse-applicative
+  build-depends: common, console, server, version
+  hs-source-dirs: app/codex
+  main-is: Main.hs
+
+test-suite lsp-test
+  import: aeson, app, base, bifunctors, containers, filepath, lens, text
+  main-is: Main.hs
+  type: exitcode-stdio-1.0
+  hs-source-dirs: app/lsp-test
+  if !flag(test-tasty)
+    buildable: False
+  else
+    autogen-modules: Paths_coda
+    other-modules:
+      ListTest
+      MessageTest
+      MapTest
+      Paths_coda
+    build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.2
+    build-depends: algebra, lsp, syntax
+    build-depends:
+      QuickCheck,
+      tasty ^>= 0.11,
+      tasty-quickcheck,
+      tasty-golden ^>= 2.3,
+      tasty-hunit ^>= 0.9,
+
