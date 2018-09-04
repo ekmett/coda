@@ -12,23 +12,21 @@
 
 --------------------------------------------------------------------
 -- |
--- Copyright :  (c) Edward Kmett 2017
--- License   :  BSD2
+-- Copyright :  (c) Edward Kmett 2017-2018
+-- License   :  BSD-2-Clause OR Apache-2.0
 -- Maintainer:  Edward Kmett <ekmett@gmail.com>
 -- Stability :  experimental
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
 
-module Coda.Server
+module Server
   ( server
   , logMessage
   , telemetryEvent
   , showMessage
   ) where
 
-import Coda.Server.Options
-import Coda.Syntax.Document
 import Control.Applicative
 import Control.Monad.IO.Class
 import Control.Monad.State
@@ -42,6 +40,9 @@ import Language.Server.Protocol
 import Language.Server.Parser
 import System.Exit
 import System.IO
+
+import Server.Options
+import Syntax.Document
 
 --------------------------------------------------------------------------------
 -- Logging

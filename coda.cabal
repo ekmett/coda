@@ -269,13 +269,19 @@ library syntax
 
   other-modules: Syntax
 
-
 library set
   import: base, data-default, deepseq, lens
   hs-source-dirs: src/set
   ghc-options: -O2
   signatures: Elem
   exposed-modules: Set Set.Internal
+
+library server
+  import: aeson, base, bytestring, data-default, lens, mtl
+  import: optparse-applicative, text, unordered-containers
+  build-depends: algebra, lsp, syntax
+  hs-source-dirs: src/server
+  exposed-modules: Server Server.Options
 
 library console
   import: base, containers, data-default-class, lens, optparse-applicative, text
