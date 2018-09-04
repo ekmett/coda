@@ -1,6 +1,6 @@
 {-# language DeriveTraversable, DeriveDataTypeable, DeriveGeneric #-}
 module Syntax.Sharing
-  ( Sharing(..), sharing
+  ( Sharing(..), sharing, changed
   ) where
 
 import Data.Bits
@@ -25,6 +25,9 @@ instance Monad Sharing where
   Sharing _ a >>= f = case f a of
     Sharing _ b -> Sharing 1 b
   Sharing m _ >> Sharing n a = Sharing (m .|. n) a
+
+changed :: a -> Sharing a
+changed = Sharing 1
 
 sharing :: a -> Sharing a -> a
 sharing z (Sharing 0 _) = z
