@@ -219,20 +219,22 @@ library parser
 library layout
   import: base, data-default, lens
   hs-source-dirs: src/layout
-  build-depends: algebra, common, dyck, reflection
-  signatures: Parser
+  build-depends: algebra, common, lens, reflection
+  signatures: Dyck Parser
   exposed-modules: Layout
 
 library syntax
   import: base
   hs-source-dirs: src/syntax
-  build-depends: common, lexer, rope, summary-unit
+  build-depends: common, lexer, layout, parser, rope, summary-unit
 
   mixins:
     summary-unit (Summary as Syntax.Summary)
       requires (Dyck as Syntax.Dyck),
     rope (Document as Syntax.Document, Rope as Syntax.Rope)
-      requires (Dyck as Syntax.Dyck, Lexer as Syntax.Lexer, Summary as Syntax.Summary)
+      requires (Dyck as Syntax.Dyck, Lexer as Syntax.Lexer, Summary as Syntax.Summary),
+    layout (Layout as Syntax.Layout)
+      requires (Dyck as Syntax.Dyck, Parser as Syntax.Parser)
 
   reexported-modules:
     Syntax.Alex,
@@ -244,7 +246,9 @@ library syntax
     Syntax.Prefix,
     Syntax.Rope,
     Syntax.Summary,
-    Syntax.Token
+    Syntax.Token,
+    Syntax.Layout,
+    Syntax.Parser
 
   other-modules: Syntax
 
@@ -322,10 +326,10 @@ executable llvm-test
   main-is: Main.hs
 
 executable codex
-  import: app, base, optparse-applicative
-  build-depends: common, console, server, version
-  hs-source-dirs: app/codex
-  main-is: Main.hs
+ import: app, base, optparse-applicative
+ build-depends: common, console, server, version
+ hs-source-dirs: app/codex
+ main-is: Main.hs
 
 test-suite lsp-test
   import: aeson, app, base, bifunctors, bytestring, containers, filepath,
@@ -349,3 +353,25 @@ test-suite lsp-test
     tasty-hunit >= 0.9,
   if !flag(test-tasty)
     buildable: False
+
+test-suite layout-test
+  import: aeson, app, base, bifunctors, bytestring, containers, filepath,
+          lens, tagged, text, transformers, mtl
+  main-is: Main.hs
+  type: exitcode-stdio-1.0
+  hs-source-dirs: app/layout-test
+  autogen-modules: Paths_coda
+  other-modules:
+    Paths_coda
+    LayoutTest
+  build-tool-depends: tasty-discover:tasty-discover >= 3.0 && < 4.3
+  build-depends: common, algebra, syntax, lsp
+  build-depends:
+    QuickCheck,
+    tasty >= 0.11,
+    tasty-quickcheck,
+    tasty-golden >= 2.3,
+    tasty-hunit >= 0.9,
+  if !flag(test-tasty)
+    buildable: False
+

@@ -1,0 +1,15 @@
+
+signature Dyck(Dyck, boring) where
+
+import Control.Lens
+import Data.Default
+import Relative.Class
+
+data Dyck
+instance Eq Dyck
+instance Show Dyck
+instance Relative Dyck
+instance Semigroup Dyck
+instance AsEmpty Dyck
+
+boring :: Dyck -> Bool

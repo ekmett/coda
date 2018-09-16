@@ -31,6 +31,7 @@ module Dyck
   , spine
   , dyckLayoutMode
   , dyckMismatchErrors
+  , boring
   ) where
 
 
@@ -84,6 +85,9 @@ data Dyck
     !LayoutMode
     !(Cat MismatchError) -- errors
   deriving (Generic, Show, Eq, Ord, Read)
+
+boring :: Dyck -> Bool
+boring = views dyckLayoutMode (def ==)
 
 dyckLayoutMode :: Lens' Dyck LayoutMode
 dyckLayoutMode f (Dyck l ms r s k e) = f k <&> \k' -> Dyck l ms r s k' e
