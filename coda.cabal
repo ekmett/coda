@@ -286,7 +286,7 @@ library
     bound,
     bytestring-short,
     llvm-hs-pure ^>= 6.0,
-    megaparsec,
+    megaparsec >= 6.0 && < 7.0,
     prettyprinter,
     prettyprinter-ansi-terminal,
     text-short
