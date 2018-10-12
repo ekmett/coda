@@ -146,6 +146,8 @@ instance Monoid Dyck where
   mappend = (<>)
   {-# inline mappend #-}
 
+instance RelativeSemigroup Dyck
+
 instance RelativeMonoid Dyck
 
 -- convert a dyck language skeleton to a set of tokens (including unmatched closings and openings)

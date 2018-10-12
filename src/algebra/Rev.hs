@@ -56,4 +56,5 @@ instance Monoid (f a) => Monoid (Rev f a) where
 
 instance Relative (f a) => Relative (Rev f a) where rel d (Rev m) = Rev (rel d m)
 
+instance RelativeSemigroup (f a) => RelativeSemigroup (Rev f a)
 instance RelativeMonoid (f a) => RelativeMonoid (Rev f a)
