@@ -68,6 +68,7 @@ instance (Ord a, Relative a) => Ord (List a) where
 
 instance RelativeOrder a => RelativeOrder (List a)
 instance StrictRelativeOrder a => StrictRelativeOrder (List a)
+instance Relative a => RelativeSemigroup (List a)
 instance Relative a => RelativeMonoid (List a)
 
 instance Default (List a) where

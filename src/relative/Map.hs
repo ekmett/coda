@@ -109,6 +109,7 @@ instance (StrictRelativeOrder k, Relative a) => Monoid (Map k a) where
   mempty = Tip
   mappend = union
 
+instance (StrictRelativeOrder k, Relative a) => RelativeSemigroup (Map k a)
 instance (StrictRelativeOrder k, Relative a) => RelativeMonoid (Map k a)
 
 lookup :: (StrictRelativeOrder k, Relative a) => k -> Map k a -> Maybe a

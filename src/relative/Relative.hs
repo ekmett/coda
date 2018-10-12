@@ -43,6 +43,7 @@ module Relative
   , birel
 
   -- * Relative monoids
+  , RelativeSemigroup
   , RelativeMonoid
 
   -- * Relative orderings
@@ -159,20 +160,32 @@ birel d = bimap (rel d) (rel d)
 --------------------------------------------------------------------------------
 
 -- |
--- Laws: @'rel' d@ is a monoid homomorphism.
+-- Laws: @'rel' d@ is a semigroup homomorphism.
+-- Or equivalently, 'rel' is a distributive group action
 --
 -- @
 -- 'rel' d (m '<>' n)   = rel d m '<>' rel d n
+-- @
+--
+
+
+class (Relative t, Semigroup t) => RelativeSemigroup t
+instance RelativeSemigroup Void
+instance Relative a => RelativeSemigroup (NonEmpty a)
+instance RelativeSemigroup Delta
+instance RelativeSemigroup ()
+instance (RelativeSemigroup a, RelativeSemigroup b) => RelativeSemigroup (a,b)
+instance Relative a => RelativeSemigroup [a]
+
+-- |
+-- Laws: @'rel' d@ is a monoid homomorphism.
+-- Or equivalently, 'rel' is a distributive unital group action
+--
+-- @
 -- 'rel' d 'mempty'   = 'mempty'
 -- @
 --
--- TODO: Add @RelativeSemigroup@ in ghc 8.4
---
--- @
--- instance RelativeSemigroup Void
--- instance Relative a => RelativeSemigroup (NonEmpty a)
--- @
-class (Relative t, Monoid t) => RelativeMonoid t
+class (RelativeSemigroup t, Monoid t) => RelativeMonoid t
 
 instance RelativeMonoid Delta
 instance RelativeMonoid ()

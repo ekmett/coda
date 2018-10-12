@@ -1,6 +1,7 @@
 {-# language DefaultSignatures #-}
 {-# language FlexibleContexts #-}
 {-# language MonoLocalBinds #-}
+{-# language TypeApplications #-}
 
 module Termination.Class
   ( Termination(..)
@@ -13,9 +14,9 @@ import Data.Proxy
 import Numeric.Natural
 
 class Termination a where
-  wqo :: Test a 
+  wqo :: Test a
   default wqo :: Deciding Termination a => Test a
-  wqo = deciding (Proxy :: Proxy Termination) wqo 
+  wqo = deciding (Proxy @Termination) wqo
 
 instance Termination ()
 instance Termination a => Termination [a]
@@ -29,9 +30,9 @@ instance Termination Natural where wqo = ord
 class Termination1 f where
   wqo1 :: Test a -> Test (f a)
   default wqo1 :: Deciding1 Termination f => Test a -> Test (f a)
-  wqo1 = deciding1 (Proxy :: Proxy Termination) wqo
+  wqo1 = deciding1 (Proxy @Termination) wqo
 
-instance Termination1 [] 
+instance Termination1 []
 instance Termination1 Maybe
 instance Termination e => Termination1 ((,) e)
 instance Termination e => Termination1 (Either e)

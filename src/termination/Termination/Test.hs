@@ -59,7 +59,7 @@ instance Monoid (Test a) where
 finite :: Eq a => Test a
 finite = Test id $ \x y -> diagBB $ x == y -- symmetric
 
--- side condition well-founded
+-- side-condition: well-founded
 ord :: Ord a => Test a
 ord = Test id $ \x y -> ordBB $ compare x y
 

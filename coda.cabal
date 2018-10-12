@@ -91,7 +91,7 @@ library lsp
     Language.Server.Protocol
 
 library termination
-  import: base, containers, contravariant, nats
+  import: base, containers, contravariant, hashable, nats, unordered-containers
   hs-source-dirs: src/termination
   exposed-modules:
     Termination
@@ -138,7 +138,7 @@ library relative
   import: base, bifunctors, comonad, data-default, ghc-prim, hashable, lens, mtl, profunctors, text
   signatures: Delta
   hs-source-dirs: src/relative
-  exposed-modules: Absolute Cat List Located Map Relative Queue
+  exposed-modules: Absolute Cat List Located Map Relative Queue Semi
   build-depends: common
 
 library algebra
@@ -153,7 +153,8 @@ library algebra
       Located as Relative.Located,
       Map as Relative.Map,
       Queue as Relative.Queue,
-      Relative as Relative.Class)
+      Relative as Relative.Class,
+      Semi as Relative.Semi)
     requires (Delta as Relative.Delta.Type)
   exposed-modules:
     Relative.Delta
@@ -169,7 +170,8 @@ library algebra
     Relative.List,
     Relative.Located,
     Relative.Map,
-    Relative.Queue
+    Relative.Queue,
+    Relative.Semi
 
 library token
   import: base, containers, data-default, lens, text

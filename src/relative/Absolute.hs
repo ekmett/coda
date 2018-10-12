@@ -47,6 +47,7 @@ instance Monoid a => Monoid (Absolute a) where
   mempty = Absolute mempty
   mappend (Absolute a) (Absolute b) = Absolute (mappend a b)
 
+instance Semigroup a => RelativeSemigroup (Absolute a)
 instance Monoid a => RelativeMonoid (Absolute a)
 
 instance Ord a => StrictRelativeOrder (Absolute a)
