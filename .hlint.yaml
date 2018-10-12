@@ -2,3 +2,7 @@
 - ignore: {name: "Use infix"}
 - ignore: {name: "Move brackets to avoid $"}
 - ignore: {name: "Use camelCase"}
+- ignore: {name: "Redundant bracket", within: Set.Lazy }
+- ignore: {name: "Eta reduce", within: [ Set.Lazy, Automata.Presburger ] }
+- ignore: {name: "Use record patterns", within: Set.Lazy }
+- ignore: {name: "Avoid lambda", within: Set.Lazy }

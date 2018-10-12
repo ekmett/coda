@@ -1,6 +1,5 @@
 {-# language GADTs #-}
 {-# language OverloadedLists #-}
-{-# language ViewPatterns #-}
 module Automata.DFA
   ( DFA(..)
   , reverse, reversed
@@ -18,7 +17,7 @@ module Automata.DFA
   ) where
 
 import Control.Lens hiding (reversed)
-import Prelude hiding (product, sum, reverse, concat)
+import Prelude hiding (reverse, concat)
 
 import Automata.Internal
 import qualified Automata.NFA as NFA

@@ -1,12 +1,10 @@
 {-# language GADTs #-}
 {-# language OverloadedLists #-}
-{-# language ViewPatterns #-}
 module Automata.Internal where
 
 import Control.Lens
 import Data.Functor.Contravariant.Divisible
 import Data.Void
-import Prelude hiding (product, sum, reverse, concat)
 
 import qualified Set.Lazy as Set
 import Set.Lazy (Set)

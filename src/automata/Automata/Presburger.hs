@@ -47,15 +47,14 @@ add i j k = reverse $ NFA sb sf sf step where
 add3 :: Var -> Var -> Var -> Var -> NFA Vec
 add3 i j k l = reverse $ NFA s3 s0 s0 step where
   step xs s = case plus3 (testBit xs i) (testBit xs j) (testBit xs k) s of
-    r :*: c -> given (testBit xs l == r) c where
-  plus3 a b c d = r :*: div (d + fromEnum a + fromEnum b + fromEnum c - fromEnum r) 2 where
-    r = a `xor` b `xor` c `xor` toEnum (mod d 2)
+    r :*: c -> given (testBit xs l == r) c
+  plus3 a b c d = r :*: div (d + fromEnum a + fromEnum b + fromEnum c - fromEnum r) 2 where r = a `xor` b `xor` c `xor` toEnum (mod d 2)
   s3 = Set.fromDistinctAscList [0,1,2]
   s0 = Set.singleton (0 :: Int)
 
 eq :: Var -> Var -> NFA Vec
-eq i j = NFA su su su $ \xs _ -> if testBit xs i == testBit xs j then su else empty where
-  su = Set.singleton ()
+eq i j = NFA su su su $ \xs _ -> if testBit xs i == testBit xs j then su else empty
+  where su = Set.singleton ()
 
 data Cmp = Never | Eq | Lt | Le | Gt | Ge | Ne | Always deriving (Eq,Ord,Show,Read,Ix,Bounded,Enum)
 

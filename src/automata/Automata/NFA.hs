@@ -19,7 +19,7 @@ module Automata.NFA
 
 import Control.Lens hiding (reversed)
 import qualified Data.List as List
-import Prelude hiding (product, sum, reverse, concat)
+import Prelude hiding (reverse, concat)
 
 import Automata.Internal
 import qualified Set.Lazy as Set
