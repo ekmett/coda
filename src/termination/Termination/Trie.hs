@@ -1,6 +1,7 @@
 {-# language CPP #-}
 {-# language GADTs #-}
 {-# language RankNTypes #-}
+{-# language LambdaCase #-}
 
 -- |
 --
@@ -71,7 +72,7 @@ seen False = Just True
 runTrie :: Trie a -> a -> a -> Bool
 runTrie (Trie p f) a b = isJust $ f a False seen (p False) >>= f b False seen
 
-data V a b = V [(a,b)]
+newtype V a b = V [(a,b)]
 
 -- side-condition: needs 'a' to be finitely enumerable -- linear time
 finite :: Eq a => Trie a
@@ -93,7 +94,7 @@ finiteOrd :: Ord a => Trie a
 finiteOrd = Trie (const mempty) $ \ a d k -> Map.alterF (fmap Just . k . fromMaybe d) a
 
 atH :: (Functor f, Hashable k, Eq k) => k -> (Maybe a -> f (Maybe a)) -> HashMap k a -> f (HashMap k a)
-atH k f m = f mv <&> \r -> case r of
+atH k f m = f mv <&> \case
     Nothing -> maybe m (const (HashMap.delete k m)) mv
     Just v' -> HashMap.insert k v' m
   where mv = HashMap.lookup k m
