@@ -22,7 +22,7 @@ import Data.Semigroup
 #endif
 import Data.Void
 
--- | A well quasi-order: A reflexive, transitive relation such that 
+-- | A well quasi-order: A reflexive, transitive relation such that
 -- and every infinite set xs has i < j such that (xs!i) <= (xs!j)
 -- returns both x <= y and y <= x simultaneously, and uses a function
 -- for more efficient prep
@@ -45,7 +45,7 @@ instance Decidable Test where
   lose f = Test f absurd
   choose f (Test p g) (Test q h) = Test (fmap (p+++q) f) step where
     step (Left a) (Left b) = g a b
-    step (Right a) (Right b) = h a b 
+    step (Right a) (Right b) = h a b
     step _ _ = FF
 
 instance Semigroup (Test a) where
@@ -54,6 +54,10 @@ instance Semigroup (Test a) where
 instance Monoid (Test a) where
   mempty = conquer
   mappend = (<>)
+
+-- set :: Ord a => Test a -> Test [a]
+-- set (Test f p) = Test (map f) $ \xs ys -> go xs ys `bb` go ys xs where
+--  go xs ys = all (\x -> any (\y -> bb1 $ p x y) ys) xs
 
 -- side-condition: needs 'a' to be finitely enumerable
 finite :: Eq a => Test a
