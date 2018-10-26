@@ -103,8 +103,15 @@ inv (Perm s t) = Perm t s
 swap :: Natural -> Natural -> Perm
 swap i j = Perm t t where t = Tip & perm j .~ i & perm i .~ j
 
-act :: Perm -> Natural -> Natural
-act (Perm t _) i = t^.perm i
+class Act s where
+  act :: Perm -> s -> s
+
+instance Act Natural where 
+  act (Perm t _) i = t^.perm i
+
+-- conjugation
+instance Act Perm where
+  act s t = inv s <> t <> s
 
 instance Semigroup Perm where
   Perm a b <> Perm c d = Perm (a <> c) (d <> b)

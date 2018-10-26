@@ -1,0 +1,19 @@
+thoughts:
+
+* build the entire cache as an mvar pointing to a bytearray rather than reference external memory
+* build a hash table and use it directly, w/ linear probing and sth?
+* easy gc due to unidirectional heap, roots maintained externally by haskell
+* can we get better sharing by storing delta vars? this way shifting an entire bdd would only move a root!
+  -- we could also get away with much smaller var sizes as big nodes can be represented by "illegal" 255 -> (y,y) nodes
+* spmd bdd evaluation
+* compressed obdds can be represented in 1-2 bits per node for offline storage
+* aligned-nybble-tries would give us better branching factor and locality
+* it also means testing nybble-windows against neighboring nybble windows, rather than tiny 2-variable windows for faster reordering
+* build variable order online as variables get inserted? order maintenance problem?
+and when putting in a new var it goes at the top unless we have a constraint ordering the two.
+
+SPMD based BDD evaluator? compute ite in parallel? recursively add shannon decompositions to current set.
+SPMBDD -- shannon decomposition on nybbles would give a good fill of a simd unit
+
+16, 16-bit node ids fit into a 256 bit simd lane
+
