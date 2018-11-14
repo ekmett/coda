@@ -35,6 +35,7 @@ section mobiles
       exact (@mobile.perm (g ∘ f) f' (@invertible_inverse ℕ ℕ f bf))
     end
 
+
   --@[trans] def mobile_trans : ∀ p q r : rose, mobile p q → mobile q r -> mobile p r :=
   --  begin admit
   --  end

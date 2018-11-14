@@ -1,6 +1,7 @@
 open function
 open nat
 
+
 -- seeking some position i, currently at some position n.
 -- todo: convert a cursor to a Prop
 def cursor (n s i k: ℕ) := n + s * k = i ∧ s > 0
@@ -59,38 +60,51 @@ inductive T: Π(n s : ℕ) (occ : Prop), Type
 | tip : Π(n s: ℕ), T n s false
 | bin : Π (n s j: ℕ) (x y : Prop), n ≠ j ∨ x ∨ y → T (n+s) (2*s) x → T (n+2*s) (2*s) y → T n s true
 
+
+-- better to work with 'steps' that go from some position to another position, and thread a list of them
+
+inductive path: (n s i k: ℕ): cursor n s i k → Type
+| step: action n s i k -> 
+
+
 structure tree := (occ : Prop) (content: T 0 1 occ)
 
 -- def well_founded.fix_F : Π {α : Sort u} {r : α → α → Prop} {C : α → Sort v},
 --  (Π (x : α), (Π (y : α), r y x → C y) → C x) → Π (x : α), acc r x → C x
-
 -- nat.well_founded
+
+-- C is my path down to a state with 'k' remainining
+
+-- def step1 : (Π (x : ℕ), (Π (y : ℕ), y < x → C y) → C x)
+-- def wat := well_founded.fix lt_wf step1 -- should i use a sub-relation of lt_wf?
+
 
 -- induction on k
 def set.rec: Π (n s i j k: ℕ) (c: cursor n s i k) (o: Prop) (t : T n s o), Σ p : Prop, T n s p := begin
   simp_intros n s i j k c o t,
   let act := step n s i k c, 
-  cases hact: act, 
-  have ni : n = i := c_1.1; rw [ni]; from or.inl ij, 
-  cases ht: t, by_cases ij: i = j,
-  -- i = j, stop, tip
-  from sigma.mk false (T.tip n s), 
-  -- i /= j, stop, tip
-  apply sigma.mk true, apply (T.bin n s j false false), 
-  apply T.tip, apply T.tip,
-  by_cases ij: i = j,
-  -- i = j, stop, bin
-  cases ha_1: a_1,
-  cases ha_2: a_2,
-  -- tip/tip -> tip
-  apply sigma.mk false, apply T.tip,
-  -- bin/tip -> bin
-  repeat { apply sigma.mk true, apply T.bin _ _ j _ _ _ a_1 a_2, simp },
-  -- i /= j, stop, bin
-  apply sigma.mk true, apply T.bin n s j 
-  
-  
-
+  cases hact: act,
+  begin
+    have ni : n = i := c_1.1,
+    cases ht: t, by_cases ij: i = j,
+    -- i = j, stop, tip
+    from sigma.mk false (T.tip n s), 
+    -- i /= j, stop, tip
+    apply sigma.mk true, apply (T.bin n s j false false), 
+    rw [ni]; from or.inl ij, 
+    apply T.tip, apply T.tip,
+    by_cases ij: i = j,
+    -- i = j, stop, bin
+    cases ha_1: a_1, cases ha_2: a_2,
+    apply sigma.mk false, apply T.tip,
+    repeat { apply sigma.mk true, apply T.bin _ _ j _ _ _ a_1 a_2, simp },
+    rw [ni], from or.inl ij
+  end,
+  begin
+    apply set.rec, 
+  end,
+  begin admit
+  end,
 end
 
 -- def set (i j: ℕ) (t0: tree): tree :=
