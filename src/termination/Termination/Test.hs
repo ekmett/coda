@@ -2,6 +2,7 @@
 {-# language ViewPatterns #-}
 {-# language GADTs #-}
 {-# language ParallelListComp #-}
+{-# language BangPatterns #-}
 
 -- |
 --

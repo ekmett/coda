@@ -59,7 +59,7 @@ common array                { build-depends: array }
 common bifunctors           { build-depends: bifunctors >= 5 && < 6 }
 common bytestring           { build-depends: bytestring ^>= 0.10.8 }
 common comonad              { build-depends: comonad >= 5 && < 6 }
-common containers           { build-depends: containers ^>= 0.5.8.2 }
+common containers           { build-depends: containers >= 0.5.8.2 && < 7 }
 common contravariant        { build-depends: contravariant >= 1.4 && < 2 }
 common data-default         { build-depends: data-default ^>= 0.7.1.1 }
 common data-default-class   { build-depends: data-default-class ^>= 0.1 }
@@ -74,7 +74,7 @@ common nats                 { build-depends: nats >= 1.1.1 && < 2 }
 common optparse-applicative { build-depends: optparse-applicative }
 common profunctors          { build-depends: profunctors ^>= 5.2 }
 common tagged               { build-depends: tagged }
-common template-haskell     { build-depends: template-haskell >= 2.12 && < 2.14 }
+common template-haskell     { build-depends: template-haskell >= 2.12 && < 2.15 }
 common text                 { build-depends: text ^>= 1.2 }
 common transformers         { build-depends: transformers }
 common unordered-containers { build-depends: unordered-containers ^>= 0.2 }
