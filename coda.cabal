@@ -210,10 +210,17 @@ library summary-unit
   exposed-modules: Summary
   build-depends: common
 
+library parser
+  import: base
+  hs-source-dirs: src/parser
+  build-depends: algebra, common, lexer, reflection
+  exposed-modules: Syntax.Parser
+
 library layout
   import: base, data-default, lens
   hs-source-dirs: src/layout
-  build-depends: algebra, common, dyck
+  build-depends: algebra, common, dyck, reflection
+  signatures: Parser
   exposed-modules: Layout
 
 library syntax
