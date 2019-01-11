@@ -73,6 +73,7 @@ common mtl                  { build-depends: mtl ^>= 2.2.1 }
 common nats                 { build-depends: nats >= 1.1.1 && < 2 }
 common optparse-applicative { build-depends: optparse-applicative }
 common profunctors          { build-depends: profunctors ^>= 5.2 }
+common reflection           { build-depends: reflection }
 common tagged               { build-depends: tagged }
 common template-haskell     { build-depends: template-haskell >= 2.12 && < 2.15 }
 common text                 { build-depends: text ^>= 1.2 }
@@ -174,7 +175,7 @@ library algebra
     Relative.Semi
 
 library token
-  import: base, containers, data-default, lens, text
+  import: base, containers, data-default, lens, reflection, text
   hs-source-dirs: src/token
   exposed-modules: Syntax.Token
   build-depends: algebra, common

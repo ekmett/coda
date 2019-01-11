@@ -21,7 +21,6 @@ module Syntax.Lexer
   ( lex
   ) where
 
-
 import Data.Char
 import Data.Default
 import Data.Text (Text)

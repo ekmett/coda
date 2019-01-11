@@ -1,0 +1,11 @@
+{-# language AllowAmbiguousTypes #-}
+signature Parser where
+
+import Dyck
+import Token
+
+data Parsed
+type ParseResult (s :: LayoutMode) :: Type
+
+parse :: Dyck -> Parsed
+retrieve :: Reifies s LayoutMode => Parsed -> ParseResult s
