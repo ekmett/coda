@@ -137,6 +137,22 @@ instance Relative Token where
     go d (TokenUnmatchedClosing dp) = TokenUnmatchedClosing (rel d dp)
     go d (TokenLexicalError d' s) = TokenLexicalError (d+d') s
 
+-- I don't see this having any legitimate uses after we start working with spans
+-- directly. -- Ed 2
+instance HasDelta Token where
+  delta (Token d _) = d
+  delta (TokenName d _) = d
+  delta (TokenKeyword d _) = d
+  delta (TokenInteger d _) = d
+  delta (TokenDouble d _) = d
+  delta (TokenString d _) = d
+  delta (TokenChar d _) = d
+  delta (TokenNested _ d _ _) = d
+  delta (TokenMismatch (Located d _) _ _) = d
+  delta (TokenUnmatchedOpening (Located d _)) = d
+  delta (TokenUnmatchedClosing (Located d _)) = d
+  delta (TokenLexicalError d _) = d
+
 data Pair = Brace | Bracket | Paren
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Generic)
 
