@@ -92,21 +92,21 @@ data Keyword
   deriving (Eq,Ord,Show,Read,Ix,Enum,Bounded,Data,Generic)
 
 data Token
-  = Token        {-# unpack #-} !Delta {-# unpack #-} !Text -- as yet uninterpreted lexemes
-  | TokenName    {-# unpack #-} !Delta !Name
-  | TokenKeyword {-# unpack #-} !Delta !Keyword
-  | TokenInteger {-# unpack #-} !Delta !Integer
-  | TokenDouble  {-# unpack #-} !Delta {-# unpack #-} !Double
-  | TokenString  {-# unpack #-} !Delta {-# unpack #-} !Text
-  | TokenChar    {-# unpack #-} !Delta {-# unpack #-} !Char
-  | TokenNested  {-# unpack #-} !(Located Pair) !(Cat Token)
+  = Token         {-# unpack #-} !Delta {-# unpack #-} !Text -- as yet uninterpreted lexemes
+  | TokenName     {-# unpack #-} !Delta !Name
+  | TokenKeyword  {-# unpack #-} !Delta !Keyword
+  | TokenInteger  {-# unpack #-} !Delta !Integer
+  | TokenDouble   {-# unpack #-} !Delta {-# unpack #-} !Double
+  | TokenString   {-# unpack #-} !Delta {-# unpack #-} !Text
+  | TokenChar     {-# unpack #-} !Delta {-# unpack #-} !Char
+  | TokenNested   !Pair {-# unpack #-} !Delta !(Cat Token) {-# unpack #-} !Delta
   | TokenMismatch {-# unpack #-} !(Located Pair) {-# unpack #-} !(Located Pair) !(Cat Token)
   | TokenUnmatchedOpening {-# unpack #-} !(Located Pair)
   | TokenUnmatchedClosing {-# unpack #-} !(Located Pair)
   | TokenLexicalError {-# unpack #-} !Delta String
   deriving (Eq,Ord,Show,Read)
 
-nested :: Located Pair -> Cat Token -> Token
+nested :: Pair -> Delta -> Cat Token -> Delta -> Token
 nested = TokenNested
 
 mismatch :: Located Pair -> Located Pair -> Cat Token -> Token
@@ -131,7 +131,7 @@ instance Relative Token where
     go d (TokenDouble d' f) = TokenDouble (d+d') f
     go d (TokenString d' l) = TokenString (d+d') l
     go d (TokenChar d' l) = TokenChar (d+d') l
-    go d (TokenNested dp ts) = TokenNested (rel d dp) (rel d ts)
+    go d (TokenNested p dp ts dq) = TokenNested p (rel d dp) (rel d ts) (rel d dq)
     go d (TokenMismatch dp dq ts) = TokenMismatch (rel d dp) (rel d dq) (rel d ts)
     go d (TokenUnmatchedOpening dp) = TokenUnmatchedOpening (rel d dp)
     go d (TokenUnmatchedClosing dp) = TokenUnmatchedClosing (rel d dp)
