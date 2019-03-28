@@ -52,7 +52,7 @@ common app
 common base
   default-language: Haskell2010
   ghc-options: -Wall
-  build-depends: base >= 4.10 && < 5
+  build-depends: base >= 4.11 && < 5
 
 common aeson                { build-depends: aeson >= 1.1 && < 1.3 }
 common array                { build-depends: array }
