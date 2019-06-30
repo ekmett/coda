@@ -291,7 +291,7 @@ data Request = Request
 
 instance FromJSON Request where
   parseJSON = withObject "Request" $ \v -> do
-    ver <- v .: "jsonrpc" -- check for jsonprc validity
+    ver <- v .: "jsonrpc" -- check for jsonrpc validity
     when (ver /= jsonRpcVersion) $ fail "invalid JSON-RPC version"
     Request <$> v .:? "id"
             <*> v .: "method"

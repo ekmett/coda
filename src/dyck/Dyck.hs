@@ -119,8 +119,8 @@ layoutToken (Dyck l ms r s _ e) i a = Dyck l ms r (snocCat s a) i e
 
 -- | O(1)
 close :: Dyck -> Located Pair -> Dyck
-close (Dyck l ms (r' :> Opening dp rs) s _ e) dq
- | extract dp == extract dq  = Dyck l ms r' (Cat.singleton $ nested dp (rs<>s)) def e
+close (Dyck l ms (r' :> Opening dp@(Located lp p) rs) s _ e) dq@(Located lq q)
+ | p == q  = Dyck l ms r' (Cat.singleton $ nested p lp (rs<>s) lq) def e
  | otherwise = Dyck l ms r' (Cat.singleton $ mismatch dp dq (rs<>s)) def (snocCat e $! MismatchError dp dq)
 close (Dyck l ms _ s _ e) dq = Dyck (snocCat l $ Closing (ms <> s) dq) mempty mempty mempty def e
 
@@ -138,8 +138,8 @@ instance Default Dyck where
 instance Semigroup Dyck where
   m <> Dyck Empty Empty Empty Empty _ Empty = m
   Dyck l0 m0 r0 s0 _ e0 <> Dyck l1 m1 r1 s1 k1 e1 = go l0 m0 r0 s0 e0 l1 m1 r1 s1 k1 e1 where
-    go l2 m2 (r2' :> Opening dp xs) s2 e2 (Closing ys dq :< l3') m3 r3 s3 k3 e3
-      | extract dp == extract dq  = go l2 m2 r2' (Cat.singleton $ nested dp (xs<>s2<>ys)) e2 l3' m3 r3 s3 k3 e3
+    go l2 m2 (r2' :> Opening dp@(Located lp p) xs) s2 e2 (Closing ys dq@(Located lq q) :< l3') m3 r3 s3 k3 e3
+      | p == q    = go l2 m2 r2' (Cat.singleton $ nested p lp (xs<>s2<>ys) lq) e2 l3' m3 r3 s3 k3 e3
       | otherwise = go l2 m2 r2' (Cat.singleton $ mismatch dp dq (xs<>s2<>ys)) (snocCat e2 $! MismatchError dp dq) l3' m3 r3 s3 k3 e3
     go l2 m2 (r2' :> Opening dp xs) s2 e2 _ m3 r3 s3 k3 e3 = Dyck l2 m2 ((r2' :> Opening dp (xs<>s2<>m3))<>r3) s3 k3 (e2<>e3)
     go l2 m2 _ s2 e2 (Closing xs dp :< l3') m3 r3 s3 k3 e3 = Dyck (l2<>(Closing (m2<>s2<>xs) dp :< l3')) m3 r3 s3 k3 (e2<>e3)

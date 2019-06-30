@@ -42,7 +42,7 @@ instance Show LayoutMode
 instance Read LayoutMode
 instance Default LayoutMode
 
-nested :: Located Pair -> Cat Token -> Token
+nested :: Pair -> Delta -> Cat Token -> Delta -> Token
 mismatch :: Located Pair -> Located Pair -> Cat Token -> Token
 unmatchedOpening :: Located Pair -> Token
 unmatchedClosing :: Located Pair -> Token
