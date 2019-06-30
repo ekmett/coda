@@ -1,7 +1,6 @@
 signature Parser where
 
 import Dyck
-import Token
 
 data Parsed
 data Tag a
