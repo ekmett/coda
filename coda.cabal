@@ -52,30 +52,32 @@ common app
 common base
   default-language: Haskell2010
   ghc-options: -Wall
-  build-depends: base >= 4.11 && < 5
+  build-depends: base >= 4.16 && < 5
 
-common aeson                { build-depends: aeson >= 1.1 && < 1.3 }
+common aeson                { build-depends: aeson >= 1.1 && <2.3 }
 common array                { build-depends: array }
 common bifunctors           { build-depends: bifunctors >= 5 && < 6 }
-common bytestring           { build-depends: bytestring ^>= 0.10.8 }
+common bytestring           { build-depends: bytestring ^>= 0.11.4.0 }
 common comonad              { build-depends: comonad >= 5 && < 6 }
 common containers           { build-depends: containers >= 0.5.8.2 && < 7 }
 common contravariant        { build-depends: contravariant >= 1.4 && < 2 }
 common data-default         { build-depends: data-default ^>= 0.7.1.1 }
 common data-default-class   { build-depends: data-default-class ^>= 0.1 }
-common deepseq              { build-depends: deepseq ^>= 1.4 }
+common deepseq              { build-depends: deepseq >= 1.4  }
 common filepath             { build-depends: filepath ^>= 1.4 }
 common ghc-prim             { build-depends: ghc-prim }
-common hashable             { build-depends: hashable ^>= 1.2.6 }
-common lens                 { build-depends: lens >= 4.15 && < 5 }
-common lens-aeson           { build-depends: lens-aeson ^>= 1.0.2 }
-common mtl                  { build-depends: mtl ^>= 2.2.1 }
+common hashable             { build-depends: hashable ^>= 1.4.4 }
+common lens                 { build-depends: lens >= 4.15 && < 6 }
+common lens-aeson           { build-depends: lens-aeson }
+common llvm-hs-pure         { build-depends: llvm-hs-pure ^>= 4.0 }
+common megaparse            { build-depends: megaparsec >= 6.0 && < 10.0 }
+common mtl                  { build-depends: mtl ^>= 2.3.1 }
 common nats                 { build-depends: nats >= 1.1.1 && < 2 }
 common optparse-applicative { build-depends: optparse-applicative }
-common profunctors          { build-depends: profunctors ^>= 5.2 }
+common profunctors          { build-depends: profunctors ^>= 5.6 }
 common reflection           { build-depends: reflection }
 common tagged               { build-depends: tagged }
-common template-haskell     { build-depends: template-haskell >= 2.12 && < 2.15 }
+common template-haskell     { build-depends: template-haskell >= 2.12 && < 2.22 }
 common text                 { build-depends: text ^>= 1.2 }
 common transformers         { build-depends: transformers }
 common unordered-containers { build-depends: unordered-containers ^>= 0.2 }
@@ -275,7 +277,7 @@ library console
     haskeline,
     prettyprinter,
     prettyprinter-ansi-terminal,
-    prettyprinter-convert-ansi-wl-pprint,
+    prettyprinter-compat-ansi-wl-pprint,
     split
 
   if flag(terminfo) && !os(windows)
@@ -292,15 +294,14 @@ library console
     Console.Unicode
 
 library
-  import: array, base, bytestring, comonad, containers, data-default-class, lens, optparse-applicative, text, transformers
+  import: array, base, bytestring, comonad, containers, data-default-class, lens, llvm-hs-pure, optparse-applicative, text, transformers
   hs-source-dirs: src/coda
   build-depends: console
   build-tools: alex
   build-depends:
     bound,
     bytestring-short,
-    llvm-hs-pure ^>= 6.0,
-    megaparsec >= 6.0 && < 7.0,
+    megaparsec,
     prettyprinter,
     prettyprinter-ansi-terminal,
     text-short
@@ -374,4 +375,3 @@ test-suite layout-test
     tasty-hunit >= 0.9,
   if !flag(test-tasty)
     buildable: False
-
