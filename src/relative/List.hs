@@ -26,7 +26,7 @@ import Control.Lens (AsEmpty(..), prism, Cons(..))
 import Data.Default
 import Data.Function (on)
 import Data.Semigroup
-import GHC.Exts as Exts
+import GHC.Exts as Exts hiding(List)
 import qualified Prelude
 import Prelude hiding (reverse)
 import Text.Read

@@ -208,8 +208,8 @@ import Control.Lens.TH
 import Control.Monad
 import Data.Aeson hiding (Error)
 import Data.Aeson.Encoding
-import Data.Aeson.Internal
-import Data.Aeson.Lens
+import Data.Aeson.Types hiding (Error)
+import Data.Aeson.Lens hiding (JSON)
 import Data.Char as Char
 import Data.Data
 import Data.Default
