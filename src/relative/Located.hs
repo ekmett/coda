@@ -32,6 +32,8 @@ import Data.Semigroup
 #endif
 import GHC.Generics
 
+import Data.Functor.Classes
+
 import Algebra.Ordered
 import Relative
 import Delta
@@ -43,6 +45,9 @@ data Located a = Located !Delta a
   deriving (Eq, Ord, Show, Read, Data, Generic, Functor, Foldable, Traversable)
 
 instance Hashable a => Hashable (Located a)
+
+instance Eq1 Located where
+    liftEq eq (Located _ x) (Located _ y) = eq x y
 
 instance Hashable1 Located where
   liftHashWithSalt f s (Located d a) = f (hashWithSalt s d) a

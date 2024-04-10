@@ -21,6 +21,7 @@ import Data.Bool (bool)
 import Data.Char (toLower)
 import Data.Default.Class
 import Data.Maybe (fromMaybe)
+import Data.String
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text as RenderText
 import Data.Text.Prettyprint.Doc.Render.Terminal as RenderTerminal
@@ -33,6 +34,9 @@ import System.Console.Terminfo.Base (setupTermFromEnv, getCapability)
 import System.Console.Terminfo.Cursor (termColumns)
 #endif
 import Text.Read (readMaybe)
+
+instance IsString str => MonadFail (Either str) where
+  fail = Left . fromString
 
 data FancyOptions
   = FancyOptions
