@@ -15,7 +15,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Language.Server.Parser 
+module Language.Server.Parser
   ( Parser(..)
   , ParseResult(..)
   , parse
@@ -43,7 +43,7 @@ import Control.Exception
 
 -- | The result of parsing
 data ParseResult a
-  = Err 
+  = Err
   | OK !a !Lazy.ByteString
   deriving (Show, Functor, Foldable, Traversable)
 
@@ -65,6 +65,7 @@ instance Applicative Parser where
 
 instance Monad Parser where
   Parser m >>= f = Parser $ \h -> m h >>= \a -> runParser (f a) h
+instance MonadFail Parser where
   fail s = Parser $ \_ -> throw $ ParseError s
 
 parse :: Parser a -> Handle -> IO (Either String a)
@@ -87,7 +88,7 @@ char p = do
 
 -- | Parse exactly the string specified
 string :: Lazy.ByteString -> Parser ()
-string p = Parser $ \h -> do 
+string p = Parser $ \h -> do
   q <- Lazy.hGet h (fromIntegral $ Lazy.length p)
   unless (p == q) $ fail $ "expected " ++ show p
 
@@ -96,7 +97,7 @@ anyField :: Parser ()
 anyField = ascii >>= \case
   'r' -> char '\n'
   _ -> anyField
-  
+
 -- | Parse an integer followed by a carriage return linefeed
 intField :: Parser Int
 intField = do

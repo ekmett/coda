@@ -56,7 +56,7 @@ import Data.Semigroup
 import Data.Text (Text)
 import Data.Text.Unsafe
 import qualified Data.Foldable as Foldable
-import GHC.Exts
+import GHC.Exts hiding (One)
 import Prelude hiding (reverse)
 
 import Relative.Delta.Type

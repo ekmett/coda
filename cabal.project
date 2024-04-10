@@ -1,1 +1,3 @@
 packages: .
+
+allow-newer: llvm-hs-pure:transformers
