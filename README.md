@@ -1,6 +1,6 @@
 # coda
 
-[![Travis Continuous Integration Status][travis-img]][travis]
+[![haskell ci](https://github.com/ekmett/coda/actions/workflows/ci.yml/badge.svg)](https://github.com/ekmett/coda/actions/workflows/ci.yml)
 
 This package will eventually provide a toy compiler.
 
@@ -98,12 +98,12 @@ Please feel free to contact me through github or on the ##coda or #haskell IRC c
  [shake]: http://shakebuild.com/
  [travis]: http://travis-ci.org/ekmett/coda
  [travis-img]: https://secure.travis-ci.org/ekmett/coda.png?branch=master
- 
+
  What is all this about?
  ====================
- 
+
 *This is the response from ekmett to this question on [reddit](https://www.reddit.com/r/programming/comments/bip6ho/graydon_hoare_on_21_compilers_a_wander_through_a/em5grcg/):*
- 
+
 The short version of what coda is about is fixing a number of things that keep functional programming from scaling.
 
 I'm leaving what particular dimension 'scaling' applies to as a free variable.
