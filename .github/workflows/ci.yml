@@ -1,0 +1,22 @@
+name: haskell ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        ghc: ['9.2.8', '9.4.5', '9.6.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        id: setup-haskell
+        with:
+          ghc-version: ${{ matrix.ghc }}
+      - run: cabal build termination automata version common summary-unit set
+        # TODO: enable these
+        # lsp relative rope console server syntax parser layout lexer token dyck layout algebra
